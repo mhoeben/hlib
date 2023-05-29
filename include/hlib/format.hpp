@@ -28,7 +28,7 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wswitch-default"
 
-#include "../../../third_party/fmt/include/fmt/format.h"
+#include "../../third_party/fmt/include/fmt/format.h"
 
 #pragma GCC diagnostic pop
 
