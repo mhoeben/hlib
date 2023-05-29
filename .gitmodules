@@ -1,0 +1,12 @@
+[submodule "third_party/pegtl"]
+	path = third_party/pegtl
+	url = https://github.com/taocpp/PEGTL.git
+	branch = 47e878a
+[submodule "third_party/fmt"]
+	path = third_party/fmt
+	url = https://github.com/fmtlib/fmt.git
+	branch = a0b8a92
+[submodule "third_party/catch2"]
+	path = third_party/catch2
+	url = https://github.com/catchorg/Catch2.git
+	branch = 3f0283d
