@@ -126,7 +126,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     third_party/pegtl/include
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME} PUBLIC
     fmt
 )
 
