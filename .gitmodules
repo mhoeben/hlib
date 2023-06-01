@@ -10,3 +10,6 @@
 	path = third_party/catch2
 	url = https://github.com/catchorg/Catch2.git
 	branch = 3f0283d
+[submodule "third_party/jsmn"]
+	path = third_party/jsmn
+	url = https://github.com/zserge/jsmn.git

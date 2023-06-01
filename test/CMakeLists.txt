@@ -28,6 +28,7 @@ project("hlib-tests")
 add_subdirectory(../third_party/catch2 catch2)
 
 add_executable(${PROJECT_NAME}
+    src/json.cpp
     src/sockaddr.cpp
 )
 
@@ -58,7 +59,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
     $<$<COMPILE_LANGUAGE:CXX>:
         # -Wctor-dtor-privacy
-        -Wsign-promo
+        # -Wsign-promo
     >
 
     $<$<CONFIG:Debug>:>
