@@ -39,6 +39,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/config.hpp
     include/hlib/event_loop.hpp
     include/hlib/format.hpp
+    include/hlib/json.hpp
     include/hlib/log.hpp
     include/hlib/memory.hpp
     include/hlib/scope_guard.hpp
@@ -53,6 +54,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_base.cpp
     src/hlib_buffer.cpp
     src/hlib_event_loop.cpp
+    src/hlib_json.cpp
     src/hlib_log.cpp
     src/hlib_scope_guard.cpp
     src/hlib_sock_addr.cpp
