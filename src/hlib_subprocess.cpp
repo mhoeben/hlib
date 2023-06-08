@@ -23,10 +23,10 @@
 //
 #include "hlib/subprocess.hpp"
 #include "hlib/config.hpp"
+#include "hlib/error.hpp"
 #include "hlib/format.hpp"
-#include "hlib/string.hpp"
 #include <array>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -99,7 +99,7 @@ void Subprocess::run(std::string command, std::vector<std::string> args)
     auto read_pipe = [&](int fd, Buffer& buffer) -> bool
     {
         do {
-            uint8_t* data = reinterpret_cast<uint8_t*>(buffer.reserve(buffer.size() + Config::subprocessOutputBatchSize()));
+            std::uint8_t* data = reinterpret_cast<std::uint8_t*>(buffer.reserve(buffer.size() + Config::subprocessOutputBatchSize()));
 
             ssize_t size = read(fd, data + buffer.size(), buffer.capacity() - buffer.size());
             switch (size) {
@@ -124,15 +124,15 @@ void Subprocess::run(std::string command, std::vector<std::string> args)
         m_error.clear();
 
         if (-1 == pipe(output_pipe.data())) {
-            throw std::runtime_error(fmt::format("Failed to create output pipe for '{}' ({})", command, get_error_string(errno)));
+            throwf<std::runtime_error>("Failed to create output pipe for '{}' ({})", command, get_error_string(errno));
         }
         if (-1 == pipe(error_pipe.data())) {
-            throw std::runtime_error(fmt::format("Failed to create error pipe for '{}' ({})", command, get_error_string(errno)));
+            throwf<std::runtime_error>("Failed to create error pipe for '{}' ({})", command, get_error_string(errno));
         }
         
         switch (pid = fork()) {
         case -1:
-            throw std::runtime_error(fmt::format("Failed to fork for '{}' ({})", command, get_error_string(errno)));
+            throwf<std::runtime_error>("Failed to fork for '{}' ({})", command, get_error_string(errno));
 
         case 0:
             close(output_pipe[0]);

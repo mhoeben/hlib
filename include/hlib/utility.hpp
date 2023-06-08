@@ -36,10 +36,10 @@ template<>
 std::string get_env(std::string const& name, std::string const& alt);
 
 template<>
-int32_t get_env(std::string const& name, int32_t const& alt);
+std::int32_t get_env(std::string const& name, std::int32_t const& alt);
 
 template<>
-int64_t get_env(std::string const& name, int64_t const& alt);
+std::int64_t get_env(std::string const& name, std::int64_t const& alt);
 
 template<>
 double get_env(std::string const& name, double const& alt);
@@ -48,7 +48,7 @@ template<>
 bool get_env(std::string const& name, bool const& alt);
 
 template<>
-size_t get_env(std::string const& name, size_t const& alt);
+std::size_t get_env(std::string const& name, std::size_t const& alt);
 
 } // namespace hlib
 

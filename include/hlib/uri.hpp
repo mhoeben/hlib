@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace hlib
@@ -33,7 +34,7 @@ struct URI
     std::string scheme;
     std::string user_info;
     std::string host;
-    uint16_t port{ 0 };
+    std::uint16_t port{ 0 };
     std::string path;
     std::string query;
     std::string fragment;
@@ -50,7 +51,7 @@ std::string uri_get_authority(URI const& uri);
 std::string uri_get_host_port(URI const& uri);
 std::string uri_get_path_query_fragment(URI const& uri);
 
-uint16_t uri_get_default_port_for_scheme(std::string const& scheme);
+std::uint16_t uri_get_default_port_for_scheme(std::string const& scheme);
 
 std::string uri_encoding_escape(std::string const& string);
 std::string uri_encoding_unescape(std::string const& string);

@@ -21,61 +21,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
+#pragma once
 
-using namespace hlib;
+#include <assert.h>
+#include <stdint.h>
 
-//
-// Implementation
-//
-namespace
-{
+#ifdef HLIB_C_VISIBILITY_STATIC
+#define HLIB_C_VISIBILITY static
+#else
+#define HLIB_C_VISIBILITY extern
+#endif
 
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
+#ifndef NDEBUG
+#define hverify(expression)  assert((expression))
+#else
+#define hverify(expression)  do { (void)(expression); } while (false)
+#endif
 
-std::array<std::string, kLevels> const kLevelStrings =
-{
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
-};
-
-} // namespace
-
-//
-// Public
-//
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
-{
-}
-
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
-{
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
-}
-
-std::string const& log::to_string(Level level)
-{
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
-}
-
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
+#if defined(__clang__)
+    #define HLIB_FALLTHROUGH [[clang::fallthrough]]
+#elif defined(__GNUC__) || defined(__GNUG__)
+    #if (__GNUC__ < 7)
+        #define HLIB_FALLTHROUGH
+    #else
+        #define HLIB_FALLTHROUGH __attribute__((fallthrough))
+    #endif
+#else
+    #error "Unsupported compiler."
+#endif
 

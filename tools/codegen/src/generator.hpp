@@ -21,61 +21,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
+#pragma once
 
-using namespace hlib;
+#include "types.hpp"
+#include "hlib/json.hpp"
+#include <memory>
+#include <stdio.h>
+#include <vector>
+#include <unordered_map>
 
-//
-// Implementation
-//
-namespace
+class Generator
 {
+    HLIB_NOT_COPYABLE(Generator);
+    HLIB_NOT_MOVABLE(Generator);
 
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
+public:
+    static std::unique_ptr<Generator> create(Language language);
 
-std::array<std::string, kLevels> const kLevelStrings =
-{
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
+public:
+    Generator() = default;
+    virtual ~Generator() = default;
+
+    virtual int generate(FILE* output, FILE* input, Side side);
+
+protected:
+    hlib::JSON m_input;
+    FILE* m_output{ nullptr };
+    Side m_side{ Side::Both };
+
+    std::vector<std::string> m_copyright;
+    std::string m_version;
+    std::vector<std::string> m_namespace;
+    int m_base_id{ 0 };
+
+    struct Declaration
+    {
+        std::string name;
+        Side orientation{ Side::Invalid };
+
+        struct Member
+        {
+            std::string name;
+            Type type;
+            bool array;
+        };
+        std::vector<Member> members;
+    };
+
+    int parseDeclarations(std::vector<Declaration>& declarations);
 };
-
-} // namespace
-
-//
-// Public
-//
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
-{
-}
-
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
-{
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
-}
-
-std::string const& log::to_string(Level level)
-{
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
-}
-
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
 

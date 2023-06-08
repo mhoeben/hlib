@@ -23,7 +23,8 @@
 //
 #pragma once
 
-#include <assert.h>
+#include "hlib/c/base.h"
+#include <cassert>
 #include <stdexcept>
 #include <string>
 
@@ -38,12 +39,6 @@ namespace hlib
     name(name &&) = delete; \
     name& operator = (name &&) = delete
 
-#ifndef NDEBUG
-#define hverify(expression)  assert((expression))
-#else
-#define hverify(expression)  do { (void)(expression); } while (false)
-#endif
-
 std::string format_assert_string(char const* file, int line, char const* expression);
 
 #define hcheck(expression) \
@@ -52,19 +47,6 @@ std::string format_assert_string(char const* file, int line, char const* express
             throw std::runtime_error(hlib::format_assert_string(__FILE__, __LINE__, #expression)); \
         } \
     } while (false)
-
-
-#if defined(__clang__)
-    #define HLIB_FALLTHROUGH [[clang::fallthrough]]
-#elif defined(__GNUC__) || defined(__GNUG__)
-    #if (__GNUC__ < 7)
-        #define HLIB_FALLTHROUGH
-    #else
-        #define HLIB_FALLTHROUGH __attribute__((fallthrough))
-    #endif
-#else
-    #error "Unsupported compiler."
-#endif
 
 } // namespace hlib
 

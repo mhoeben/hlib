@@ -21,61 +21,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
+#pragma once
+
+#include "hlib/buffer.hpp"
 #include "hlib/config.hpp"
-#include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
+#include <iostream>
+#include <stdio.h>
 
-using namespace hlib;
-
-//
-// Implementation
-//
-namespace
+namespace hlib
+{
+namespace file
 {
 
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
+Buffer read(std::istream& stream, std::size_t chunk_size = Config::fileReadChunkSize());
+Buffer read(FILE* file, std::size_t chunk_size = Config::fileReadChunkSize());
+Buffer read(std::string const& pathname, std::size_t chunk_size = Config::fileReadChunkSize());
 
-std::array<std::string, kLevels> const kLevelStrings =
-{
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
-};
+void write(std::ostream& stream, Buffer const& buffer);
+void write(FILE* file, Buffer const& buffer);
+void write(std::string const& pathname, Buffer const& buffer, bool append = false);
 
-} // namespace
-
-//
-// Public
-//
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
-{
-}
-
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
-{
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
-}
-
-std::string const& log::to_string(Level level)
-{
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
-}
-
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
-
+} // namespace file
+} // namespace hlib

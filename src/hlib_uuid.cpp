@@ -21,61 +21,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
-#include "hlib/config.hpp"
+#include "hlib/uuid.hpp"
 #include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
 
 using namespace hlib;
 
 //
-// Implementation
-//
-namespace
-{
-
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
-
-std::array<std::string, kLevels> const kLevelStrings =
-{
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
-};
-
-} // namespace
-
-//
 // Public
 //
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
+UUID::UUID()
 {
+    uuid_generate(octets);
 }
 
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
+std::string hlib::to_string(UUID const& uuid)
 {
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
-}
-
-std::string const& log::to_string(Level level)
-{
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
-}
-
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
+    return fmt::format("{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+        uuid.octets[0], uuid.octets[1], uuid.octets[2], uuid.octets[3],
+        uuid.octets[4], uuid.octets[5],
+        uuid.octets[6], uuid.octets[7],
+        uuid.octets[8], uuid.octets[9],
+        uuid.octets[10], uuid.octets[11], uuid.octets[12], uuid.octets[13], uuid.octets[14], uuid.octets[15]
+    );
 }
 

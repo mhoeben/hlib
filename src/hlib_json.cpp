@@ -34,15 +34,18 @@
 using namespace hlib;
 
 //
-// Implementation
+// Implementation (JSONData)
 //
-struct JSON::Data
+struct hlib::JSONData
 {
     std::string string;
     std::vector<jsmntok_t> tokens;
 };
 
-JSON::JSON(std::shared_ptr<JSON::Data> data, int name, int value)
+//
+// Implementation (JSON)
+//
+JSON::JSON(std::shared_ptr<JSONData> data, int name, int value)
     : m_data(std::move(data))
     , m_name{ name }
     , m_value{ value }
@@ -51,15 +54,31 @@ JSON::JSON(std::shared_ptr<JSON::Data> data, int name, int value)
     assert(m_value >= 0 && m_value < static_cast<int>(m_data->tokens.size()));
 }
 
+void JSON::getPosition(int& line, int& column, int position) const
+{
+    line = 0;
+    column = 0;
+
+    for (int i = 0; i < position; ++i) {
+        if ('\n' == m_data->string[i]) {
+            column = 0;
+            ++line;
+        }
+        else {
+            ++column;
+        }
+    }
+}
+
 template<typename T>
-T JSON::convert(T(*function)(std::string const&, size_t* pos)) const
+T JSON::convert(T(*function)(std::string const&, std::size_t* pos)) const
 {
     if (Number != type()) {
         throw std::invalid_argument("Value is not convertible in a number");
     }
 
     std::string value = this->value();
-    size_t pos = 0;
+    std::size_t pos = 0;
     T result = function(value, &pos);
 
     if (value.length() != pos) {
@@ -69,37 +88,18 @@ T JSON::convert(T(*function)(std::string const&, size_t* pos)) const
     return result;
 }
 
-int JSON::skip(int token) const
-{
-    int i;
-    jsmntok_t const& current = m_data->tokens[token];
- 
-    ++token;
-
-    switch (current.type) {
-    case JSMN_OBJECT:
-        for (i = 0; i < current.size; ++i) {
-            token = skip(token + 1);
-        }
-        break;
-
-    case JSMN_ARRAY:
-        for (i = 0; i < current.size; ++i) {
-            token = skip(token);
-        }
-        break;
-
-    default:
-        break;
-    }
-
-    return token;
-}
-
 //
 // Public (JSON)
 //
-JSON::JSON()
+JSON::JSON(std::string string)
+{
+    parse(string);
+}
+
+JSON::JSON(JSON const& that)
+    : m_data(std::move(that.m_data))
+    , m_name{ that.m_name }
+    , m_value{ that.m_value }
 {
 }
 
@@ -110,6 +110,14 @@ JSON::JSON(JSON&& that) noexcept
 {
     that.m_name = -1;
     that.m_value = -1;
+}
+
+JSON& JSON::operator =(JSON const& that)
+{
+    m_data = that.m_data;
+    m_name = that.m_name;
+    m_value = that.m_value;
+    return *this;
 }
 
 JSON& JSON::operator =(JSON&& that) noexcept
@@ -125,7 +133,9 @@ JSON& JSON::operator =(JSON&& that) noexcept
 
 bool JSON::empty() const noexcept
 {
-    return nullptr == m_data || m_data->tokens.empty();
+    return nullptr == m_data
+        || m_data->tokens.empty()
+        || m_value < 0;
 }
 
 JSON::Type JSON::type() const noexcept
@@ -140,8 +150,8 @@ JSON::Type JSON::type() const noexcept
     case JSMN_UNDEFINED: return Undefined;
     case JSMN_PRIMITIVE:
       {
-        size_t start = m_data->tokens[m_value].start;
-        size_t end = m_data->tokens[m_value].end;
+        std::size_t start = m_data->tokens[m_value].start;
+        std::size_t end = m_data->tokens[m_value].end;
         if (0 == strncmp("null", &m_data->string[start], end - start)) {
             return Null;
         }
@@ -167,8 +177,8 @@ std::string JSON::name() const
     }
     assert(m_name < static_cast<int>(m_data->tokens.size()));
 
-    size_t start = m_data->tokens[m_name].start;
-    size_t end = m_data->tokens[m_name].end;
+    std::size_t start = m_data->tokens[m_name].start;
+    std::size_t end = m_data->tokens[m_name].end;
 
     return std::string(&m_data->string[start], end - start);
 }
@@ -180,10 +190,84 @@ std::string JSON::value() const
     }
     assert(m_value < static_cast<int>(m_data->tokens.size()));
 
-    size_t start = m_data->tokens[m_value].start;
-    size_t end = m_data->tokens[m_value].end;
+    std::size_t start = m_data->tokens[m_value].start;
+    std::size_t end = m_data->tokens[m_value].end;
 
     return std::string(&m_data->string[start], end - start);
+}
+
+std::size_t JSON::size() const
+{
+    if (m_value < 0) {
+        return 0;
+    }
+
+    return m_data->tokens[m_value].size;
+}
+
+int JSON::line() const
+{
+    int start;
+
+    if (m_name >= 0) {
+        start = m_data->tokens[m_name].start;
+    }
+    else if (m_value >= 0) {
+        start = m_data->tokens[m_value].start;
+    }
+    else {
+        return -1;
+    }
+
+    int line, column;
+    getPosition(line, column, start);
+    return line;
+}
+
+int JSON::column() const
+{
+    int start;
+
+    if (m_name >= 0) {
+        start = m_data->tokens[m_name].start;
+    }
+    else if (m_value >= 0) {
+        start = m_data->tokens[m_value].start;
+    }
+    else {
+        return -1;
+    }
+
+    if (start > 0 && '"' == m_data->string[start - 1]) {
+        --start;
+    }
+
+    int line, column;
+    getPosition(line, column, start);
+    return column;
+}
+
+int JSON::start() const
+{
+    if (m_name >= 0) {
+        return m_data->tokens[m_name].start;
+    }
+    else if (m_value >= 0) {
+        return m_data->tokens[m_value].start;
+    }
+    else {
+        return -1;
+    }
+}
+
+int JSON::stop() const
+{
+    if (m_value >= 0) {
+        return m_data->tokens[m_value].end;
+    }
+    else {
+        return -1;
+    }
 }
 
 template<>
@@ -197,17 +281,17 @@ bool JSON::as() const
 }
 
 template<>
-int32_t JSON::as() const
+std::int32_t JSON::as() const
 {
-    return convert<int>([](std::string const& string, size_t* pos) -> int {
+    return convert<std::int32_t>([](std::string const& string, std::size_t* pos) -> int {
         return std::stoi(string, pos, 0);
     });
 }
 
 template<>
-int64_t JSON::as() const
+std::int64_t JSON::as() const
 {
-    return convert<int64_t>([](std::string const& string, size_t* pos) -> int64_t {
+    return convert<std::int64_t>([](std::string const& string, std::size_t* pos) -> int64_t {
         return std::stoll(string, pos, 0);
     });
 }
@@ -230,31 +314,32 @@ std::string JSON::as() const
     return value();
 }
 
+bool JSON::operator ==(JSON const& that) const
+{
+    return m_data == that.m_data
+        && m_name == that.m_name
+        && m_value == that.m_value;
+}
+
+bool JSON::operator !=(JSON const& that) const
+{
+    return m_data != that.m_data
+        || m_name != that.m_name
+        || m_value != that.m_value;
+}
+
 JSON JSON::operator[](int index) const
 {
     assert(false == empty());
     assert(Array == type() || Object == type());
 
-    jsmntok_t const& current = m_data->tokens[m_value];
-    assert(index < current.size);
-
-    int token = m_value + 1;
-    switch (current.type) {
-    case JSMN_ARRAY:
-        for (; index > 0; --index) {
-            token = skip(token);
+    for (auto it = begin(); end() != it; ++it) {
+        if (--index < 0) {
+            return *it;
         }
-        return JSON(m_data, 0, token);
-
-    case JSMN_OBJECT:
-        for(; index > 0; --index) { 
-            token = skip(token + 1);
-        }
-        return JSON(m_data, token, token + 1);
-
-    default:
-        return JSON();
     }
+
+    return JSON();
 }
 
 JSON JSON::operator[](std::string const& name) const
@@ -262,15 +347,10 @@ JSON JSON::operator[](std::string const& name) const
     assert(false == empty());
     assert(Object == type());
 
-    jsmntok_t const& current = m_data->tokens[m_value];
-
-    for (int it = 0, token = m_value + 1; it < current.size; ++it) {
-        size_t start = m_data->tokens[token].start;
-        size_t end = m_data->tokens[token].end;
-        if (0 == strncmp(name.c_str(), &m_data->string[start], end - start)) {
-            return JSON(m_data, token, token + 1);
+    for (auto it = begin(); end() != it; ++it) {
+        if (it->name() == name) {
+            return JSON(*it);
         }
-        token = skip(token + 1);
     }
 
     return JSON();
@@ -296,6 +376,43 @@ JSON JSON::at(std::string const& name) const
     return (*this)[name];
 }
 
+JSON::Iterator JSON::begin() const
+{
+    if (m_value < 0) {
+        return end();
+    }
+    if (m_data->tokens[m_value].size <= 0) {
+        return end();
+    }
+
+    return Iterator(m_data, m_value);
+}
+
+JSON::Iterator JSON::end() const
+{
+    return Iterator();
+}
+
+JSON::Iterator JSON::find(std::string const& name) const
+{
+    if (Object != type()) { 
+        return end();
+    }
+
+    for (auto it = begin(); end() != it; ++it) {
+        if (it->name() == name) {
+            return it;
+        }
+    }
+
+    return end();
+}
+
+bool JSON::contains(std::string const& name) const
+{
+    return end() != find(name);
+}
+
 void JSON::clear()
 {
     m_data.reset();
@@ -308,26 +425,29 @@ void JSON::parse(std::string string)
     jsmn_parser parser;
     int tokens;
 
-    auto throw_error = [this](jsmnerr error)
+    auto throw_error = [&](jsmnerr error)
     {
-        clear();
+        int line, column;
+        getPosition(line, column, parser.pos);
 
-        std::string str;
+        std::string error_string;
 
         switch (error) {
-        case JSMN_ERROR_NOMEM: str = "No memory"; break;
-        case JSMN_ERROR_INVAL: str = "Invalid character"; break;
-        case JSMN_ERROR_PART:  str = "Partial JSON fragment"; break;
+        case JSMN_ERROR_NOMEM: error_string = "No memory"; break;
+        case JSMN_ERROR_INVAL: error_string = "Invalid character"; break;
+        case JSMN_ERROR_PART:  error_string = "Partial JSON fragment"; break;
         default:
-            str = "Unknown error";
+            error_string = "Unknown error";
             break;
         }
-        throw std::runtime_error(fmt::format("Failed to JSON parse string ({})", str));
+
+        clear();
+        throwf<std::runtime_error>("Failed to JSON parse string at {}:{} ({})", line, column, error_string);
     };
 
     // Clear, create new data and assign string.
     clear();
-    m_data = std::make_shared<Data>();
+    m_data = std::make_shared<JSONData>();
     m_data->string = std::move(string);
 
     // Parse the string to find the number of JSON tokens it contains.
@@ -348,5 +468,103 @@ void JSON::parse(std::string string)
 
     m_name = -1;
     m_value = 0;
+}
+
+//
+// Implementation (JSONIterator)
+//
+JSONIterator::JSONIterator(std::shared_ptr<JSONData> data, int value)
+    : m_value{ value }
+{
+    switch (data->tokens[m_value].type) {
+    case JSMN_ARRAY:
+        m_current = JSON(std::move(data), -1, m_value + 1);
+        break;
+
+    case JSMN_OBJECT:
+        m_current = JSON(std::move(data), m_value + 1, m_value + 2);
+        break;
+
+    default:
+        assert(false);
+        break;
+    }
+}
+
+int JSONIterator::skip(int token) const
+{
+    int i;
+    jsmntok_t const& current = m_current.m_data->tokens[token];
+ 
+    ++token;
+
+    switch (current.type) {
+    case JSMN_OBJECT:
+        for (i = 0; i < current.size; ++i) {
+            token = skip(token + 1);
+        }
+        break;
+
+    case JSMN_ARRAY:
+        for (i = 0; i < current.size; ++i) {
+            token = skip(token);
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return token;
+}
+
+//
+// Public (Iterator)
+//
+JSON const* JSONIterator::operator->() const
+{
+    return &m_current;
+}
+
+JSON const& JSONIterator::operator *() const
+{
+    return m_current;
+}
+
+bool JSONIterator::operator ==(JSONIterator const& that) const
+{
+    return m_current == that.m_current;
+}
+
+bool JSONIterator::operator !=(JSONIterator const& that) const
+{
+    return m_current != that.m_current;
+}
+
+JSONIterator& JSONIterator::operator++()
+{
+    assert(m_index < m_current.m_data->tokens[m_value].size);
+
+    switch (m_current.m_data->tokens[m_value].type) {
+    case JSMN_ARRAY:
+        m_current.m_value = skip(m_current.m_value);
+        break;
+
+    case JSMN_OBJECT:
+        m_current.m_name = skip(m_current.m_value);
+        m_current.m_value = m_current.m_name + 1;
+        break;
+
+    default:
+        assert(false);
+        break;
+    }
+
+    ++m_index;
+    if (m_index >= m_current.m_data->tokens[m_value].size) {
+        m_current.clear();
+    }
+
+    return *this;
 }
 

@@ -55,7 +55,7 @@ private:
 
     int m_fd{ -1 };
 
-    void onExpire(int fd, uint32_t events);
+    void onExpire(int fd, std::uint32_t events);
 };
 
 } // namespace hlib

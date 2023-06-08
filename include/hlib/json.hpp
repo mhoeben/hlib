@@ -29,8 +29,14 @@
 namespace hlib
 {
 
+struct JSONData;
+
+class JSONIterator;
+
 class JSON final
 {
+    friend class JSONIterator;
+
 public:
     enum Type
     {
@@ -43,19 +49,33 @@ public:
         Object
     };
 
+    using Iterator = JSONIterator;
+
 public:
-    JSON();
+    JSON() = default;
+    JSON(std::string string);
+    JSON(JSON const& that);
     JSON(JSON&& that) noexcept;
 
+    JSON& operator =(JSON const& that);
     JSON& operator =(JSON&& that) noexcept;
 
     bool empty() const noexcept;
     Type type() const noexcept;
     std::string name() const;
     std::string value() const;
+    std::size_t size() const;
+
+    int line() const;
+    int column() const;
+    int start() const;
+    int stop() const;
 
     template<typename T>
     T as() const;
+
+    bool operator ==(JSON const& that) const;
+    bool operator !=(JSON const& that) const;
 
     JSON operator[](int index) const;
     JSON operator[](std::string const& name) const;
@@ -63,31 +83,36 @@ public:
     JSON at(int index) const;
     JSON at(std::string const& name) const;
 
+    Iterator begin() const;
+    Iterator end() const;
+
+    Iterator find(std::string const& name) const;
+    bool contains(std::string const& name) const;
+
     void clear();
     void parse(std::string string);
 
 private:
-    struct Data;
-    std::shared_ptr<Data> m_data;
+    std::shared_ptr<JSONData> m_data;
     int m_name{ -1 };
     int m_value{ -1 };
 
-    JSON(std::shared_ptr<Data> data, int name, int value);
+    JSON(std::shared_ptr<JSONData> data, int name, int value);
+
+    void getPosition(int& line, int& column, int position) const;
 
     template<typename T>
-    T convert(T(*function)(std::string const&, size_t* pos)) const;
-
-    int skip(int token) const;
+    T convert(T(*function)(std::string const&, std::size_t* pos)) const;
 };
 
 template<>
 bool JSON::as() const;
 
 template<>
-int32_t JSON::as() const;
+std::int32_t JSON::as() const;
 
 template<>
-int64_t JSON::as() const;
+std::int64_t JSON::as() const;
 
 template<>
 float JSON::as() const;
@@ -97,6 +122,29 @@ double JSON::as() const;
 
 template<>
 std::string JSON::as() const;
+
+class JSONIterator final
+{
+    friend class JSON;
+
+public:
+    JSON const* operator ->() const;
+    JSON const& operator *() const;
+
+    bool operator ==(JSONIterator const& that) const;
+    bool operator !=(JSONIterator const& that) const;
+
+    JSONIterator& operator++();
+
+private:
+    int m_index{ 0 };
+    int m_value{ -1 };
+    JSON m_current;
+
+    JSONIterator() = default;
+    JSONIterator(std::shared_ptr<JSONData> data, int value);
+    int skip(int token) const;
+};
 
 } // namespace hlib
 

@@ -36,8 +36,11 @@ add_subdirectory(third_party/pegtl pegtl)
 add_library(${PROJECT_NAME} SHARED
     include/hlib/base.hpp
     include/hlib/buffer.hpp
+    include/hlib/codec.hpp
     include/hlib/config.hpp
+    include/hlib/error.hpp
     include/hlib/event_loop.hpp
+    include/hlib/file.hpp
     include/hlib/format.hpp
     include/hlib/json.hpp
     include/hlib/log.hpp
@@ -49,11 +52,27 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/time.hpp
     include/hlib/timer.hpp
     include/hlib/uri.hpp
+    include/hlib/utility.hpp
+    include/hlib/uuid.hpp
     include/hlib/wait.hpp
+
+    include/hlib/c/base.h
+    include/hlib/c/buffer.h
+    include/hlib/c/codec.h
+    include/hlib/c/codec_binary.h
+    include/hlib/c/error.h
+    include/hlib/c/vector.h
 
     src/hlib_base.cpp
     src/hlib_buffer.cpp
+    src/hlib_codec.cpp
+    src/hlib_codec_binary.cpp
+    src/hlib_codec_binary.hpp
+    src/hlib_codec_json.cpp
+    src/hlib_codec_json.hpp
+    src/hlib_error.cpp
     src/hlib_event_loop.cpp
+    src/hlib_file.cpp
     src/hlib_json.cpp
     src/hlib_log.cpp
     src/hlib_scope_guard.cpp
@@ -64,6 +83,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_timer.cpp
     src/hlib_uri.cpp
     src/hlib_utility.cpp
+    src/hlib_uuid.cpp
     src/hlib_wait.cpp
 )
 
@@ -130,6 +150,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     fmt
+    uuid
 )
 
 if (ENABLE_TEST)

@@ -21,61 +21,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
-
-using namespace hlib;
-
-//
-// Implementation
-//
-namespace
+#ifdef __cplusplus
+extern "C"
 {
+#endif
 
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
+#include "hlib/c/base.h"
 
-std::array<std::string, kLevels> const kLevelStrings =
+#ifndef HLIB_C_ERROR_H
+#define HLIB_C_ERROR_H
+
+typedef enum hlib_error_e
 {
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
-};
+    HLIB_ERROR_NONE,
+    HLIB_ERROR_BAD_ALLOC,
+    HLIB_ERROR_PARSING
+} hlib_error_t;
 
-} // namespace
+HLIB_C_VISIBILITY char const* hlib_error_to_string(hlib_error_t error);
 
-//
-// Public
-//
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
+#endif // HLIB_C_ERROR_H
+
+#ifdef HLIB_C_ERROR_IMPL
+
+char const* hlib_error_to_string(hlib_error_t error)
 {
+    switch (error) {
+    case HLIB_ERROR_NONE:       return "";
+    case HLIB_ERROR_BAD_ALLOC:  return "Bad alloc";
+    case HLIB_ERROR_PARSING:    return "Parse error";
+    default:
+        assert(0);
+        return "";
+    }
 }
 
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
-{
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
-}
+#endif // HLIB_C_ERROR_IMPL
 
-std::string const& log::to_string(Level level)
-{
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
+#ifdef __cplusplus
 }
-
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
-
+#endif

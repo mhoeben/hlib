@@ -21,61 +21,62 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
+#include "hlib/codec.hpp"
+#include "hlib/buffer.hpp"
+#include "hlib/memory.hpp"
+#include "hlib_codec_binary.hpp"
+#include "hlib_codec_json.hpp"
+
+#define HLIB_C_CODEC_IMPL
+#include "hlib/c/codec.h"
 
 using namespace hlib;
-
-//
-// Implementation
-//
-namespace
-{
-
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
-
-std::array<std::string, kLevels> const kLevelStrings =
-{
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
-};
-
-} // namespace
+using namespace hlib::codec;
 
 //
 // Public
 //
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
+std::unique_ptr<Encoder> Encoder::create(std::string const& kind, Buffer& buffer)
 {
+    std::unique_ptr<Encoder> encoder;
+
+    if ("binary" == kind) {
+        encoder.reset(new BinaryEncoder(buffer));
+    }
+    else if ("json" == kind) {
+        encoder.reset(new JSONEncoder(buffer));
+    }
+
+    return encoder;
 }
 
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
+void Encoder::wrap(Type const& type)
 {
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
+    open(nullptr, Array(2));
+    type(*this);
+    close();
 }
 
-std::string const& log::to_string(Level level)
+std::unique_ptr<Decoder> Decoder::create(std::string const& kind, void const* data, std::size_t size)
 {
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
+    std::unique_ptr<Decoder> decoder;
+
+    if ("binary" == kind) {
+        decoder.reset(new BinaryDecoder(data, size));
+    }
+    else if ("json" == kind) {
+        decoder.reset(new JSONDecoder(data, size));
+    }
+
+    return decoder;
 }
 
-void log::log(Domain const& domain, Level level, std::string const& message)
+void Decoder::unwrap(Type& type)
 {
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
+    Array array;
+    open(nullptr, array);
+    assert(2 == array.size);
 
+    type(*this);
+    close();
+}

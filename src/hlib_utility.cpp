@@ -22,8 +22,8 @@
 // SOFTWARE.
 //
 #include "hlib/utility.hpp"
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 using namespace hlib;
 
@@ -41,7 +41,7 @@ std::string hlib::get_env(std::string const& name, std::string const& alt)
 }
 
 template<>
-int32_t hlib::get_env(std::string const& name, int32_t const& alt)
+std::int32_t hlib::get_env(std::string const& name, std::int32_t const& alt)
 {
     char const* value = getenv(name.c_str());
     if (nullptr == value) {
@@ -57,7 +57,7 @@ int32_t hlib::get_env(std::string const& name, int32_t const& alt)
 }
 
 template<>
-int64_t hlib::get_env(std::string const& name, int64_t const& alt)
+std::int64_t hlib::get_env(std::string const& name, std::int64_t const& alt)
 {
     char const* value = getenv(name.c_str());
     if (nullptr == value) {
@@ -106,7 +106,7 @@ bool hlib::get_env(std::string const& name, bool const& alt)
 }
 
 template<>
-size_t hlib::get_env(std::string const& name, size_t const& alt)
+std::size_t hlib::get_env(std::string const& name, std::size_t const& alt)
 {
     char const* value = getenv(name.c_str());
     if (nullptr == value) {
@@ -114,7 +114,7 @@ size_t hlib::get_env(std::string const& name, size_t const& alt)
     }
 
     try {
-        return static_cast<size_t>(std::stoull(value));
+        return static_cast<std::size_t>(std::stoull(value));
     }
     catch (...) {
         return alt;

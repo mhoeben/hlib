@@ -66,12 +66,12 @@ struct bind_port
     static void apply(INPUT const& input, URI& uri)
     {
         if (false == input.empty()) {
-            uint32_t port = std::stoul(input.string());
+            std::uint32_t port = std::stoul(input.string());
             if (port > 65536) {
-                throw std::out_of_range("port out of range");
+                throwf<std::out_of_range>("port {} out of range", port);
             }
 
-            uri.port = static_cast<uint16_t>(port);
+            uri.port = static_cast<std::uint16_t>(port);
         }
         else {
             uri.port = uri_get_default_port_for_scheme(uri.scheme);
@@ -121,7 +121,7 @@ URI hlib::uri_parse(std::string const& string)
 
 std::string hlib::to_string(URI const& uri)
 {
-    size_t const length = uri.scheme.length() + 3
+    std::size_t const length = uri.scheme.length() + 3
                         + uri.user_info.length() + 1
                         + uri.host.length() + 6
                         + uri.path.length() + 1
@@ -137,20 +137,20 @@ std::string hlib::to_string(URI const& uri)
 
     if (false == uri.host.empty()) {
         if (false == uri.scheme.empty()) {
-            fmt::append_to(buffer, "//");
+            append_to(buffer, "//");
         }
         if (false == uri.user_info.empty()) {
             fmt::format_to(fmt::appender(buffer), "{}@", uri.user_info);
         }
 
-        fmt::append_to(buffer, uri.host);
+        append_to(buffer, uri.host);
 
         if (0 != uri.port && uri_get_default_port_for_scheme(uri.scheme) != uri.port) {
             fmt::format_to(fmt::appender(buffer), ":{}", uri.port);
         }
     }
 
-    fmt::append_to(buffer, uri.path);
+    append_to(buffer, uri.path);
 
     if (false == uri.query.empty()) {
         fmt::format_to(fmt::appender(buffer), "?{}", uri.query);
@@ -168,7 +168,7 @@ std::string hlib::uri_get_host_port(URI const& uri)
     fmt::memory_buffer buffer;
     buffer.reserve(uri.host.length() + 6);
 
-    fmt::append_to(buffer, uri.host);
+    append_to(buffer, uri.host);
     if (uri.port != 0 && uri.port != uri_get_default_port_for_scheme(uri.scheme)) {
         fmt::format_to(fmt::appender(buffer), ":{}", uri.port);
     }
@@ -181,7 +181,7 @@ std::string hlib::uri_get_path_query_fragment(URI const& uri)
     fmt::memory_buffer buffer;
     buffer.reserve(uri.path.length() + uri.query.length() + uri.fragment.length() + 2);
 
-    fmt::append_to(buffer, uri.path);
+    append_to(buffer, uri.path);
     if (uri.query.empty() == false) {
         fmt::format_to(fmt::appender(buffer), "?{}", uri.query);
     }
@@ -192,9 +192,9 @@ std::string hlib::uri_get_path_query_fragment(URI const& uri)
     return fmt::to_string(buffer);
 }
 
-uint16_t hlib::uri_get_default_port_for_scheme(std::string const& scheme)
+std::uint16_t hlib::uri_get_default_port_for_scheme(std::string const& scheme)
 {
-    static std::unordered_map<std::string, uint16_t> const table =
+    static std::unordered_map<std::string, std::uint16_t> const table =
     {
         { "http",   80 },
         { "https",  443 },
@@ -219,7 +219,7 @@ std::string hlib::uri_encoding_escape(std::string const& string)
     fmt::memory_buffer buffer;
     buffer.reserve(string.length());
 
-    for(size_t i = 0; i < string.length(); ++i) {
+    for(std::size_t i = 0; i < string.length(); ++i) {
         char const c = string[i];
         if (escape(c)) {
             fmt::format_to(fmt::appender(buffer), "%{}{}", 
@@ -228,7 +228,7 @@ std::string hlib::uri_encoding_escape(std::string const& string)
             );
         }
         else {
-            fmt::append_to(buffer, c);
+            append_to(buffer, c);
         }
     }
 
@@ -240,7 +240,7 @@ std::string hlib::uri_encoding_unescape(std::string const& string)
     fmt::memory_buffer buffer;
     char hex[4]{};
 
-    for(size_t i = 0; i < string.length(); ++i) {
+    for(std::size_t i = 0; i < string.length(); ++i) {
         char c = string[i];
         if ('%' == c) {
             if (i + 3 > string.length()) {
@@ -257,7 +257,7 @@ std::string hlib::uri_encoding_unescape(std::string const& string)
             c = static_cast<char>(::strtoul(hex, nullptr, 16));
         }
 
-        fmt::append_to(buffer, c);
+        append_to(buffer, c);
     }
 
     return fmt::to_string(buffer);
