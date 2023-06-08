@@ -22,16 +22,27 @@
 // SOFTWARE.
 //
 #include "hlib/string.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
+#include <locale>
 
-using namespace hlib;
-
-std::string hlib::get_error_string(int error_no)
+std::string hlib::to_upper(std::string string)
 {
-    char buffer[Config::maxErrorString()];
+    std::locale locale;
 
-    char* string = strerror_r(error_no, buffer, sizeof(buffer));
-    return nullptr != string ? std::string(string) : fmt::format("errno {}", error_no);
+    for (char& c : string) {
+        c = std::toupper(c, locale);
+    }
+
+    return string;
+}
+
+std::string hlib::to_lower(std::string string)
+{
+    std::locale locale;
+
+    for (char& c : string) {
+        c = std::tolower(c, locale);
+    }
+
+    return string;
 }
 

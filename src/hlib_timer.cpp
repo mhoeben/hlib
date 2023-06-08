@@ -33,9 +33,9 @@ using namespace hlib;
 //
 // Implementation
 //
-void Timer::onExpire(int fd, uint32_t /* events */)
+void Timer::onExpire(int fd, std::uint32_t /* events */)
 {
-    uint64_t data;
+    std::uint64_t data;
     ssize_t r = read(fd, &data, sizeof(data));
     hcheck(-1 != r);
     assert(sizeof(data) == r);

@@ -23,13 +23,12 @@
 //
 #pragma once
 
-#include <errno.h>
 #include <string>
 
 namespace hlib
 {
 
-std::string get_error_string(int error_no);
+std::string to_upper(std::string string);
+std::string to_lower(std::string string);
 
 } // namespace hlib
-

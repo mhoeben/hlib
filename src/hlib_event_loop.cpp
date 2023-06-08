@@ -22,7 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/event_loop.hpp"
-#include "hlib/string.hpp"
+#include "hlib/error.hpp"
 #include "hlib/format.hpp"
 #include "hlib/utility.hpp"
 #include <stdexcept>
@@ -46,10 +46,10 @@ EventLoop::EventLoop(std::string name)
         m_name = fmt::format("{}", static_cast<void*>(this));
     }
 
-    add(m_pipe[0], kRead, [this](int fd, uint32_t events) {
+    add(m_pipe[0], kRead, [this](int fd, std::uint32_t events) {
         assert(0 != (EPOLLIN & events));
 
-        uint8_t cmd;
+        std::uint8_t cmd;
         hverify(1 == read(fd, &cmd, 1));
 
         m_interrupt = true;
@@ -76,7 +76,7 @@ int EventLoop::fd() const noexcept
     return m_fd;
 }
 
-void EventLoop::add(int fd, uint32_t events, Callback callback)
+void EventLoop::add(int fd, std::uint32_t events, Callback callback)
 {
     assert(-1 != fd);
     assert(nullptr != callback);
@@ -101,7 +101,7 @@ void EventLoop::add(int fd, uint32_t events, Callback callback)
     }
 }
 
-void EventLoop::modify(int fd, uint32_t events)
+void EventLoop::modify(int fd, std::uint32_t events)
 {
     assert(-1 != fd);
 
@@ -175,7 +175,7 @@ void EventLoop::dispatch(int timeout_ms)
 
 void EventLoop::interrupt()
 {
-    uint8_t const cmd = 0;
+    std::uint8_t const cmd = 0;
     hverify(1 == write(m_pipe[1], &cmd, 1));
 
     HLOGT(m_logger, "EventLoop[{}]: interrupted", m_name);

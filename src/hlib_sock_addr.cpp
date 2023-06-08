@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/sock_addr.hpp"
+#include "hlib/error.hpp"
 #include "hlib/format.hpp"
 #include "tao/pegtl.hpp"
 #include <arpa/inet.h>
@@ -256,13 +257,13 @@ std::string SockAddr::address() const
     switch (m_family) {
     case AF_INET:
         if (nullptr == inet_ntop(AF_INET, &m_inet.sin_addr, address, INET_ADDRSTRLEN)) {
-            throw std::runtime_error("SockAddr::toString: inet_ntop failed");
+            throwf<std::runtime_error>("SockAddr::toString: inet_ntop failed ({})", get_error_string(errno));
         }
         return address;
 
     case AF_INET6:
         if (nullptr == inet_ntop(AF_INET6, &m_inet6.sin6_addr, address, INET6_ADDRSTRLEN)) {
-            throw std::runtime_error("SockAddr::toString: inet_ntop failed");
+            throwf<std::runtime_error>("SockAddr::toString: inet_ntop failed ({})", get_error_string(errno));
         }
         return address;
 

@@ -30,9 +30,10 @@ namespace hlib
 
 struct Config
 {
-    static constexpr int    defaultLogLevel()           { return 3; }
-    static constexpr size_t maxErrorString()            { return 256; }
-    static constexpr size_t subprocessOutputBatchSize() { return 1024; }
+    static constexpr int         defaultLogLevel()              { return 3; }
+    static constexpr std::size_t maxErrorString()               { return 256; }
+    static constexpr std::size_t subprocessOutputBatchSize()    { return 1024; }
+    static constexpr std::size_t fileReadChunkSize()            { return 4096; }
 };
 
 } // namespace hlib

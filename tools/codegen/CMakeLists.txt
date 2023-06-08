@@ -23,19 +23,28 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
-project("hlib-tests")
+project("codegen" VERSION 0.1 LANGUAGES CXX)
 
-add_subdirectory(../third_party/catch2 catch2)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+add_subdirectory(../../ hlib)
 
 add_executable(${PROJECT_NAME}
-    src/buffer.cpp
-    src/codec.cpp
-    src/json.cpp
-    src/sockaddr.cpp
+    src/generator.cpp
+    src/generator.hpp
+    src/generator_c99.cpp
+    src/generator_c99.hpp
+    src/generator_cpp11.cpp
+    src/generator_cpp11.hpp
+    src/main.cpp
+    src/types.cpp
+    src/types.hpp
+    src/utility.cpp
+    src/utility.hpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 14
+    CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )
@@ -60,8 +69,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wformat-nonliteral
 
     $<$<COMPILE_LANGUAGE:CXX>:
-        # -Wctor-dtor-privacy
-        # -Wsign-promo
+        -Wctor-dtor-privacy
+        -Wsign-promo
     >
 
     $<$<CONFIG:Debug>:>
@@ -86,21 +95,14 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     >
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ../include
-    ../third_party/catch2/src
-    ${CMAKE_CURRENT_BINARY_DIR}/catch2/generated-includes
+    ../../include
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Catch2::Catch2WithMain
+target_link_libraries(${PROJECT_NAME} PUBLIC
     hlib
-)
-
-add_custom_target(run-${PROJECT_NAME}
-    ALL
-    COMMENT "Running ${PROJECT_NAME} tests"
-    COMMAND ${PROJECT_NAME}
-    DEPENDS ${PROJECT_NAME}
 )
 

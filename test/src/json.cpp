@@ -28,40 +28,43 @@ using namespace hlib;
 
 namespace
 {
+
+std::string const test_json(
+R"""({
+    "firstName": "John",
+    "lastName": "Smith",
+    "isAlive": true,
+    "age": 27,
+    "address": {
+        "streetAddress": "21 2nd Street",
+        "city": "New York",
+        "state": "NY",
+        "postalCode": "10021-3100"
+    },
+    "phoneNumbers": [
+        {
+            "type": "home",
+            "number": "212 555-1234"
+        },
+        {
+            "type": "office",
+            "number": "646 555-4567"
+        }
+    ],
+    "children": [
+        "Catherine",
+        "Thomas",
+        "Trevor"
+    ],
+    "spouse": null
+})""");
+
 } // namespace
 
 TEST_CASE("JSON", "[json]")
 {
     JSON json;
-    json.parse(R"""(
-    {
-        "firstName": "John",
-        "lastName": "Smith",
-        "isAlive": true,
-        "age": 27,
-        "address": {
-            "streetAddress": "21 2nd Street",
-            "city": "New York",
-            "state": "NY",
-            "postalCode": "10021-3100"
-        },
-        "phoneNumbers": [
-            {
-                "type": "home",
-                "number": "212 555-1234"
-            },
-            {
-                "type": "office",
-                "number": "646 555-4567"
-            }
-        ],
-        "children": [
-            "Catherine",
-            "Thomas",
-            "Trevor"
-        ],
-        "spouse": null
-    })""");
+    json.parse(test_json);
 
     REQUIRE("John"  == json["firstName"].value());
     REQUIRE("Smith" == json["lastName"].value());
@@ -101,5 +104,22 @@ TEST_CASE("JSON", "[json]")
     REQUIRE("John"  == json["firstName"].as<std::string>());
     REQUIRE(true    == json["isAlive"].as<bool>());
     REQUIRE(27      == json["age"].as<int32_t>());
+
+    REQUIRE(8 == json.size());
+    REQUIRE(0 == json["firstName"].size());
+    REQUIRE(4 == json["address"].size());
+    REQUIRE(2 == json["phoneNumbers"].size());
+    REQUIRE(3 == json["children"].size());
+
+    JSON foo = json["phoneNumbers"][0];
+}
+
+TEST_CASE("JSON Empty Object", "[json]")
+{
+    JSON json;
+    json.parse("{}");
+    JSON foo = json.at("foo");
+    REQUIRE(true == foo.empty());
+    REQUIRE(JSON::Undefined == foo.type());
 }
 

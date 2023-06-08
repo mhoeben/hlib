@@ -27,7 +27,9 @@
 #include <string>
 #include <sstream>
 
-namespace hlib { namespace log
+namespace hlib
+{
+namespace log
 {
 
 enum Level
@@ -80,5 +82,6 @@ void log(Domain const& domain, Level level, std::string const& message);
 #define HLOGT(domain, ...) do { } while (false)
 #endif
 
-}} // namespace hlib::log
+} // namespace log
+} // namespace hlib
 

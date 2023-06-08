@@ -40,10 +40,10 @@ class EventLoop final
     HLIB_NOT_MOVABLE(EventLoop);
 
 public:
-    static constexpr uint32_t kRead{ EPOLLIN };
-    static constexpr uint32_t kWrite{ EPOLLOUT };
+    static constexpr std::uint32_t kRead{ EPOLLIN };
+    static constexpr std::uint32_t kWrite{ EPOLLOUT };
 
-    typedef std::function<void(int fd, uint32_t events)> Callback;
+    typedef std::function<void(int fd, std::uint32_t events)> Callback;
 
 public:
     EventLoop(std::string m_name = std::string());
@@ -51,8 +51,8 @@ public:
 
     int fd() const noexcept;
 
-    void add(int fd, uint32_t events, Callback callback);
-    void modify(int fd, uint32_t events);
+    void add(int fd, std::uint32_t events, Callback callback);
+    void modify(int fd, std::uint32_t events);
     void remove(int fd);
 
     void dispatch(int timeout_ms = 0);

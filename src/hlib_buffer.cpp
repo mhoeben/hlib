@@ -22,43 +22,19 @@
 // SOFTWARE.
 //
 #include "hlib/buffer.hpp"
-#include <string.h>
+#include <cstring>
+
+#define HLIB_C_BUFFER_IMPL
+#include "hlib/c/buffer.h"
 
 using namespace hlib;
-
-//
-// Implementation
-//
-void Buffer::realloc(size_t capacity, bool shrink)
-{
-    assert(0 == m_capacity || nullptr != m_data);
-    assert(m_size <= m_capacity);
-
-    if (false == shrink && capacity <= m_capacity) {
-        return;
-    }
-
-    void* data = ::realloc(m_data, capacity);
-    if (nullptr == data) {
-        throw std::bad_alloc();
-    }
-
-    m_data = data;
-    m_capacity = capacity;
-    m_size = std::min(m_size, m_capacity);
-}
 
 //
 // Public
 //
 Buffer::Buffer(Buffer&& that) noexcept
-    : m_capacity{ that.m_capacity }
-    , m_size{ that.m_size }
-    , m_data{ that.m_data }
 {
-    that.m_capacity = 0;
-    that.m_size = 0;
-    that.m_data = nullptr;
+    hlib_buffer_move(&m_buffer, &that.m_buffer);
 }
 
 Buffer::~Buffer()
@@ -68,116 +44,101 @@ Buffer::~Buffer()
 
 Buffer& Buffer::operator =(Buffer&& that) noexcept
 {
-    reset();
-
-    m_capacity = that.m_capacity;
-    m_size = that.m_size;
-    m_data = that.m_data;
-
-    that.m_capacity = 0;
-    that.m_size = 0;
-    that.m_data = nullptr;
+    hlib_buffer_move(&m_buffer, &that.m_buffer);
     return *this;
+}
+
+hlib_buffer_t const* Buffer::buffer() const noexcept
+{
+    return &m_buffer;
+}
+
+hlib_buffer_t* Buffer::buffer() noexcept
+{
+    return &m_buffer;
 }
 
 void const* Buffer::data() const noexcept
 {
-    return m_data;
+    return m_buffer.data;
 }
 
-size_t Buffer::capacity() const noexcept
+std::size_t Buffer::capacity() const noexcept
 {
-    return m_capacity;
+    return m_buffer.capacity;
 }
 
-size_t Buffer::size() const noexcept
+std::size_t Buffer::size() const noexcept
 {
-    return m_size;
+    return m_buffer.size;
 }
 
 bool Buffer::empty() const noexcept
 {
-    return 0 == m_size;
+    return 0 == m_buffer.size;
 }
 
 void Buffer::reset() noexcept
 {
-    if (nullptr != m_data) {
-        free(m_data);
-    }
-
-    m_size = 0;
-    m_capacity = 0;
+    hlib_buffer_free(&m_buffer);
 }
 
 void Buffer::clear() noexcept
 {
-    m_size = 0;
+    m_buffer.size = 0;
 }
 
 void Buffer::shrink() noexcept
 {
-    if (0 == m_size) {
-        reset();
-        return;
+    hlib_buffer_shrink(&m_buffer);
+}
+
+void* Buffer::reserve(std::size_t capacity)
+{
+    void* data = hlib_buffer_reserve(&m_buffer, capacity);
+    if (nullptr == data) {
+        throw std::bad_alloc();
     }
-
-    realloc(m_size, true);
+    return data;
 }
 
-void* Buffer::reserve(size_t capacity)
+void* Buffer::resize(std::size_t size)
 {
-    realloc(capacity, false);
-    return m_data;
-}
-
-void* Buffer::resize(size_t size)
-{
-    if (size > 0) {
-        realloc(size, false);
+    void* data = hlib_buffer_resize(&m_buffer, size);
+    if (nullptr == data) {
+        throw std::bad_alloc();
     }
-
-    m_size = size;
-    return m_data;
+    return data;
 }
 
-void Buffer::assign(void const* data, size_t size)
+void Buffer::assign(void const* data, std::size_t size)
 {
-    clear();
-    append(data, size);
-}
-
-void Buffer::append(void const* data, size_t size)
-{
-    insert(m_size, data, size);
-}
-
-void Buffer::insert(size_t offset, void const* data, size_t size)
-{
-    assert(offset <= m_size);
-
-    if (0 == size) {
-        return;
+    if (-1 == hlib_buffer_assign(&m_buffer, data, size)) {
+        throw std::bad_alloc();
     }
-
-    realloc(m_size + size, false);
-
-    uint8_t* ptr = reinterpret_cast<uint8_t*>(m_data);
-
-    memmove(ptr + offset + size, ptr + offset, m_size - offset);
-    if (nullptr != data) {
-        memcpy(ptr + offset, data, size);
-    }
-    m_size += size;
 }
 
-void Buffer::erase(size_t offset, size_t size)
+void Buffer::append(void const* data, std::size_t size)
 {
-    assert(offset + size <= m_size);
+    if (-1 == hlib_buffer_append(&m_buffer, data, size)) {
+        throw std::bad_alloc();
+    }
+}
 
-    uint8_t* ptr = reinterpret_cast<uint8_t*>(m_data);
+void Buffer::insert(std::size_t offset, void const* data, std::size_t size)
+{
+    if (-1 == hlib_buffer_insert(&m_buffer, offset, data, size)) {
+        throw std::bad_alloc();
+    }
+}
 
-    memmove(ptr + offset, ptr + offset + size, m_size - (offset + size));
-    m_size -= size;
+void Buffer::erase(std::size_t offset, std::size_t size)
+{
+    hlib_buffer_erase(&m_buffer, offset, size);
+}
+
+std::string hlib::to_string(Buffer const& buffer)
+{
+    return std::string(static_cast<char const*>(buffer.data()), buffer.size());
 }
 

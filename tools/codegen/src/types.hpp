@@ -21,61 +21,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/log.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
-#include "hlib/utility.hpp"
-#include <array>
+#pragma once
 
-using namespace hlib;
+#include <string>
 
-//
-// Implementation
-//
-namespace
+enum class Language
 {
+    Invalid,
 
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::kTrace) + 1;
-
-std::array<std::string, kLevels> const kLevelStrings =
-{
-    "FATL",
-    "ERRO",
-    "WARN",
-    "NOTI",
-    "INFO",
-    "DEBG",
-    "TRAC"
+    CPP11,
+    C99,
+    Typescript
 };
 
-} // namespace
+Language to_language(std::string const& string);
 
-//
-// Public
-//
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
+enum class Side
 {
-}
+    Invalid,
 
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
-    : name(std::move(a_name))
+    Left,
+    Right,
+    Both
+};
+
+Side to_side(std::string const& string);
+
+enum class Type
 {
-    level = static_cast<Level>(get_env<std::int32_t>(
-        a_env_name,
-        Config::defaultLogLevel()
-    ));
-}
+    Invalid,
 
-std::string const& log::to_string(Level level)
-{
-    assert(level >= log::kFatal && level <= log::kTrace);
-    return kLevelStrings[level];
-}
+    Bool,
+    Int32,
+    Int64,
+    Float32,
+    Float64,
+    String,
+    Blob,
 
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
+    BoolArray,
+    Int32Array,
+    Int64Array,
+    Float32Array,
+    Float64Array,
+    StringArray,
+    BlobArray
+};
 
+Type to_type(std::string const& string);
+
+bool is_primitive(Type type);
+bool is_pointer(Type type);
+bool is_vector(Type type);
+Type to_underlying_type(Type type);
