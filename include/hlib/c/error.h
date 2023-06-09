@@ -44,6 +44,9 @@ HLIB_C_VISIBILITY char const* hlib_error_to_string(hlib_error_t error);
 
 #ifdef HLIB_C_ERROR_IMPL
 
+#ifndef HLIB_C_ERROR_IMPL_ONCE
+#define HLIB_C_ERROR_IMPL_ONCE
+
 char const* hlib_error_to_string(hlib_error_t error)
 {
     switch (error) {
@@ -56,6 +59,7 @@ char const* hlib_error_to_string(hlib_error_t error)
     }
 }
 
+#endif // HLIB_C_ERROR_IMPL_ONCE
 #endif // HLIB_C_ERROR_IMPL
 
 #ifdef __cplusplus

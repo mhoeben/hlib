@@ -27,8 +27,6 @@ project("codegen" VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_subdirectory(../../ hlib)
-
 add_executable(${PROJECT_NAME}
     src/generator.cpp
     src/generator.hpp

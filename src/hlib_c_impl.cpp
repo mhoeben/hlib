@@ -21,17 +21,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/error.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
-
-using namespace hlib;
-
-std::string hlib::get_error_string(int error_no)
-{
-    char buffer[Config::maxErrorString()];
-
-    char* string = strerror_r(error_no, buffer, sizeof(buffer));
-    return nullptr != string ? std::string(string) : fmt::format("errno {}", error_no);
-}
-
+#include "hlib/c/impl.h"

@@ -22,10 +22,8 @@
 // SOFTWARE.
 //
 #include "hlib/buffer.hpp"
-#include <cstring>
-
-#define HLIB_C_BUFFER_IMPL
 #include "hlib/c/buffer.h"
+#include <cstring>
 
 using namespace hlib;
 

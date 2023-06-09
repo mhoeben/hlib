@@ -33,6 +33,8 @@ set(PEGTL_BUILD_TESTS OFF CACHE BOOL "PEGTL: Build test programs" FORCE)
 set(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "PEGTL: Build example programs" FORCE)
 add_subdirectory(third_party/pegtl pegtl)
 
+add_subdirectory(tools/codegen  codegen)
+
 add_library(${PROJECT_NAME} SHARED
     include/hlib/base.hpp
     include/hlib/buffer.hpp
@@ -65,6 +67,7 @@ add_library(${PROJECT_NAME} SHARED
 
     src/hlib_base.cpp
     src/hlib_buffer.cpp
+    src/hlib_c_impl.cpp
     src/hlib_codec.cpp
     src/hlib_codec_binary.cpp
     src/hlib_codec_binary.hpp
@@ -153,6 +156,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     uuid
 )
 
-if (ENABLE_TEST)
+if (ENABLE_TESTS)
     add_subdirectory(test)
 endif()
+

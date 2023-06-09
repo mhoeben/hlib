@@ -120,7 +120,7 @@ int Generator::generate(FILE* output, FILE* input, Side side)
         m_input.parse(to_string(file::read(input)));
     }
     catch (std::exception const& e) {
-        fmt::print(stderr, "codegen: failed to read or parse input: {}", e.what());
+        fmt::print(stderr, "codegen: failed to read or parse input: {}\n", e.what());
         return -1;
     }
 
@@ -153,11 +153,11 @@ int Generator::generate(FILE* output, FILE* input, Side side)
         break;
 
     case JSON::Undefined:
-        fmt::print(stderr, "codegen: no declarations specified");
+        fmt::print(stderr, "codegen: no declarations specified\n");
         return -1;
 
     default:
-        fmt::print(stderr, "codegen: declarations is not of type array");
+        fmt::print(stderr, "codegen: declarations is not of type array\n");
         return -1;
     }
 

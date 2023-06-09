@@ -109,13 +109,13 @@ HLIB_C_VISIBILITY hlib_decoder_t* hlib_decoder_create(char const* name, void con
 
 #ifdef HLIB_C_CODEC_IMPL
 
+#ifndef HLIB_C_CODEC_IMPL_ONCE
+#define HLIB_C_CODEC_IMPL_ONCE
+
 #include <string.h>
 
-//
-// Implementation
-//
-hlib_encoder_t* hlib_encoder_binary_create(struct hlib_buffer_s* buffer);
-hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size);
+extern hlib_encoder_t* hlib_encoder_binary_create(struct hlib_buffer_s* buffer);
+extern hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size);
 
 //
 // Public
@@ -138,6 +138,7 @@ hlib_decoder_t* hlib_decoder_create(char const* name, void const* data, size_t s
     return NULL;
 }
 
+#endif // HLIB_C_CODEC_IMPL_ONCE
 #endif // HLIB_C_CODEC_IMPL
 
 #ifdef __cplusplus

@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
         case 'l':
             language = to_language(optarg);
             if (Language::Invalid == language) {
-                fmt::print(stderr, "codegen: invalid argument for -l/--language '{}'", optarg);
+                fmt::print(stderr, "codegen: invalid argument for -l/--language '{}'\n", optarg);
                 return EXIT_FAILURE;
             }
             break;
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
             output_filepath = optarg;
             output = fopen(optarg, "w");
             if (nullptr == output) {
-                fmt::print(stderr, "codegen: failed to open '{}' for writing ({})", optarg, get_error_string(errno));
+                fmt::print(stderr, "codegen: failed to open '{}' for writing ({})\n", optarg, get_error_string(errno));
                 return EXIT_FAILURE;
             }
             break;
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
         case 's':
             side = to_side(optarg);
             if (Side::Invalid == side) {
-                fmt::print(stderr, "codegen: invalid argument for -s/--side '{}'", optarg);
+                fmt::print(stderr, "codegen: invalid argument for -s/--side '{}'\n", optarg);
                 return EXIT_FAILURE;
             }
             break;
@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
         input_filepath = argv[0];
         input = fopen(argv[0], "r");
         if (nullptr == input) {
-            fmt::print(stderr, "codegen: failed to open '{}' for reading ({})", argv[0], get_error_string(errno));
+            fmt::print(stderr, "codegen: failed to open '{}' for reading ({})\n", argv[0], get_error_string(errno));
             return EXIT_FAILURE;
         }
     }

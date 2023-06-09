@@ -32,12 +32,39 @@ extern "C"
 #ifndef HLIB_C_CODEC_BINARY_H
 #define HLIB_C_CODEC_BINARY_H
 
-HLIB_C_VISIBILITY hlib_encoder_t* hlib_encoder_binary_create(hlib_buffer_t* buffer);
-HLIB_C_VISIBILITY hlib_decoder_t* hlib_decoder_binary_create( void const* data, size_t size);
+HLIB_C_VISIBILITY void hlib_encoder_binary_destroy(hlib_encoder_t* encoder);
+HLIB_C_VISIBILITY void hlib_encoder_binary_open_type(hlib_encoder_t* encoder, char const* name, hlib_codec_type_t const* value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_open_array(hlib_encoder_t* encoder, char const* name, size_t value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_open_map(hlib_encoder_t* encoder, char const* name, size_t value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* name, char value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_int32(hlib_encoder_t* encoder, char const* name, int32_t value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_int64(hlib_encoder_t* encoder, char const* name, int64_t value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_float(hlib_encoder_t* encoder, char const* name, float value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_double(hlib_encoder_t* encoder, char const* name, double value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_string(hlib_encoder_t* encoder, char const* name, hlib_codec_string_t const* value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_blob(hlib_encoder_t* encoder, char const* name, hlib_codec_blob_t const* value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_close(hlib_encoder_t* encoder);
+
+HLIB_C_VISIBILITY void hlib_decoder_binary_destroy(hlib_decoder_t* decoder);
+HLIB_C_VISIBILITY void hlib_decoder_binary_open_type(hlib_decoder_t* decoder, char const* name, hlib_codec_type_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_open_array(hlib_decoder_t* decoder, char const* name, size_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_open_map(hlib_decoder_t* decoder, char const* name, size_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_bool(hlib_decoder_t* decoder, char const* name, char* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_int32(hlib_decoder_t* decoder, char const* name, int32_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_int64(hlib_decoder_t* decoder, char const* name, int64_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_float(hlib_decoder_t* decoder, char const* name, float* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_double(hlib_decoder_t* decoder, char const* name, double* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_string(hlib_decoder_t* decoder, char const* name, hlib_codec_string_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_blob(hlib_decoder_t* decoder, char const* name, hlib_codec_blob_t* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_close(hlib_decoder_t* decoder);
+HLIB_C_VISIBILITY int hlib_decoder_binary_peek(hlib_decoder_t* decoder);
 
 #endif // HLIB_C_CODEC_BINARY_H
 
 #ifdef HLIB_C_CODEC_BINARY_IMPL
+
+#ifndef HLIB_C_CODEC_BINARY_IMPL_ONCE
+#define HLIB_C_CODEC_BINARY_IMPL_ONCE
 
 #include "hlib/c/buffer.h"
 
@@ -193,28 +220,51 @@ do {                                                                        \
 //
 // Public
 //
-static void hlib_encoder_binary_encode_int64(hlib_encoder_t* encoder, char const* name, int64_t value);
+hlib_encoder_t* hlib_encoder_binary_create(hlib_buffer_t* buffer)
+{
+    hlib_encoder_binary_t* self = (hlib_encoder_binary_t*)malloc(sizeof(hlib_encoder_binary_t));
+    if (NULL == self) {
+        return NULL;
+    }
 
-static void hlib_encoder_binary_destroy(hlib_encoder_t* encoder)
+    memset(self, 0, sizeof(*self));
+    self->base.destroy = hlib_encoder_binary_destroy;
+    self->base.open_type = hlib_encoder_binary_open_type;
+    self->base.open_array = hlib_encoder_binary_open_array;
+    self->base.open_map = hlib_encoder_binary_open_map;
+    self->base.encode_bool = hlib_encoder_binary_encode_bool;
+    self->base.encode_int32 = hlib_encoder_binary_encode_int32;
+    self->base.encode_int64 = hlib_encoder_binary_encode_int64;
+    self->base.encode_float = hlib_encoder_binary_encode_float;
+    self->base.encode_double = hlib_encoder_binary_encode_double;
+    self->base.encode_string = hlib_encoder_binary_encode_string;
+    self->base.encode_blob = hlib_encoder_binary_encode_blob;
+    self->base.close = hlib_encoder_binary_close;
+
+    self->buffer = buffer;
+    return (hlib_encoder_t*)self;
+}
+
+void hlib_encoder_binary_destroy(hlib_encoder_t* encoder)
 {
     free(encoder);
 }
 
-static void hlib_encoder_binary_open_type(hlib_encoder_t* /* encoder */, char const* /* name */, hlib_codec_type_t const* /* value */)
+void hlib_encoder_binary_open_type(hlib_encoder_t* /* encoder */, char const* /* name */, hlib_codec_type_t const* /* value */)
 {
 }
 
-static void hlib_encoder_binary_open_array(hlib_encoder_t* encoder, char const* /* name */, size_t value)
-{
-    hlib_encoder_binary_encode_int64(encoder, nullptr, value);
-}
-
-static void hlib_encoder_binary_open_map(hlib_encoder_t* encoder, char const* /* name */, size_t value)
+void hlib_encoder_binary_open_array(hlib_encoder_t* encoder, char const* /* name */, size_t value)
 {
     hlib_encoder_binary_encode_int64(encoder, nullptr, value);
 }
 
-static void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* /* name */, char value)
+void hlib_encoder_binary_open_map(hlib_encoder_t* encoder, char const* /* name */, size_t value)
+{
+    hlib_encoder_binary_encode_int64(encoder, nullptr, value);
+}
+
+void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* /* name */, char value)
 {
     if (HLIB_ERROR_NONE != encoder->error) {
         return;
@@ -226,27 +276,27 @@ static void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const*
     hlib_buffer_append(self->buffer, &b, 1);
 }
 
-static void hlib_encoder_binary_encode_int32(hlib_encoder_t* encoder, char const* /* name */, int32_t value)
+void hlib_encoder_binary_encode_int32(hlib_encoder_t* encoder, char const* /* name */, int32_t value)
 {
     HLIB_ENCODER_BINARY_ENCODE_INT(int32_t, __builtin_clz, encoder, value);
 }
 
-static void hlib_encoder_binary_encode_int64(hlib_encoder_t* encoder, char const* /* name */, int64_t value)
+void hlib_encoder_binary_encode_int64(hlib_encoder_t* encoder, char const* /* name */, int64_t value)
 {
-    HLIB_ENCODER_BINARY_ENCODE_INT(int32_t, __builtin_clzll, encoder, value);
+    HLIB_ENCODER_BINARY_ENCODE_INT(int64_t, __builtin_clzll, encoder, value);
 }
 
-static void hlib_encoder_binary_encode_float(hlib_encoder_t* encoder, char const* /* name */, float value)
+void hlib_encoder_binary_encode_float(hlib_encoder_t* encoder, char const* /* name */, float value)
 {
     HLIB_ENCODER_BINARY_ENCODE_FLOAT(float, encoder, value);
 }
 
-static void hlib_encoder_binary_encode_double(hlib_encoder_t* encoder, char const* /* name */, double value)
+void hlib_encoder_binary_encode_double(hlib_encoder_t* encoder, char const* /* name */, double value)
 {
     HLIB_ENCODER_BINARY_ENCODE_FLOAT(double, encoder, value);
 }
 
-static void hlib_encoder_binary_encode_string(hlib_encoder_t* encoder, char const* /* name */, hlib_codec_string_t const* value)
+void hlib_encoder_binary_encode_string(hlib_encoder_t* encoder, char const* /* name */, hlib_codec_string_t const* value)
 {
     hlib_encoder_binary_encode_int64(encoder, NULL, value->length);
 
@@ -258,7 +308,7 @@ static void hlib_encoder_binary_encode_string(hlib_encoder_t* encoder, char cons
     hlib_buffer_append(self->buffer, value->data, value->length);
 }
 
-static void hlib_encoder_binary_encode_blob(hlib_encoder_t* encoder, char const* /* name */, hlib_codec_blob_t const* value)
+void hlib_encoder_binary_encode_blob(hlib_encoder_t* encoder, char const* /* name */, hlib_codec_blob_t const* value)
 {
     hlib_encoder_binary_encode_int64(encoder, NULL, value->size);
 
@@ -270,11 +320,36 @@ static void hlib_encoder_binary_encode_blob(hlib_encoder_t* encoder, char const*
     hlib_buffer_append(self->buffer, value->data, value->size);
 }
 
-static void hlib_encoder_binary_close(hlib_encoder_t* /* encoder */)
+void hlib_encoder_binary_close(hlib_encoder_t* /* encoder */)
 {
 }
 
-void hlib_decoder_binary_decode_int64(hlib_decoder_t* decoder, char const* name, int64_t* value);
+hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size)
+{
+    hlib_decoder_binary_t* self = (hlib_decoder_binary_t*)malloc(sizeof(hlib_decoder_binary_t));
+    if (NULL == self) {
+        return NULL;
+    }
+
+    memset(self, 0, sizeof(*self));
+    self->base.destroy = hlib_decoder_binary_destroy;
+    self->base.open_type = hlib_decoder_binary_open_type;
+    self->base.open_array = hlib_decoder_binary_open_array;
+    self->base.open_map = hlib_decoder_binary_open_map;
+    self->base.decode_bool = hlib_decoder_binary_decode_bool;
+    self->base.decode_int32 = hlib_decoder_binary_decode_int32;
+    self->base.decode_int64 = hlib_decoder_binary_decode_int64;
+    self->base.decode_float = hlib_decoder_binary_decode_float;
+    self->base.decode_double = hlib_decoder_binary_decode_double;
+    self->base.decode_string = hlib_decoder_binary_decode_string;
+    self->base.decode_blob = hlib_decoder_binary_decode_blob;
+    self->base.close = hlib_decoder_binary_close;
+    self->base.peek = hlib_decoder_binary_peek;
+
+    self->data = (uint8_t const*)data;
+    self->size = size;
+    return (hlib_decoder_t*)self;
+}
 
 void hlib_decoder_binary_destroy(hlib_decoder_t* decoder)
 {
@@ -399,61 +474,7 @@ int hlib_decoder_binary_peek(hlib_decoder_t* decoder)
     return 0;
 }
 
-//
-// Public
-//
-hlib_encoder_t* hlib_encoder_binary_create(hlib_buffer_t* buffer)
-{
-    hlib_encoder_binary_t* self = (hlib_encoder_binary_t*)malloc(sizeof(hlib_encoder_binary_t));
-    if (NULL == self) {
-        return NULL;
-    }
-
-    memset(self, 0, sizeof(*self));
-    self->base.destroy = hlib_encoder_binary_destroy;
-    self->base.open_type = hlib_encoder_binary_open_type;
-    self->base.open_array = hlib_encoder_binary_open_array;
-    self->base.open_map = hlib_encoder_binary_open_map;
-    self->base.encode_bool = hlib_encoder_binary_encode_bool;
-    self->base.encode_int32 = hlib_encoder_binary_encode_int32;
-    self->base.encode_int64 = hlib_encoder_binary_encode_int64;
-    self->base.encode_float = hlib_encoder_binary_encode_float;
-    self->base.encode_double = hlib_encoder_binary_encode_double;
-    self->base.encode_string = hlib_encoder_binary_encode_string;
-    self->base.encode_blob = hlib_encoder_binary_encode_blob;
-    self->base.close = hlib_encoder_binary_close;
-
-    self->buffer = buffer;
-    return (hlib_encoder_t*)self;
-}
-
-hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size)
-{
-    hlib_decoder_binary_t* self = (hlib_decoder_binary_t*)malloc(sizeof(hlib_decoder_binary_t));
-    if (NULL == self) {
-        return NULL;
-    }
-
-    memset(self, 0, sizeof(*self));
-    self->base.destroy = hlib_decoder_binary_destroy;
-    self->base.open_type = hlib_decoder_binary_open_type;
-    self->base.open_array = hlib_decoder_binary_open_array;
-    self->base.open_map = hlib_decoder_binary_open_map;
-    self->base.decode_bool = hlib_decoder_binary_decode_bool;
-    self->base.decode_int32 = hlib_decoder_binary_decode_int32;
-    self->base.decode_int64 = hlib_decoder_binary_decode_int64;
-    self->base.decode_float = hlib_decoder_binary_decode_float;
-    self->base.decode_double = hlib_decoder_binary_decode_double;
-    self->base.decode_string = hlib_decoder_binary_decode_string;
-    self->base.decode_blob = hlib_decoder_binary_decode_blob;
-    self->base.close = hlib_decoder_binary_close;
-    self->base.peek = hlib_decoder_binary_peek;
-
-    self->data = (uint8_t const*)data;
-    self->size = size;
-    return (hlib_decoder_t*)self;
-}
-
+#endif // HLIB_C_CODEC_BINARY_IMPL_ONCE
 #endif // HLIB_C_CODEC_BINARY_IMPL
 
 #ifdef __cplusplus

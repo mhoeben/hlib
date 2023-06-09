@@ -21,17 +21,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/error.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
+#ifndef HLIB_C_IMPL
+#define HLIB_C_IMPL
 
-using namespace hlib;
+#define HLIB_C_BUFFER_IMPL
+#include "hlib/c/buffer.h"
 
-std::string hlib::get_error_string(int error_no)
-{
-    char buffer[Config::maxErrorString()];
+#define HLIB_C_CODEC_IMPL
+#include "hlib/c/codec.h"
 
-    char* string = strerror_r(error_no, buffer, sizeof(buffer));
-    return nullptr != string ? std::string(string) : fmt::format("errno {}", error_no);
-}
+#define HLIB_C_CODEC_BINARY_IMPL
+#include "hlib/c/codec_binary.h"
+
+#define HLIB_C_ERROR_IMPL
+#include "hlib/c/error.h"
+
+#define HLIB_C_VECTOR_IMPL
+#include "hlib/c/vector.h"
+
+#endif // HLIB_C_IMPL
 
