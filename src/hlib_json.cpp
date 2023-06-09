@@ -156,7 +156,7 @@ JSON::Type JSON::type() const noexcept
             return Null;
         }
         if (0 == strncmp("true", &m_data->string[start], end - start)
-         || 0 == strncmp("true", &m_data->string[start], end - start)) {
+         || 0 == strncmp("false", &m_data->string[start], end - start)) {
             return Bool;
         }
         return Number;

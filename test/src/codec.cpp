@@ -24,7 +24,6 @@
 #include "catch2/catch_test_macros.hpp"
 #include "hlib/buffer.hpp"
 #include "hlib/codec.hpp"
-#include "hlib/format.hpp"
 
 using namespace hlib;
 using namespace hlib::codec;
@@ -37,7 +36,7 @@ void test(std::string kind)
     Buffer buffer;
     std::unique_ptr<Encoder> encoder = Encoder::create(kind, buffer);
 
-    encoder->open("", codec::Map(5));
+    encoder->open("", codec::Map(6));
     encoder->encode("foo", std::string("bar"));
     encoder->encode("xxx", true);
     encoder->encode("yyy", 13);
@@ -47,6 +46,8 @@ void test(std::string kind)
     encoder->encode("", 9);
     encoder->encode("", 7);
     encoder->encode("", 1);
+    encoder->close();
+    encoder->open("empty", codec::Array(0));
     encoder->close();
     encoder->close();
 
@@ -62,6 +63,7 @@ void test(std::string kind)
     int32_t xyz1;
     int32_t xyz2;
     int32_t xyz3;
+    codec::Array empty;
 
     decoder->open("", root);
     decoder->decode("foo", foo);
@@ -74,9 +76,11 @@ void test(std::string kind)
     decoder->decode("", xyz2);
     decoder->decode("", xyz3);
     decoder->close();
+    decoder->open("empty", empty);
+    decoder->close();
     decoder->close();
 
-    REQUIRE(5 == root.size);
+    REQUIRE(6 == root.size);
     REQUIRE("bar" == foo);
     REQUIRE(true == xxx);
     REQUIRE(13 == yyy);
@@ -86,6 +90,7 @@ void test(std::string kind)
     REQUIRE(9 == xyz1);
     REQUIRE(7 == xyz2);
     REQUIRE(1 == xyz3);
+    REQUIRE(0 == empty.size);
 }
 
 
@@ -98,6 +103,6 @@ TEST_CASE("Binary Codec", "[codec]")
 
 TEST_CASE("JSON Codec", "[codec,json]")
 {
-   test("json");
+    test("json");
 }
 

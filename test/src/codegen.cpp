@@ -33,11 +33,13 @@
 using namespace hlib;
 using namespace hlib::codec;
 
-TEST_CASE("Codegen CPP11", "[codec,codegen]")
+namespace cpp11
+{
+
+Buffer encode_Primitives(std::string const& kind)
 {
     Buffer buffer;
-    std::unique_ptr<Encoder> encoder;
-    std::unique_ptr<Decoder> decoder;
+    std::unique_ptr<Encoder> encoder = Encoder::create(kind, buffer);
 
     test::Primitives p;
     p.boolean = true;
@@ -47,11 +49,15 @@ TEST_CASE("Codegen CPP11", "[codec,codegen]")
     p.float64 = 2.71828182845904523536;
     p.string = "foo bar";
 
-    buffer.clear();
-    encoder = Encoder::create("binary", buffer);
     p(*encoder);
+    return buffer;
+}
 
-    decoder = Decoder::create("binary", buffer.data(), buffer.size());
+void decode_Primitives(std::string const& kind, void const* data, size_t size)
+{
+    std::unique_ptr<Decoder> decoder = Decoder::create(kind, data, size);
+
+    test::Primitives p;
     p(*decoder);
 
     REQUIRE(true == p.boolean);
@@ -60,6 +66,12 @@ TEST_CASE("Codegen CPP11", "[codec,codegen]")
     REQUIRE(3.14159265359f == p.float32);
     REQUIRE(2.71828182845904523536 == p.float64);
     REQUIRE("foo bar" == p.string);
+}
+
+Buffer encode_PrimitiveArrays(std::string const& kind)
+{
+    Buffer buffer;
+    std::unique_ptr<Encoder> encoder = Encoder::create(kind, buffer);
 
     test::PrimitiveArrays a;
     a.booleans = { true, false };
@@ -69,12 +81,16 @@ TEST_CASE("Codegen CPP11", "[codec,codegen]")
     a.float64s = { 3.14159265359, 2.71828182845904523536 };
     a.strings = { "foo", "bar" };
 
-    buffer.clear();
-    encoder = Encoder::create("binary", buffer);
-    p(*encoder);
+    a(*encoder);
+    return buffer;
+}
 
-    decoder = Decoder::create("binary", buffer.data(), buffer.size());
-    p(*decoder);
+void decode_PrimitiveArrays(std::string const& kind, void const* data, size_t size)
+{
+    std::unique_ptr<Decoder> decoder = Decoder::create(kind, data, size);
+
+    test::PrimitiveArrays a;
+    a(*decoder);
 
     REQUIRE(true == a.booleans[0]);
     REQUIRE(false == a.booleans[1]);
@@ -90,39 +106,27 @@ TEST_CASE("Codegen CPP11", "[codec,codegen]")
     REQUIRE("bar" == a.strings[1]);
 }
 
-TEST_CASE("Codegen C99", "[codec,codegen]")
+} // namespace cpp11
+
+namespace c99
 {
-    hlib_buffer_t buffer;
-    hlib_encoder_t* encoder = nullptr;
-    hlib_decoder_t* decoder = nullptr;
+
+bool string_compare(std::string const& expected, hlib_codec_string_t const& test_string)
+{ 
+    return expected.length() == test_string.length
+        && 0 == memcmp(expected.data(), test_string.data, test_string.length);
+};
+
+hlib_buffer_t* encode_Primitives(char const* kind)
+{
+    hlib_buffer_t* buffer = hlib_buffer_create();
+    REQUIRE(nullptr != buffer);
+
+    hlib_encoder_t* encoder = hlib_encoder_create(kind, buffer);
+    REQUIRE(nullptr != encoder);
 
     test_Primitives p;
     test_Primitives_init(&p);
-
-    test_PrimitiveArrays a;
-    test_PrimitiveArrays_init(&a);
-
-    auto reset = [&]()
-    {
-        test_PrimitiveArrays_free(&a);
-        test_Primitives_free(&p);
-
-        if (nullptr != decoder) {
-            decoder->destroy(decoder);
-            decoder = nullptr;
-        }
-        if (nullptr != encoder) {
-            encoder->destroy(encoder);
-            encoder = nullptr;
-        }
-        hlib_buffer_free(&buffer);
-    };
-
-    auto string_compare = [](std::string const& expected, hlib_codec_string_t const& test_string)
-    { 
-        return expected.length() == test_string.length
-            && 0 == memcmp(expected.data(), test_string.data, test_string.length);
-    };
 
     p.boolean = true;
     p.int32 = 12345678;
@@ -131,16 +135,24 @@ TEST_CASE("Codegen C99", "[codec,codegen]")
     p.float64 = 2.71828182845904523536;
     p.string = { "foo bar", 7 };
 
-    hlib_buffer_init(&buffer);
-    encoder = hlib_encoder_create("binary", &buffer);
-    REQUIRE(nullptr != encoder);
     test_Primitives_encode(encoder, &p);
+    REQUIRE(HLIB_ERROR_NONE == encoder->error);
+    encoder->destroy(encoder);
 
-    decoder = hlib_decoder_create("binary", buffer.data, buffer.size);
+    test_Primitives_free(&p);
+    return buffer;
+}
+
+void decode_Primitives(char const* kind, void const* data, size_t size)
+{
+    hlib_decoder_t* decoder = hlib_decoder_create(kind, data, size);
     REQUIRE(nullptr != decoder);
-    test_Primitives_decode(decoder, &p);
 
+    test_Primitives p;
+    test_Primitives_init(&p);
+    test_Primitives_decode(decoder, &p);
     REQUIRE(HLIB_ERROR_NONE == decoder->error);
+    decoder->destroy(decoder);
 
     REQUIRE(true == p.boolean);
     REQUIRE(12345678 == p.int32);
@@ -149,8 +161,19 @@ TEST_CASE("Codegen C99", "[codec,codegen]")
     REQUIRE(2.71828182845904523536 == p.float64);
     REQUIRE(true == string_compare("foo bar", p.string));
 
-    reset();
+    test_Primitives_free(&p);
+}
 
+hlib_buffer_t* encode_PrimitiveArrays(char const* kind)
+{
+    hlib_buffer_t* buffer = hlib_buffer_create();
+    REQUIRE(nullptr != buffer);
+
+    hlib_encoder_t* encoder = hlib_encoder_create(kind, buffer);
+    REQUIRE(nullptr != encoder);
+
+    test_PrimitiveArrays a;
+    test_PrimitiveArrays_init(&a);
     HLIB_VECTOR_PUSH_BACK(&a.booleans, char, true);
     HLIB_VECTOR_PUSH_BACK(&a.booleans, char, false);
     HLIB_VECTOR_PUSH_BACK(&a.int32s, int32_t, 12345678);
@@ -167,15 +190,24 @@ TEST_CASE("Codegen C99", "[codec,codegen]")
     HLIB_VECTOR_PUSH_BACK(&a.strings, hlib_codec_string_t, foo);
     HLIB_VECTOR_PUSH_BACK(&a.strings, hlib_codec_string_t, bar);
 
-    encoder = hlib_encoder_create("binary", &buffer);
-    REQUIRE(nullptr != encoder);
-    test_Primitives_encode(encoder, &p);
+    test_PrimitiveArrays_encode(encoder, &a);
+    REQUIRE(HLIB_ERROR_NONE == encoder->error);
+    encoder->destroy(encoder);
 
-    decoder = hlib_decoder_create("binary", buffer.data, buffer.size);
+    test_PrimitiveArrays_free(&a);
+    return buffer;
+}
+
+void decode_PrimitiveArrays(char const* kind, void const* data, size_t size)
+{
+    hlib_decoder_t* decoder = hlib_decoder_create(kind, data, size);
     REQUIRE(nullptr != decoder);
-    test_Primitives_decode(decoder, &p);
 
+    test_PrimitiveArrays a;
+    test_PrimitiveArrays_init(&a);
+    test_PrimitiveArrays_decode(decoder, &a);
     REQUIRE(HLIB_ERROR_NONE == decoder->error);
+    decoder->destroy(decoder);
 
     REQUIRE(true == HLIB_VECTOR_AT(&a.booleans, char, 0));
     REQUIRE(false== HLIB_VECTOR_AT(&a.booleans, char, 1));
@@ -190,6 +222,67 @@ TEST_CASE("Codegen C99", "[codec,codegen]")
     REQUIRE(true == string_compare("foo", HLIB_VECTOR_AT(&a.strings, hlib_codec_string_t, 0)));
     REQUIRE(true == string_compare("bar", HLIB_VECTOR_AT(&a.strings, hlib_codec_string_t, 1)));
 
-    reset();
+    test_PrimitiveArrays_free(&a);
+}
+
+} // namespace c99
+
+TEST_CASE("Codegen CPP11 Binary", "[codec,codegen]")
+{
+    Buffer buffer;
+
+    buffer = cpp11::encode_Primitives("binary");
+             cpp11::decode_Primitives("binary", buffer.data(), buffer.size());
+
+    buffer = cpp11::encode_PrimitiveArrays("binary");
+             cpp11::decode_PrimitiveArrays("binary", buffer.data(), buffer.size());
+}
+
+TEST_CASE("Codegen C99 Binary", "[codec,codegen]")
+{
+    hlib_buffer_t* buffer = nullptr;
+
+    buffer = c99::encode_Primitives("binary");
+             c99::decode_Primitives("binary", buffer->data, buffer->size);
+    hlib_buffer_destroy(buffer);
+
+    buffer = c99::encode_PrimitiveArrays("binary");
+             c99::decode_PrimitiveArrays("binary", buffer->data, buffer->size);
+    hlib_buffer_destroy(buffer);
+}
+
+TEST_CASE("Codegen CPP11-G99 Binary", "[codec,codegen]")
+{
+    Buffer buffer;
+
+    buffer = cpp11::encode_Primitives("binary");
+             c99::decode_Primitives("binary", buffer.data(), buffer.size());
+
+    buffer = cpp11::encode_PrimitiveArrays("binary");
+             c99::decode_PrimitiveArrays("binary", buffer.data(), buffer.size());
+}
+
+TEST_CASE("Codegen C99-CPP11 Binary", "[codec,codegen]")
+{
+    hlib_buffer_t* buffer = nullptr;
+
+    buffer = c99::encode_Primitives("binary");
+             cpp11::decode_Primitives("binary", buffer->data, buffer->size);
+    hlib_buffer_destroy(buffer);
+
+    buffer = c99::encode_PrimitiveArrays("binary");
+             cpp11::decode_PrimitiveArrays("binary", buffer->data, buffer->size);
+    hlib_buffer_destroy(buffer);
+}
+
+TEST_CASE("Codegen CPP11 JSON", "[codec,codegen,json]")
+{
+    Buffer buffer;
+
+    buffer = cpp11::encode_Primitives("json");
+             cpp11::decode_Primitives("json", buffer.data(), buffer.size());
+
+    buffer = cpp11::encode_PrimitiveArrays("json");
+             cpp11::decode_PrimitiveArrays("json", buffer.data(), buffer.size());
 }
 
