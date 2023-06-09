@@ -123,3 +123,31 @@ TEST_CASE("JSON Empty Object", "[json]")
     REQUIRE(JSON::Undefined == foo.type());
 }
 
+std::string const foo(
+R"""({
+    "booleans": [
+        true,
+        false
+    ],
+    "int32s": [
+        12345678,
+        87654321
+    ],
+    "int64s": [
+        81985529216486895,
+        1147797409030816545
+    ],
+    "float32s": [
+        3.141592,
+        2.7182817
+    ],
+    "float64s": [
+        3.14159265359,
+        2.718281828459045
+    ],
+    "strings": [
+        "foo",
+        "bar"
+    ]
+})""");
+

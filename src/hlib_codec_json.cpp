@@ -69,10 +69,10 @@ void JSONEncoder::open(char const* name, Array const& value)
 
     if (true == m_state.map) {
         assert(nullptr != name);
-        append_to(m_buffer, "{}\"{}\": [{}", m_indent, name, newline());
+        append_to(m_buffer, "{}\"{}\": [\n", m_indent, name);
     }
     else {
-        append_to(m_buffer, "{}[{}", m_indent, newline());
+        append_to(m_buffer, "{}[\n", m_indent);
     }
 
     m_stack.push_back(m_state);
@@ -89,10 +89,10 @@ void JSONEncoder::open(char const* name, Map const& value)
 
     if (true == m_state.map) {
         assert(nullptr != name);
-        append_to(m_buffer, "{}\"{}\": {{{}", m_indent, name, newline());
+        append_to(m_buffer, "{}\"{}\": {{\n", m_indent, name);
     }
     else {
-        append_to(m_buffer, "{}{{{}", m_indent, newline());
+        append_to(m_buffer, "{}{{\n", m_indent);
     }
 
     m_stack.push_back(m_state);
@@ -153,17 +153,20 @@ void JSONEncoder::close()
     assert(false == m_stack.empty());
     assert(m_state.size == m_state.index);
 
-    m_indent = std::string((m_stack.size() - 1) * 4, ' ');
-
-    if (true == m_state.map) {
-        append_to(m_buffer, "{}}}\n", m_indent);
-    }
-    else {
-        append_to(m_buffer, "{}]\n", m_indent);
-    }
+    bool map = m_state.map;
 
     m_state = m_stack.back();
     m_stack.pop_back();
+
+    m_indent = std::string(m_stack.size() * 4, ' ');
+
+    if (true == map) {
+        append_to(m_buffer, "{}}}{}", m_indent, newline());
+    }
+    else {
+        append_to(m_buffer, "{}]{}", m_indent, newline());
+    }
+
     ++m_state.index;
 }
 
