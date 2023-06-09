@@ -24,8 +24,6 @@
 #include "hlib_codec_binary.hpp"
 #include "hlib/buffer.hpp"
 #include "hlib/format.hpp"
-
-#define HLIB_C_CODEC_BINARY_IMPL
 #include "hlib/c/codec_binary.h"
 
 using namespace hlib;
@@ -54,7 +52,7 @@ void check_error(char const* operation, hlib_error_t error)
 // Public (BinaryEncoder)
 //
 BinaryEncoder::BinaryEncoder(Buffer& buffer)
-    : m_encoder(hlib_encoder_binary_create(buffer.buffer()))
+    : m_encoder(hlib_encoder_create("binary", buffer.buffer()))
 {
 }
 
@@ -136,7 +134,7 @@ void BinaryEncoder::close()
 // Public (BinaryDecoder)
 //
 BinaryDecoder::BinaryDecoder(void const* data, std::size_t size)
-    : m_decoder(hlib_decoder_binary_create(data, size))
+    : m_decoder(hlib_decoder_create("binary", data, size))
 {
 }
 

@@ -57,14 +57,22 @@ HLIB_C_VISIBILITY void* hlib_vector_resize(hlib_vector_t* vector, size_t size);
 HLIB_C_VISIBILITY int hlib_vector_assign(hlib_vector_t* vector, void const* values, size_t size);
 HLIB_C_VISIBILITY int hlib_vector_append(hlib_vector_t* vector, void const* values, size_t size);
 HLIB_C_VISIBILITY int hlib_vector_insert(hlib_vector_t* vector, size_t index, void const* values, size_t size);
-HLIB_C_VISIBILITY int hlib_vector_erase(hlib_vector_t* vector, size_t index, size_t size);
+HLIB_C_VISIBILITY void hlib_vector_erase(hlib_vector_t* vector, size_t index, size_t size);
+
+#define HLIB_VECTOR_PUSH_BACK(vector, type, value)                          \
+    do {                                                                    \
+        type v = value;                                                     \
+        hlib_vector_push_back(vector, &v);                                  \
+    } while (0)
 
 HLIB_C_VISIBILITY int hlib_vector_push_back(hlib_vector_t* vector, void* value);
 HLIB_C_VISIBILITY void hlib_vector_pop_back(hlib_vector_t* vector);
 
+#define HLIB_VECTOR_AT(vector, type, index)                                 \
+    *((type*)hlib_vector_at(vector, index))
+
 HLIB_C_VISIBILITY void* hlib_vector_at(hlib_vector_t* vector, size_t index);
 
-#define HLIB_VECTOR_AT(vector, type, index) ((type*)hlib_vector_at(vector, index))
 
 #endif // HLIB_C_VECTOR_H
 
@@ -87,6 +95,7 @@ int hlib_vector_copy(hlib_vector_t* vector, hlib_vector_t const* that)
         return -1;
     }
     vector->sizeof_type = that->sizeof_type;
+    return 0;
 }
 
 void hlib_vector_move(hlib_vector_t* vector, hlib_vector_t* that)
@@ -146,14 +155,14 @@ int hlib_vector_insert(hlib_vector_t* vector, size_t index, void const* values, 
     return hlib_buffer_insert(&vector->buffer, index * vector->sizeof_type, values, size * vector->sizeof_type);
 }
 
-int hlib_vector_erase(hlib_vector_t* vector, size_t index, size_t size)
+void hlib_vector_erase(hlib_vector_t* vector, size_t index, size_t size)
 {
-    return hlib_buffer_erase(&vector->buffer, index * vector->sizeof_type, size * vector->sizeof_type);
+    hlib_buffer_erase(&vector->buffer, index * vector->sizeof_type, size * vector->sizeof_type);
 }
 
 int hlib_vector_push_back(hlib_vector_t* vector, void* value)
 {
-    hlib_vector_append(vector, value, 1);
+    return hlib_vector_append(vector, value, 1);
 }
 
 void hlib_vector_pop_back(hlib_vector_t* vector)
@@ -168,7 +177,7 @@ void* hlib_vector_at(hlib_vector_t* vector, size_t index)
         return NULL;
     }
 
-    return ((uint8_t*)vector->buffer.data) + idex * vector->sizeof_type;
+    return ((uint8_t*)vector->buffer.data) + index * vector->sizeof_type;
 }
 
 #endif // HLIB_C_VECTOR_IMPL

@@ -23,13 +23,30 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
+include(../cmake/hlib_codegen.cmake)
+
 project("hlib-tests")
 
 add_subdirectory(../third_party/catch2 catch2)
 
+function(generate LANGUAGE OUTPUT_FILE)
+    hlib_codegen(
+        ${CMAKE_CURRENT_BINARY_DIR}/../codegen/codegen
+        ${LANGUAGE}
+        src/codegen.json 
+        ${OUTPUT_FILE}
+    )
+endfunction()
+
+generate(cpp11 ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp)
+generate(c99 ${CMAKE_CURRENT_BINARY_DIR}/codegen.h)
+
 add_executable(${PROJECT_NAME}
     src/buffer.cpp
     src/codec.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp
+    ${CMAKE_CURRENT_BINARY_DIR}/codegen.h
+    src/codegen.cpp
     src/json.cpp
     src/sockaddr.cpp
 )
@@ -88,6 +105,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ../include
+    ${CMAKE_CURRENT_BINARY_DIR}
     ../third_party/catch2/src
     ${CMAKE_CURRENT_BINARY_DIR}/catch2/generated-includes
 )

@@ -26,8 +26,6 @@
 #include "hlib/memory.hpp"
 #include "hlib_codec_binary.hpp"
 #include "hlib_codec_json.hpp"
-
-#define HLIB_C_CODEC_IMPL
 #include "hlib/c/codec.h"
 
 using namespace hlib;

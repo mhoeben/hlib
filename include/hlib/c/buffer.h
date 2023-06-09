@@ -51,6 +51,9 @@ typedef struct hlib_buffer_s
 HLIB_C_VISIBILITY void hlib_buffer_init(hlib_buffer_t* buffer);
 HLIB_C_VISIBILITY void hlib_buffer_free(hlib_buffer_t* buffer);
 
+HLIB_C_VISIBILITY hlib_buffer_t* hlib_buffer_create();
+HLIB_C_VISIBILITY void hlib_buffer_destroy(hlib_buffer_t* buffer);
+
 HLIB_C_VISIBILITY int hlib_buffer_copy(hlib_buffer_t* buffer, hlib_buffer_t const* that);
 HLIB_C_VISIBILITY void hlib_buffer_move(hlib_buffer_t* buffer, hlib_buffer_t* that);
 
@@ -71,6 +74,9 @@ HLIB_C_VISIBILITY int hlib_buffer_appendf(hlib_buffer_t* buffer, char const* for
 #endif // HLIB_C_BUFFER_H
 
 #ifdef HLIB_C_BUFFER_IMPL
+
+#ifndef HLIB_C_BUFFER_IMPL_ONCE
+#define HLIB_C_BUFFER_IMPL_ONCE
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -146,6 +152,27 @@ void hlib_buffer_free(hlib_buffer_t* buffer)
         free(buffer->data);
     }
     memset(buffer, 0, sizeof(*buffer));
+}
+
+hlib_buffer_t* hlib_buffer_create()
+{
+    hlib_buffer_t* buffer = (hlib_buffer_t*)malloc(sizeof(hlib_buffer_t));
+    if (NULL == buffer) {
+        return NULL;
+    }
+
+    hlib_buffer_init(buffer);
+    return buffer;
+}
+
+void hlib_buffer_destroy(hlib_buffer_t* buffer)
+{
+    if (NULL == buffer) {
+        return;
+    }
+
+    hlib_buffer_free(buffer);
+    free(buffer);
 }
 
 int hlib_buffer_copy(hlib_buffer_t* buffer, hlib_buffer_t const* that)
@@ -301,6 +328,7 @@ int hlib_buffer_appendf(hlib_buffer_t* buffer, char const* format, ...)
     return r;
 }
 
+#endif // HLIB_C_BUFFER_IMPL_ONCE
 #endif // HLIB_C_BUFFER_IMPL
 
 #ifdef __cplusplus

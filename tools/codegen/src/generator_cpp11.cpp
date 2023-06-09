@@ -103,7 +103,7 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
     // Identifiers.
     for (Declaration const& declaration : declarations) {
         fmt::print(m_output,
-            "static constexpr int {name}{{ {id} }};\n",
+            "static constexpr int {name}Id{{ {id} }};\n",
             fmt::arg("name", declaration.name),
             fmt::arg("id", id)
         );
@@ -126,6 +126,7 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
 
             // Constructor and id operator.
             fmt::print(m_output,
+                "\n"
                 "    {name}() = default;\n"
                 "\n"
                 "    explicit operator hlib::codec::Type::Id() const override\n"
@@ -142,7 +143,7 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
                 fmt::arg("size", declaration.members.size())
             );
 
-            // Encoder transform member function.
+            // Encoder member function.
             fmt::print(m_output,
                 "\n"
                 "    void operator()(hlib::codec::Encoder& encoder) const override\n"
@@ -153,7 +154,7 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
 
             for (Declaration::Member const& member : declaration.members) {
                 fmt::print(m_output,
-                    "        encoder.transform(\"{name}\", this->{name});\n",
+                    "        encoder.encode(\"{name}\", this->{name});\n",
                     fmt::arg("name", member.name)
                 );
             }
@@ -163,7 +164,7 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
                 "    }}\n"
             );
 
-            // Decoder transform member function.
+            // Decoder member function.
             fmt::print(m_output,
                 "\n"
                 "    void operator()(hlib::codec::Decoder& decoder) override\n"
@@ -174,7 +175,7 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
 
             for (Declaration::Member const& member : declaration.members) {
                 fmt::print(m_output,
-                    "        decoder.transform(\"{name}\", this->{name});\n",
+                    "        decoder.decode(\"{name}\", this->{name});\n",
                     fmt::arg("name", member.name)
                 );
             }

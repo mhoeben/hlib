@@ -101,11 +101,11 @@ public:
     virtual void close() = 0;
 
     template<typename T>
-    void transform(char const* name, std::vector<T> const& values)
+    void encode(char const* name, std::vector<T> const& values)
     {
         open(name, Array{ values.size() });
         for (T const& value : values) {
-            transform(nullptr, value);
+            encode(nullptr, value);
         }
         close();
     }
@@ -134,16 +134,18 @@ public:
     virtual void close() = 0;
 
     template<typename T>
-    void transform(char const* name, std::vector<T>& values)
+    void decode(char const* name, std::vector<T>& values)
     {
         Array array;
 
         open(name, array);
 
-        values.resize(array.size);
+        values.reserve(array.size);
 
         for (size_t i = 0; i < array.size; ++i) {
-            transform(nullptr, values[i]);
+            T value;
+            decode(nullptr, value);
+            values.emplace_back(std::move(value));
         }
         close();
     }

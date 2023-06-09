@@ -60,7 +60,7 @@ std::string c99_to_string(Type type)
     return map.end() != it ? it->second : "";
 }
 
-std::string c99_to_transform_extension(Type type)
+std::string c99_to_extension(Type type)
 {
     std::unordered_map<Type, std::string> map =
     {
@@ -163,22 +163,22 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
         );
 
         fmt::print(m_output,
-            "void {ns}{name}_init({ns}{name}* object);\n",
+            "void {ns}{name}_init(struct {ns}{name}* object);\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         fmt::print(m_output,
-            "void {ns}{name}_free({ns}{name}* object);\n",
+            "void {ns}{name}_free(struct {ns}{name}* object);\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         fmt::print(m_output,
-            "void {ns}{name}_encode(hlib_encoder_t* encoder, {ns}{name}* const object);\n",
+            "void {ns}{name}_encode(hlib_encoder_t* encoder, struct {ns}{name}* const object);\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         fmt::print(m_output,
-            "void {ns}{name}_decode(hlib_decoder_t* decoder, {ns}{name}* object);\n",
+            "void {ns}{name}_decode(hlib_decoder_t* decoder, struct {ns}{name}* object);\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
@@ -195,10 +195,10 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
     for (Declaration const& declaration : declarations) {
         // Init function.
         fmt::print(m_output,
-            "\nvoid {ns}{name}_init({name}* object)\n"
+            "\nvoid {ns}{name}_init(struct {ns}{name}* self)\n"
             "{{\n"
-            "    object.__id = {NS}{NAME};\n"
-            "    object.__size = {size};\n",
+            "    self->__id = {NS}{NAME};\n"
+            "    self->__size = {size};\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name),
             fmt::arg("NS", to_upper(ns)),
@@ -212,7 +212,7 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
             for (Declaration::Member const& member : declaration.members) {
                 if (true == is_vector(member.type)) {
-                    fmt::print(m_output, "    hlib_vector_init(&object.{}, sizeof({}));\n", member.name, c99_to_string(to_underlying_type(member.type)));
+                    fmt::print(m_output, "    hlib_vector_init(&self->{}, sizeof({}));\n", member.name, c99_to_string(to_underlying_type(member.type)));
                 }
             }
         }
@@ -220,15 +220,16 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
         // Free function.
         fmt::print(m_output,
-            "void {ns}{name}_free({ns}{name}* object)\n"
-            "{{\n",
+            "void {ns}{name}_free(struct {ns}{name}* self)\n"
+            "{{\n"
+            "    (void)self;\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         {
             for (Declaration::Member const& member : declaration.members) {
                 if (true == is_vector(member.type)) {
-                    fmt::print(m_output, "    hlib_vector_free(&object.{});\n", member.name);
+                    fmt::print(m_output, "    hlib_vector_free(&self->{});\n", member.name);
                 }
             }
         }
@@ -236,14 +237,14 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
         // Encoder function.
         fmt::print(m_output,
-            "void {ns}{name}_encode(hlib_encoder_t* encoder, {ns}{name}* const object)\n"
+            "void {ns}{name}_encode(hlib_encoder_t* encoder, struct {ns}{name}* const self)\n"
             "{{\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         {
             fmt::print(m_output,
-                "    encoder->open_type(encoder, NULL, (hlib_codec_type_t const*)object);\n",
+                "    encoder->open_type(encoder, NULL, (hlib_codec_type_t const*)self);\n",
                 fmt::arg("name", declaration.name),
                 fmt::arg("size", declaration.members.size())
             );
@@ -253,26 +254,26 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
                 if (true == is_vector(member.type)) {
                     fmt::print(m_output,
                         "    {{\n"
-                        "        size_t array_size = hlib_vector_size(&object->{name});\n"
+                        "        size_t array_size = hlib_vector_size(&self->{name});\n"
                         "        encoder->open_array(encoder, \"{name}\", array_size);\n"
                         "        {{\n"
-                        "            {type}* array = ({type}*)hlib_vector_data(&object->{name});\n"
+                        "            {type}* array = ({type}*)hlib_vector_data(&self->{name});\n"
                         "            for (size_t i = 0; i < array_size; ++i) {{\n"
-                        "                encoder->transform_{ext}(encoder, \"{name}\", {deref}array->{name}[i]);\n"
+                        "                encoder->encode_{ext}(encoder, \"{name}\", {deref}array[i]);\n"
                         "            }}\n"
                         "        }}\n"
                         "        encoder->close(encoder);\n"
                         "    }}\n",
                         fmt::arg("type", c99_to_string(underlying_type)),
-                        fmt::arg("ext", c99_to_transform_extension(underlying_type)),
+                        fmt::arg("ext", c99_to_extension(underlying_type)),
                         fmt::arg("name", member.name),
                         fmt::arg("deref", is_pointer(underlying_type) ? "&":"")
                     );
                 }
                 else {
                     fmt::print(m_output,
-                        "    encoder->transform_{ext}(encoder, \"{name}\", {deref}object->{name});\n",
-                        fmt::arg("ext", c99_to_transform_extension(underlying_type)),
+                        "    encoder->encode_{ext}(encoder, \"{name}\", {deref}self->{name});\n",
+                        fmt::arg("ext", c99_to_extension(underlying_type)),
                         fmt::arg("name", member.name),
                         fmt::arg("deref", is_pointer(underlying_type) ? "&":"")
                     );
@@ -284,14 +285,16 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
         // Decoder function.
         fmt::print(m_output,
-            "void {ns}{name}_decode(hlib_decoder_t* decoder, {ns}{name}* object)\n"
-            "{{\n",
+            "void {ns}{name}_decode(hlib_decoder_t* decoder, struct {ns}{name}* self)\n"
+            "{{\n"
+            "    size_t array_size;\n"
+            "    (void)array_size;\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         {
             fmt::print(m_output,
-                "    decoder->open_type(encoder, NULL, (hlib_codec_type_t*)object);\n",
+                "    decoder->open_type(decoder, NULL, (hlib_codec_type_t*)self);\n",
                 fmt::arg("name", declaration.name),
                 fmt::arg("size", declaration.members.size())
             );
@@ -302,25 +305,25 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
                     fmt::print(m_output,
                         "    decoder->open_array(decoder, \"{name}\", &array_size);\n"
                         "    {{\n"
-                        "        type* array = (type*)hlib_vector_resize(&object->{name}, array_size);\n"
+                        "        {type}* array = ({type}*)hlib_vector_resize(&self->{name}, array_size);\n"
                         "        if (NULL == array) {{\n"
                         "            decoder->error = HLIB_ERROR_BAD_ALLOC;\n"
                         "            return;\n"
                         "        }}\n"
                         "        for (size_t i = 0; i < array_size; ++i) {{\n"
-                        "            decoder->transform{ext}(decoder, \"{name}\", &array[i]);\n"
+                        "            decoder->decode_{ext}(decoder, \"{name}\", &array[i]);\n"
                         "        }}\n"
                         "    }}\n"
                         "    decoder->close(decoder);\n",
                         fmt::arg("type", c99_to_string(underlying_type)),
-                        fmt::arg("ext", c99_to_transform_extension(underlying_type)),
+                        fmt::arg("ext", c99_to_extension(underlying_type)),
                         fmt::arg("name", member.name)
                     );
                 }
                 else {
                     fmt::print(m_output,
-                        "    decoder->transform_{ext}(.ncoder, \"{name}\", &object->{name});\n",
-                        fmt::arg("ext", c99_to_transform_extension(underlying_type)),
+                        "    decoder->decode_{ext}(decoder, \"{name}\", &self->{name});\n",
+                        fmt::arg("ext", c99_to_extension(underlying_type)),
                         fmt::arg("name", member.name)
                     );
                 }
