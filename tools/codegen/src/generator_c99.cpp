@@ -35,7 +35,7 @@ using namespace hlib;
 namespace
 {
 
-std::string c99_to_string(Type type)
+std::string to_string(Type type)
 {
     std::unordered_map<Type, std::string> map =
     {
@@ -45,14 +45,14 @@ std::string c99_to_string(Type type)
         { Type::Float32,        "float" },
         { Type::Float64,        "double" },
         { Type::String,         "hlib_codec_string_t" },
-        { Type::Blob,           "hlib_codec_blob_t" },
+        { Type::Binary,         "hlib_codec_binary_t" },
         { Type::BoolArray,      "hlib_vector_t" },
         { Type::Int32Array,     "hlib_vector_t" },
         { Type::Int64Array,     "hlib_vector_t" },
         { Type::Float32Array,   "hlib_vector_t" },
         { Type::Float64Array,   "hlib_vector_t" },
         { Type::StringArray,    "hlib_vector_t" },
-        { Type::BlobArray,      "hlib_vector_t" }
+        { Type::BinaryArray,    "hlib_vector_t" }
     };
 
     auto it = map.find(type);
@@ -60,7 +60,7 @@ std::string c99_to_string(Type type)
     return map.end() != it ? it->second : "";
 }
 
-std::string c99_to_extension(Type type)
+std::string to_extension(Type type)
 {
     std::unordered_map<Type, std::string> map =
     {
@@ -70,7 +70,7 @@ std::string c99_to_extension(Type type)
         { Type::Float32,        "float" },
         { Type::Float64,        "double" },
         { Type::String,         "string" },
-        { Type::Blob,           "blob" }
+        { Type::Binary,         "binary" }
     };
 
     auto it = map.find(type);
@@ -152,7 +152,7 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
             for (Declaration::Member const& member : declaration.members) {
                 fmt::print(m_output,
                     "    {} {};\n",
-                    c99_to_string(member.type),
+                    to_string(member.type),
                     member.name
                 );
             }
@@ -212,7 +212,7 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
             for (Declaration::Member const& member : declaration.members) {
                 if (true == is_vector(member.type)) {
-                    fmt::print(m_output, "    hlib_vector_init(&self->{}, sizeof({}));\n", member.name, c99_to_string(to_underlying_type(member.type)));
+                    fmt::print(m_output, "    hlib_vector_init(&self->{}, sizeof({}));\n", member.name, to_string(to_underlying_type(member.type)));
                 }
             }
         }
@@ -264,8 +264,8 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
                         "        }}\n"
                         "        encoder->close(encoder);\n"
                         "    }}\n",
-                        fmt::arg("type", c99_to_string(underlying_type)),
-                        fmt::arg("ext", c99_to_extension(underlying_type)),
+                        fmt::arg("type", to_string(underlying_type)),
+                        fmt::arg("ext", to_extension(underlying_type)),
                         fmt::arg("name", member.name),
                         fmt::arg("deref", is_pointer(underlying_type) ? "&":"")
                     );
@@ -273,7 +273,7 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
                 else {
                     fmt::print(m_output,
                         "    encoder->encode_{ext}(encoder, \"{name}\", {deref}self->{name});\n",
-                        fmt::arg("ext", c99_to_extension(underlying_type)),
+                        fmt::arg("ext", to_extension(underlying_type)),
                         fmt::arg("name", member.name),
                         fmt::arg("deref", is_pointer(underlying_type) ? "&":"")
                     );
@@ -315,15 +315,15 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
                         "        }}\n"
                         "    }}\n"
                         "    decoder->close(decoder);\n",
-                        fmt::arg("type", c99_to_string(underlying_type)),
-                        fmt::arg("ext", c99_to_extension(underlying_type)),
+                        fmt::arg("type", to_string(underlying_type)),
+                        fmt::arg("ext", to_extension(underlying_type)),
                         fmt::arg("name", member.name)
                     );
                 }
                 else {
                     fmt::print(m_output,
                         "    decoder->decode_{ext}(decoder, \"{name}\", &self->{name});\n",
-                        fmt::arg("ext", c99_to_extension(underlying_type)),
+                        fmt::arg("ext", to_extension(underlying_type)),
                         fmt::arg("name", member.name)
                     );
                 }

@@ -51,6 +51,7 @@ std::unique_ptr<Encoder> Encoder::create(std::string const& kind, Buffer& buffer
 void Encoder::wrap(Type const& type)
 {
     open(nullptr, Array(2));
+    encode(nullptr, static_cast<Type::Id>(type));
     type(*this);
     close();
 }
@@ -72,9 +73,12 @@ std::unique_ptr<Decoder> Decoder::create(std::string const& kind, void const* da
 void Decoder::unwrap(Type& type)
 {
     Array array;
+    Type::Id id;
+
     open(nullptr, array);
     assert(2 == array.size);
-
+    decode(nullptr, id);
     type(*this);
+    assert(static_cast<Type::Id>(type) == id);
     close();
 }

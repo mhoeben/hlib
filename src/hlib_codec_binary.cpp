@@ -117,10 +117,10 @@ void BinaryEncoder::encode(char const* name, std::string const& value)
     check_error("encoding", m_encoder->error);
 }
 
-void BinaryEncoder::encode(char const* name, Blob const& value)
+void BinaryEncoder::encode(char const* name, Binary const& value)
 {
-    hlib_codec_blob_t blob{ value.data, value.size };
-    hlib_encoder_binary_encode_blob(m_encoder, name, &blob);
+    hlib_codec_binary_t binary{ value.data, value.size };
+    hlib_encoder_binary_encode_binary(m_encoder, name, &binary);
     check_error("encoding", m_encoder->error);
 }
 
@@ -203,12 +203,12 @@ void BinaryDecoder::decode(char const* name, std::string& value)
     value.assign(string.data, string.length);
 }
 
-void BinaryDecoder::decode(char const* name, Blob& value)
+void BinaryDecoder::decode(char const* name, Binary& value)
 {
-    hlib_codec_blob_t blob;
-    hlib_decoder_binary_decode_blob(m_decoder, name, &blob);
-    value.data = blob.data;
-    value.size = blob.size;
+    hlib_codec_binary_t binary;
+    hlib_decoder_binary_decode_binary(m_decoder, name, &binary);
+    value.data = binary.data;
+    value.size = binary.size;
 }
 
 void BinaryDecoder::close()
@@ -216,9 +216,9 @@ void BinaryDecoder::close()
     hlib_decoder_binary_close(m_decoder);
 }
 
-int BinaryDecoder::peek() const
+Type::Id BinaryDecoder::peek() const
 {
-    int id = hlib_decoder_binary_peek(m_decoder);
+    Type::Id id = hlib_decoder_binary_peek(m_decoder);
     if (INT_MIN == id) {
         throwf<std::runtime_error>("Data is not a wrapped codec::Type");
     }

@@ -24,6 +24,7 @@
 #include "generator.hpp"
 #include "generator_c99.hpp"
 #include "generator_cpp11.hpp"
+#include "generator_typescript.hpp"
 #include "utility.hpp"
 #include "hlib/file.hpp"
 #include "hlib/format.hpp"
@@ -104,6 +105,10 @@ std::unique_ptr<Generator> Generator::create(Language language)
 
     case Language::C99:
         generator.reset(new GeneratorC99);
+        break;
+
+    case Language::Typescript:
+        generator.reset(new GeneratorTypescript);
         break;
 
     default:

@@ -43,14 +43,14 @@ std::string to_string(Type type)
         { Type::Float32,        "float" },
         { Type::Float64,        "double" },
         { Type::String,         "std::string" },
-        { Type::Blob,           "hlib::Blob" },
+        { Type::Binary,         "hlib::codec::Binary" },
         { Type::BoolArray,      "std::vector<bool>" },
         { Type::Int32Array,     "std::vector<std::int32_t>" },
         { Type::Int64Array,     "std::vector<std::int64_t>" },
         { Type::Float32Array,   "std::vector<float>" },
         { Type::Float64Array,   "std::vector<double>" },
         { Type::StringArray,    "std::vector<std::string>" },
-        { Type::BlobArray,      "std::vector<hlib::Blob>" }
+        { Type::BinaryArray,    "std::vector<hlib::codec::Binary>" }
     };
 
     auto it = map.find(type);
@@ -121,7 +121,11 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
         {
             // Member declarations.
             for (Declaration::Member const& member : declaration.members) {
-                fmt::print(m_output, "    {} {};\n", to_string(member.type), member.name);
+                fmt::print(m_output,
+                    "    {} {};\n",
+                    fmt::arg("type", to_string(member.type)),
+                    fmt::arg("name", member.name)
+                );
             }
 
             // Constructor and id operator.
