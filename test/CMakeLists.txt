@@ -23,7 +23,7 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
-include(../cmake/hlib_codegen.cmake)
+include(../cmake/codegen.cmake)
 
 project("hlib-tests")
 
