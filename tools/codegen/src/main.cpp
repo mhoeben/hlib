@@ -27,6 +27,7 @@
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
 #include "hlib/scope_guard.hpp"
+#include <cstdio>
 #include <getopt.h>
 #include <iostream>
 #include <fstream>
@@ -74,6 +75,7 @@ int main(int argc, char* argv[])
     auto side = Side::Left;
     FILE* input = stdin;
     FILE* output = stdout;
+    std::string remove_output;
 
     ScopeGuard cleanup([&] {
         if (nullptr != output && stdout != output) {
@@ -81,6 +83,10 @@ int main(int argc, char* argv[])
         }
         if (nullptr != input && stdin != input) {
             fclose(input);
+        }
+
+        if (true != remove_output.empty()) {
+            std::remove(remove_output.c_str());
         }
     });
 
@@ -111,6 +117,8 @@ int main(int argc, char* argv[])
                 fmt::print(stderr, "codegen: failed to open '{}' for writing ({})\n", optarg, get_error_string(errno));
                 return EXIT_FAILURE;
             }
+
+            remove_output = output_filepath;
             break;
 
         case 's':
@@ -146,6 +154,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    remove_output.clear();
     return EXIT_SUCCESS;
 }
 
