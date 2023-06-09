@@ -50,14 +50,14 @@ int Generator::parseDeclarations(std::vector<Declaration>& declarations)
             return error_at(decl, "No 'name' attribute specified for declaration");
         }
 
-        // Get the declaration's orientation.
-        std::string orientation = decl.at("orientation").value();
-        if (true == orientation.empty()) {
-            return error_at(decl, "No 'orientation' attribute specified for declaration");
+        // Get the declaration's flow.
+        std::string flow = decl.at("flow").value();
+        if (true == flow.empty()) {
+            return error_at(decl, "No 'flow' attribute specified for declaration");
         }
-        declaration.orientation = to_side(orientation);
-        if (Side::Invalid == declaration.orientation) {
-            return error_at(decl.at("orientation"), "Invalid orientation attribute value '{}'", orientation);
+        declaration.flow = to_flow(flow);
+        if (Flow::Invalid == declaration.flow) {
+            return error_at(decl.at("flow"), "Invalid flow attribute value '{}'", flow);
         }
 
         // Get and iterate the declaration's members.

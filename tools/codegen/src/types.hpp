@@ -47,6 +47,17 @@ enum class Side
 
 Side to_side(std::string const& string);
 
+enum class Flow
+{
+    Invalid,
+
+    Left,
+    Right,
+    Both
+};
+
+Flow to_flow(std::string const& string);
+
 enum class Type
 {
     Invalid,
