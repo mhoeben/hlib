@@ -50,6 +50,19 @@ Side to_side(std::string const& string)
     return map.end() == it ? Side::Invalid : it->second;
 }
 
+Flow to_flow(std::string const& string)
+{
+    static std::unordered_map<std::string, Flow> const map =
+    {
+        { "left",   Flow::Left },
+        { "right",  Flow::Right },
+        { "both",   Flow::Both }
+    };
+
+    auto it = map.find(string);
+    return map.end() == it ? Flow::Invalid : it->second;
+}
+
 Type to_type(std::string const& string)
 {
     static std::unordered_map<std::string, Type> const map =

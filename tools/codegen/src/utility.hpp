@@ -33,7 +33,7 @@ extern std::string output_filepath;
 template<typename... PARAMS>
 int error_at(hlib::JSON const& json, std::string const& fmt, PARAMS&&... params)
 {
-    fmt::print(stderr, "{}:{}:{}: {}", input_filepath, json.line() + 1, json.column() + 1, fmt::format(fmt, std::forward<PARAMS>(params)...));
+    fmt::print(stderr, "{}:{}:{}: {}\n", input_filepath, json.line() + 1, json.column() + 1, fmt::format(fmt, std::forward<PARAMS>(params)...));
     return EXIT_FAILURE;
 }
 

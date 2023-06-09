@@ -57,7 +57,7 @@ protected:
     struct Declaration
     {
         std::string name;
-        Side orientation{ Side::Invalid };
+        Flow flow{ Flow::Invalid };
 
         struct Member
         {

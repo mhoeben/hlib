@@ -29,7 +29,7 @@
     [
         {
             "name": "Primitives",
-            "orientation": "both",
+            "flow": "both",
             "members": [
                 { "name": "boolean",    "type": "bool" },
                 { "name": "int32",      "type": "int32" },
@@ -41,7 +41,7 @@
         },
         {
             "name": "PrimitiveArrays",
-            "orientation": "both",
+            "flow": "both",
             "members": [
                 { "name": "booleans",   "type": "bool[]" },
                 { "name": "int32s",     "type": "int32[]" },
