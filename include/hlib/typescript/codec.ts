@@ -24,7 +24,7 @@
 export namespace hlib_codec
 {
 
-export let config =
+const config =
 {
     binary: {
         encoder: {
@@ -37,31 +37,49 @@ export let config =
 
 export interface Encoder
 {
-    openStruct(name: string, value: number): void;
+};
+
+export interface Type
+{
+    readonly __id : number;
+    readonly __size : number;
+
+    encode(encoder: Encoder): void;
+    decode(decoder: Decoder): void;
+};
+
+export interface Encoder
+{
+    openType(name: string, value: Type): void;
     openArray(name: string, value: number): void;
     openMap(name: string, value: number): void;
-    transformBool(name: string, value: boolean): void;
-    transformInt(name: string, value: number): void;
-    transformFloat32(name: string, value: number): void;
-    transformFloat64(name: string, value: number): void;
-    transformString(name: string, value: string): void;
-    transformBlob(name: string, value: Uint8Array): void;
+    encodeBool(name: string, value: boolean): void;
+    encodeInt(name: string, value: number): void;
+    encodeFloat32(name: string, value: number): void;
+    encodeFloat64(name: string, value: number): void;
+    encodeString(name: string, value: string): void;
+    encodeBinary(name: string, value: Uint8Array): void;
     close(): void;
+
+    wrap(object: Type): void;
 };
 
 export interface Decoder
 { 
-    openStruct(name: string): number;
+    openType(name: string): number;
     openArray(name: string): number;
     openMap(name: string): number;
-    transformBool(name: string): boolean;
-    transformInt(name: string): number;
-    transformFloat32(name: string): number;
-    transformFloat64(name: string): number;
-    transformString(name: string): string;
-    transformBlob(name: string): Uint8Array;
+    decodeBool(name: string): boolean;
+    decodeInt(name: string): number;
+    decodeFloat32(name: string): number;
+    decodeFloat64(name: string): number;
+    decodeString(name: string): string;
+    decodeBinary(name: string): Uint8Array;
     close(): void;
-}
+
+    peek(): number;
+    unwrap(object: Type): void;
+};
 
 class ProducerUint8Array
 {
@@ -166,6 +184,16 @@ class ConsumerUint8Array
         return this.size() - this.offset;
     }
 
+    mark(): number
+    {
+        return this.offset;
+    }
+
+    restore(offset: number)
+    {
+        this.offset = offset;
+    }
+
     consumeByte(): number
     {
         return this.view.getUint8(this.consume(1));
@@ -215,26 +243,26 @@ class BinaryEncoder implements Encoder
         this.array = new ProducerUint8Array(config.binary.encoder.grow);
     }
     
-    openStruct(_name: string, _value: number): void
+    openType(_name: string, _value: Type): void
     {
     }
 
     openArray(name: string, value: number): void
     {
-        this.transformInt(name, value);
+        this.encodeInt(name, value);
     }
 
     openMap(name: string, value: number): void
     {
-        this.transformInt(name, value);
+        this.encodeInt(name, value);
     }
 
-    transformBool(_name: string, value: boolean): void
+    encodeBool(_name: string, value: boolean): void
     {
         this.array.produceByte(Number(!!value));
     }
 
-    transformInt(_name: string, value: number): void
+    encodeInt(_name: string, value: number): void
     {
         const data: Uint8Array = new Uint8Array(8);
         let size: number = 0;
@@ -265,32 +293,40 @@ class BinaryEncoder implements Encoder
         this.array.produceUint8ArraySubstr(data, 0, size);
     }
 
-    transformFloat32(_name: string, value: number): void
+    encodeFloat32(_name: string, value: number): void
     {
         this.array.produceFloat32(value);
     }
 
-    transformFloat64(_name: string, value: number): void
+    encodeFloat64(_name: string, value: number): void
     {
         this.array.produceFloat32(value);
     }
 
-    transformString(_name: string, value: string): void
+    encodeString(_name: string, value: string): void
     {
         const utf8: Uint8Array = new TextEncoder().encode(value);
 
-        this.transformInt(null, utf8.byteLength);
+        this.encodeInt(null, utf8.byteLength);
         this.array.produceUint8Array(utf8);
     }
 
-    transformBlob(_name: string, value: Uint8Array): void
+    encodeBinary(_name: string, value: Uint8Array): void
     {
-        this.transformInt(null, value.byteLength);
+        this.encodeInt(null, value.byteLength);
         this.array.produceUint8Array(value);
     }
 
     close(): void
     {
+    }
+
+    wrap(type: Type): void
+    {
+        this.openArray(null, 2);
+        this.encodeInt(null, type.__id);
+        type.encode(this);
+        this.close();
     }
 
     //
@@ -306,27 +342,27 @@ class BinaryDecoder implements Decoder
         this.array = new ConsumerUint8Array(buffer);
     }
 
-    openStruct(name: string): number
+    openType(_name: string): number
     {
         return 0;
     }
 
     openArray(name: string): number
     {
-        return this.transformInt(name);
+        return this.decodeInt(name);
     }
 
     openMap(name: string): number
     {
-        return this.transformInt(name);
+        return this.decodeInt(name);
     }
 
-    transformBool(_name: string): boolean
+    decodeBool(_name: string): boolean
     {
         return Boolean(this.array.consumeByte());
     }
 
-    transformInt(_name: string): number
+    decodeInt(_name: string): number
     {
         let byte = this.array.consumeByte();
 
@@ -343,31 +379,52 @@ class BinaryDecoder implements Decoder
         return negative ? -value : value;
     }
 
-    transformFloat32(_name: string): number
+    decodeFloat32(_name: string): number
     {
         return this.array.consumeFloat32();
     }
 
-    transformFloat64(_name: string): number
+    decodeFloat64(_name: string): number
     {
         return this.array.consumeFloat64();
     }
 
-    transformString(_name: string): string
+    decodeString(_name: string): string
     {
-        const length: number = this.transformInt(null);
+        const length: number = this.decodeInt(null);
         const utf8: Uint8Array = this.array.consumeUint8Array(length);
         return new TextDecoder().decode(utf8);
     }
 
-    transformBlob(_name: string): Uint8Array
+    decodeBinary(_name: string): Uint8Array
     {
-        const size: number = this.transformInt(null);
+        const size: number = this.decodeInt(null);
         return this.array.consumeUint8Array(size);
     }
 
     close(): void
     {
+    }
+
+    peek(): number
+    {
+        const offset: number = this.array.mark();
+                           this.openArray(null);
+        const id: number = this.decodeInt(null);
+        this.array.restore(offset);
+        return id;
+    }
+
+    unwrap(type: Type)
+    {
+        const size: number = this.openArray(null);
+        const id: number = this.decodeInt(null);
+        type.decode(this);
+
+        console.assert(2 == size);
+        console.assert(type.__id == id);
+
+        this.close();
     }
 
     //

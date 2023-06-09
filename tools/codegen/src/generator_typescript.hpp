@@ -23,54 +23,14 @@
 //
 #pragma once
 
-#include <string>
+#include "generator.hpp"
 
-enum class Language
+class GeneratorTypescript final : public Generator
 {
-    Invalid,
+public:
+    GeneratorTypescript() = default;
 
-    CPP11,
-    C99,
-    Typescript
+    int generate(FILE* output, FILE* input, Side side) override;
 };
 
-Language to_language(std::string const& string);
 
-enum class Side
-{
-    Invalid,
-
-    Left,
-    Right,
-    Both
-};
-
-Side to_side(std::string const& string);
-
-enum class Type
-{
-    Invalid,
-
-    Bool,
-    Int32,
-    Int64,
-    Float32,
-    Float64,
-    String,
-    Binary,
-
-    BoolArray,
-    Int32Array,
-    Int64Array,
-    Float32Array,
-    Float64Array,
-    StringArray,
-    BinaryArray
-};
-
-Type to_type(std::string const& string);
-
-bool is_primitive(Type type);
-bool is_pointer(Type type);
-bool is_vector(Type type);
-Type to_underlying_type(Type type);

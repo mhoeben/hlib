@@ -141,7 +141,7 @@ void JSONEncoder::encode(char const* name, std::string const& value)
     ++m_state.index;
 }
 
-void JSONEncoder::encode(char const* name, Blob const& value)
+void JSONEncoder::encode(char const* name, Binary const& value)
 {
     assert(false); // TODO
     (void)name;
@@ -299,7 +299,7 @@ void JSONDecoder::decode(char const* name, std::string& value)
     decode<>(name, value);
 }
 
-void JSONDecoder::decode(char const* name, Blob& value)
+void JSONDecoder::decode(char const* name, Binary& value)
 {
     assert(false); // TODO
     (void)name;
@@ -319,7 +319,7 @@ void JSONDecoder::close()
     ++m_index;
 }
 
-int JSONDecoder::peek() const
+Type::Id JSONDecoder::peek() const
 {
     if (JSON::Array != m_root.type()) {
         throwf<std::runtime_error>("Cannot unwrap non-array root data");
@@ -329,6 +329,6 @@ int JSONDecoder::peek() const
         throwf<std::runtime_error>("Data is not a wrapped codec::Type");
     }
 
-    return id.as<int>();
+    return id.as<Type::Id>();
 }
 

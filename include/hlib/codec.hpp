@@ -69,12 +69,12 @@ struct Array
         {}
 };
 
-struct Blob
+struct Binary
 {
     void const* data;
     std::size_t size;
 
-    Blob(void const* a_data, size_t a_size)
+    Binary(void const* a_data, size_t a_size)
         : data(a_data)
         , size(a_size)
         {}
@@ -97,7 +97,7 @@ public:
     virtual void encode(char const* name, float const& value) = 0;
     virtual void encode(char const* name, double const& value) = 0;
     virtual void encode(char const* name, std::string const& value) = 0;
-    virtual void encode(char const* name, Blob const& value) = 0;
+    virtual void encode(char const* name, Binary const& value) = 0;
     virtual void close() = 0;
 
     template<typename T>
@@ -130,7 +130,7 @@ public:
     virtual void decode(char const* name, float& value) = 0;
     virtual void decode(char const* name, double& value) = 0;
     virtual void decode(char const* name, std::string& value) = 0;
-    virtual void decode(char const* name, Blob& value) = 0;
+    virtual void decode(char const* name, Binary& value) = 0;
     virtual void close() = 0;
 
     template<typename T>
@@ -150,7 +150,7 @@ public:
         close();
     }
 
-    virtual int peek() const = 0;
+    virtual Type::Id peek() const = 0;
     virtual void unwrap(Type& value);
 };
 

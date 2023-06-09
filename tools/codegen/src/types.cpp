@@ -60,14 +60,14 @@ Type to_type(std::string const& string)
         { "float32",    Type::Float32 },
         { "float64",    Type::Float64 },
         { "string",     Type::String },
-        { "binary",     Type::Blob },
+        { "binary",     Type::Binary },
         { "bool[]",     Type::BoolArray },
         { "int32[]",    Type::Int32Array },
         { "int64[]",    Type::Int64Array },
         { "float32[]",  Type::Float32Array },
         { "float64[]",  Type::Float64Array },
         { "string[]",   Type::StringArray },
-        { "blob[]",     Type::BlobArray }
+        { "blob[]",     Type::BinaryArray }
     };
 
     auto it = map.find(string);
@@ -76,7 +76,7 @@ Type to_type(std::string const& string)
 
 bool is_primitive(Type type)
 {
-    return type <= Type::Blob;
+    return type <= Type::Binary;
 }
 
 bool is_pointer(Type type)
@@ -99,14 +99,14 @@ Type to_underlying_type(Type type)
         { Type::Float32,        Type::Float32 },
         { Type::Float64,        Type::Float64 },
         { Type::String,         Type::String },
-        { Type::Blob,           Type::Blob },
+        { Type::Binary,         Type::Binary },
         { Type::BoolArray,      Type::Bool },
         { Type::Int32Array,     Type::Int32 },
         { Type::Int64Array,     Type::Int64 },
         { Type::Float32Array,   Type::Float32 },
         { Type::Float64Array,   Type::Float64 },
         { Type::StringArray,    Type::String },
-        { Type::BlobArray,      Type::Blob }
+        { Type::BinaryArray,    Type::Binary }
     };
 
     auto it = map.find(type);

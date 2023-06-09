@@ -34,7 +34,7 @@ struct hlib_buffer_s;
 #ifndef HLIB_C_CODEC_H
 #define HLIB_C_CODEC_H
 
-typedef int hlib_codec_type_id_t;
+typedef int32_t hlib_codec_type_id_t;
 typedef size_t hlib_codec_type_size_t;
 
 typedef struct hlib_codec_type_s
@@ -55,11 +55,11 @@ typedef struct hlib_codec_string_s
     size_t length;
 } hlib_codec_string_t;
 
-typedef struct hlib_codec_blob_s
+typedef struct hlib_codec_binary_s
 {
     void const* data;
     size_t size;
-} hlib_codec_blob_t;
+} hlib_codec_binary_t;
 
 typedef struct hlib_encoder_s
 {
@@ -76,7 +76,7 @@ typedef struct hlib_encoder_s
     void (*encode_float)(struct hlib_encoder_s* encoder, char const* name, float value);
     void (*encode_double)(struct hlib_encoder_s* encoder, char const* name, double value);
     void (*encode_string)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_string_t const* value);
-    void (*encode_blob)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_blob_t const* value);
+    void (*encode_binary)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_binary_t const* value);
     void (*close)(struct hlib_encoder_s* encoder);
 } hlib_encoder_t;
 
@@ -97,7 +97,7 @@ typedef struct hlib_decoder_s
     void (*decode_float)(struct hlib_decoder_s* decoder, char const* name, float* value);
     void (*decode_double)(struct hlib_decoder_s* decoder, char const* name, double* value);
     void (*decode_string)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_string_t* value);
-    void (*decode_blob)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_blob_t* value);
+    void (*decode_binary)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_binary_t* value);
     void (*close)(struct hlib_decoder_s* decoder);
 
     int (*peek)(struct hlib_decoder_s* decoder);

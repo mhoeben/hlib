@@ -46,7 +46,7 @@ public:
     void encode(char const* name, float const& value) override;
     void encode(char const* name, double const& value) override;
     void encode(char const* name, std::string const& value) override;
-    void encode(char const* name, Blob const& value) override;
+    void encode(char const* name, Binary const& value) override;
     void close() override;
 
 private:
@@ -81,10 +81,10 @@ public:
     void decode(char const* name, float& value) override;
     void decode(char const* name, double& value) override;
     void decode(char const* name, std::string& value) override;
-    void decode(char const* name, Blob& value) override;
+    void decode(char const* name, Binary& value) override;
     void close() override;
 
-    int peek() const override;
+    Type::Id peek() const override;
 
 private:
     JSON m_root;

@@ -34,6 +34,8 @@ add_executable(${PROJECT_NAME}
     src/generator_c99.hpp
     src/generator_cpp11.cpp
     src/generator_cpp11.hpp
+    src/generator_typescript.cpp
+    src/generator_typescript.hpp
     src/main.cpp
     src/types.cpp
     src/types.hpp
