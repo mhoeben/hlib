@@ -61,6 +61,8 @@ public:
     BinaryDecoder(void const* data, std::size_t size);
     ~BinaryDecoder();
 
+    void reset(void const* data, std::size_t size);
+
     void open(char const* name, Type& value) override;
     void open(char const* name, Array& value) override;
     void open(char const* name, Map& value) override;

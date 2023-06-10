@@ -46,6 +46,7 @@ HLIB_C_VISIBILITY void hlib_encoder_binary_encode_binary(hlib_encoder_t* encoder
 HLIB_C_VISIBILITY void hlib_encoder_binary_close(hlib_encoder_t* encoder);
 
 HLIB_C_VISIBILITY void hlib_decoder_binary_destroy(hlib_decoder_t* decoder);
+HLIB_C_VISIBILITY void hlib_decoder_binary_reset(hlib_decoder_t* decoder, void const* data, size_t size);
 HLIB_C_VISIBILITY void hlib_decoder_binary_open_type(hlib_decoder_t* decoder, char const* name, hlib_codec_type_t* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_open_array(hlib_decoder_t* decoder, char const* name, size_t* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_open_map(hlib_decoder_t* decoder, char const* name, size_t* value);
@@ -354,6 +355,14 @@ hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size)
 void hlib_decoder_binary_destroy(hlib_decoder_t* decoder)
 {
     free(decoder);
+}
+
+void hlib_decoder_binary_reset(hlib_decoder_t* decoder, void const* data, size_t size)
+{
+    hlib_decoder_binary_t* self = (hlib_decoder_binary_t*)decoder;
+    self->data = (uint8_t const*)data;
+    self->size = size;
+    self->offset = 0;
 }
 
 void hlib_decoder_binary_open_type(hlib_decoder_t* /* decoder */, char const* /* name */, hlib_codec_type_t* /* value */)

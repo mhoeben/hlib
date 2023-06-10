@@ -143,6 +143,11 @@ BinaryDecoder::~BinaryDecoder()
     hlib_decoder_binary_destroy(m_decoder);
 }
 
+void BinaryDecoder::reset(void const* data, std::size_t size)
+{
+    hlib_decoder_binary_reset(m_decoder, data, size);
+}
+
 void BinaryDecoder::open(char const* name, Type& value)
 {
     hlib_codec_type_t type{ static_cast<Type::Id>(value), 0 };
