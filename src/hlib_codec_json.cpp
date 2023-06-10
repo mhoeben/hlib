@@ -204,6 +204,14 @@ JSONDecoder::JSONDecoder(void const* data, std::size_t size)
 {
 }
 
+void JSONDecoder::reset(void const* data, std::size_t size)
+{
+    m_root.parse(std::string(static_cast<char const*>(data), size));
+    m_node = JSON();
+    m_index = 0;
+    m_stack.clear();
+}
+
 void JSONDecoder::open(char const* name, Type& value)
 {
     Map map;

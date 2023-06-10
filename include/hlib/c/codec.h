@@ -88,6 +88,8 @@ typedef struct hlib_decoder_s
 
     void (*destroy)(struct hlib_decoder_s* decoder);
 
+    void (*reset)(struct hlib_decoder_s* decoder, void const* data, size_t size);
+
     void (*open_type)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_type_t* value);
     void (*open_array)(struct hlib_decoder_s* decoder, char const* name, size_t* value);
     void (*open_map)(struct hlib_decoder_s* decoder, char const* name, size_t* value);
