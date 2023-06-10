@@ -118,6 +118,10 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
     int id = m_base_id;
 
     // Identifiers.
+    fmt::print(m_output,
+        "export const FirstId_: number = {id};\n",
+        fmt::arg("id", id)
+    );
     for (Declaration const& declaration : declarations) {
         fmt::print(m_output,
             "export const {name}Id: number = {id};\n",
@@ -126,6 +130,10 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
         );
         ++id;
     }
+    fmt::print(m_output,
+        "export const LastId_: number = {id};\n",
+        fmt::arg("id", id)
+    );
 
     id = m_base_id;
 

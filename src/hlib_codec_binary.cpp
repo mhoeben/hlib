@@ -159,7 +159,7 @@ void BinaryDecoder::open(char const* name, Type& value)
     hlib_decoder_binary_open_type(m_decoder, name, &type);
     check_error("decoding", m_decoder->error);
 
-    assert(static_cast<Type::Id>(value) == type.__id);
+    assert(static_cast<Type::Id>(value) == type.id_);
 }
 
 void BinaryDecoder::open(char const* name, Array& value)

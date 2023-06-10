@@ -101,6 +101,10 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
     int id = m_base_id;
 
     // Identifiers.
+    fmt::print(m_output,
+        "static constexpr int FirstId_{{ {id} }};\n",
+        fmt::arg("id", id)
+    );
     for (Declaration const& declaration : declarations) {
         fmt::print(m_output,
             "static constexpr int {name}Id{{ {id} }};\n",
@@ -109,6 +113,10 @@ int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
         );
         ++id;
     }
+    fmt::print(m_output,
+        "static constexpr int LastId_{{ {id} }};\n",
+        fmt::arg("id", id - 1)
+    );
 
     id = m_base_id;
 

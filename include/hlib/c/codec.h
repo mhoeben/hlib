@@ -39,8 +39,8 @@ typedef size_t hlib_codec_type_size_t;
 
 typedef struct hlib_codec_type_s
 {
-    hlib_codec_type_id_t    __id;
-    hlib_codec_type_size_t  __size;
+    hlib_codec_type_id_t    id_;
+    hlib_codec_type_size_t  size_;
 } hlib_codec_type_t;
 
 struct hlib_codec_encoder_s;
