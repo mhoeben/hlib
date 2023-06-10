@@ -67,6 +67,8 @@ typedef struct hlib_encoder_s
 
     void (*destroy)(struct hlib_encoder_s* encoder);
 
+    int (*is_binary)(struct hlib_encoder_s* encoder);
+
     void (*open_type)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_type_t const* value);
     void (*open_array)(struct hlib_encoder_s* encoder, char const* name, size_t value);
     void (*open_map)(struct hlib_encoder_s* encoder, char const* name, size_t value);

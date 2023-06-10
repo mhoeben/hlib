@@ -58,6 +58,11 @@ JSONEncoder::JSONEncoder(Buffer& buffer)
 {
 }
 
+bool JSONEncoder::isBinary() const
+{
+    return false;
+}
+
 void JSONEncoder::open(char const* name, Type const& value)
 {
     return open(name, Map(static_cast<std::size_t>(value)));

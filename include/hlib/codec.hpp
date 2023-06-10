@@ -88,6 +88,8 @@ public:
 public:
     virtual ~Encoder() = default;
 
+    virtual bool isBinary() const = 0;
+
     virtual void open(char const* name, Type const& value) = 0;
     virtual void open(char const* name, Array const& value) = 0;
     virtual void open(char const* name, Map const& value) = 0;
@@ -120,6 +122,8 @@ public:
 
 public:
     virtual ~Decoder() = default;
+
+    virtual void reset(void const* data, std::size_t size) = 0;
 
     virtual void open(char const* name, Type& value) = 0;
     virtual void open(char const* name, Array& value) = 0;
