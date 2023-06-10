@@ -218,6 +218,11 @@ do {                                                                        \
     self->offset += sizeof(type);                                           \
 } while(0)
 
+static int hlib_encoder_binary_is_binary(hlib_encoder_t* /* encoder */)
+{
+    return 1;
+}
+
 //
 // Public
 //
@@ -230,6 +235,7 @@ hlib_encoder_t* hlib_encoder_binary_create(hlib_buffer_t* buffer)
 
     memset(self, 0, sizeof(*self));
     self->base.destroy = hlib_encoder_binary_destroy;
+    self->base.is_binary = hlib_encoder_binary_is_binary;
     self->base.open_type = hlib_encoder_binary_open_type;
     self->base.open_array = hlib_encoder_binary_open_array;
     self->base.open_map = hlib_encoder_binary_open_map;
@@ -334,6 +340,7 @@ hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size)
 
     memset(self, 0, sizeof(*self));
     self->base.destroy = hlib_decoder_binary_destroy;
+    self->base.reset = hlib_decoder_binary_reset;
     self->base.open_type = hlib_decoder_binary_open_type;
     self->base.open_array = hlib_decoder_binary_open_array;
     self->base.open_map = hlib_decoder_binary_open_map;

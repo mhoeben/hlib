@@ -61,6 +61,11 @@ BinaryEncoder::~BinaryEncoder()
     hlib_encoder_binary_destroy(m_encoder);
 }
 
+bool BinaryEncoder::isBinary() const
+{
+    return true;
+}
+
 void BinaryEncoder::open(char const* name, Type const& value)
 {
     hlib_codec_type_t const type{ static_cast<Type::Id>(value), static_cast<std::size_t>(value) };

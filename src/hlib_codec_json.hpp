@@ -37,6 +37,8 @@ class JSONEncoder final : public Encoder
 public:
     JSONEncoder(Buffer& buffer);
 
+    bool isBinary() const override;
+
     void open(char const* name, Type const& value) override;
     void open(char const* name, Array const& value) override;
     void open(char const* name, Map const& value) override;
@@ -72,7 +74,7 @@ class JSONDecoder : public Decoder
 public:
     JSONDecoder(void const* data, std::size_t size);
 
-    void reset(void const* data, std::size_t size);
+    void reset(void const* data, std::size_t size) override;
 
     void open(char const* name, Type& value) override;
     void open(char const* name, Array& value) override;

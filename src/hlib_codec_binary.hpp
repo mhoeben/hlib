@@ -39,6 +39,8 @@ public:
     BinaryEncoder(Buffer& buffer);
     ~BinaryEncoder();
 
+    bool isBinary() const override;
+
     void open(char const* name, Type const& value) override;
     void open(char const* name, Array const& value) override;
     void open(char const* name, Map const& value) override;
@@ -61,7 +63,7 @@ public:
     BinaryDecoder(void const* data, std::size_t size);
     ~BinaryDecoder();
 
-    void reset(void const* data, std::size_t size);
+    void reset(void const* data, std::size_t size) override;
 
     void open(char const* name, Type& value) override;
     void open(char const* name, Array& value) override;
