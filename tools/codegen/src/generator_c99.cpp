@@ -124,22 +124,33 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
     // Type IDs.
     int id = m_base_id;
+
+    fmt::print(m_output,
+        "#define {NS}FIRST_ID_ ({id})\n",
+            fmt::arg("NS", to_upper(ns)),
+            fmt::arg("id", id)
+    );
     for (Declaration const& declaration : declarations) {
         fmt::print(m_output,
-            "#define {NS}{NAME} ({id})\n",
+            "#define {NS}{NAME}_ID ({id})\n",
             fmt::arg("NS", to_upper(ns)),
             fmt::arg("NAME", to_upper(declaration.name)),
             fmt::arg("id", id)
         );
         ++id;
     }
+    fmt::print(m_output,
+        "#define {NS}LAST_ID_ ({id})\n",
+            fmt::arg("NS", to_upper(ns)),
+            fmt::arg("id", id - 1)
+    );
 
     for (Declaration const& declaration : declarations) {
         fmt::print(m_output,
             "\nstruct {ns}{name}\n"
             "{{\n"
-            "    hlib_codec_type_id_t __id;\n"
-            "    hlib_codec_type_size_t __size;\n",
+            "    hlib_codec_type_id_t id_;\n"
+            "    hlib_codec_type_size_t size_;\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
@@ -197,8 +208,8 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
         fmt::print(m_output,
             "\nvoid {ns}{name}_init(struct {ns}{name}* self)\n"
             "{{\n"
-            "    self->__id = {NS}{NAME};\n"
-            "    self->__size = {size};\n",
+            "    self->id_ = {NS}{NAME}_ID;\n"
+            "    self->size_ = {size};\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name),
             fmt::arg("NS", to_upper(ns)),
