@@ -39,6 +39,10 @@ export interface Encoder
 {
 };
 
+export interface Decoder
+{
+};
+
 export interface Type
 {
     readonly __id : number;
