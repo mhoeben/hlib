@@ -63,10 +63,10 @@ std::string to_extension(Type type)
     std::unordered_map<Type, std::string> map =
     {
         { Type::Bool,           "Bool" },
-        { Type::Int32,          "Number" },
-        { Type::Int64,          "Number" },
-        { Type::Float32,        "Number" },
-        { Type::Float64,        "Number" },
+        { Type::Int32,          "Int" },
+        { Type::Int64,          "Int" },
+        { Type::Float32,        "Float32" },
+        { Type::Float64,        "Float64" },
         { Type::String,         "String" },
         { Type::Binary,         "Binary" }
     };
