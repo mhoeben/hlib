@@ -54,6 +54,8 @@ export interface Type
 
 export interface Encoder
 {
+    getArrayBuffer(): ArrayBuffer;
+
     clear(): void;
 
     openType(name: string, value: Type): void;
@@ -72,6 +74,8 @@ export interface Encoder
 
 export interface Decoder
 { 
+    reset(buffer: ArrayBuffer): void;
+
     openType(name: string): number;
     openArray(name: string): number;
     openMap(name: string): number;
@@ -367,7 +371,7 @@ class BinaryDecoder implements Decoder
         this.reset(buffer);
     }
 
-    reset(buffer: ArrayBuffer)
+    reset(buffer: ArrayBuffer): void
     {
         this.array = new ConsumerUint8Array(buffer);
     }
