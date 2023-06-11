@@ -103,6 +103,8 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
     ns.pop_back();
 
     fmt::print(m_output,
+        "import { hlib_codec } from \"hlib/codec.js\"\n"
+        "\n"
         "export namespace {ns}\n"
         "{{\n"
         "\n",
@@ -139,7 +141,7 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
 
     for (Declaration const& declaration : declarations) {
         fmt::print(m_output,
-            "\nexport class {name} implements hlib_codec::Type\n"
+            "\nexport class {name} implements hlib_codec.Type\n"
             "{{\n",
             fmt::arg("name", declaration.name)
         );
@@ -162,7 +164,7 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
 
             fmt::print(m_output,
                 "\n"
-                "    encode(encoder: hlib_codec::Encoder): void\n"
+                "    encode(encoder: hlib_codec.Encoder): void\n"
                 "    {{\n"
                 "        encoder.openType(null, this);\n"
             );
@@ -197,7 +199,7 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
 
             fmt::print(m_output,
                 "\n"
-                "    decode(decoder: hlib_codec::Decoder): void\n"
+                "    decode(decoder: hlib_codec.Decoder): void\n"
                 "    {{\n"
                 "        decoder.openType(null);\n"
             );
