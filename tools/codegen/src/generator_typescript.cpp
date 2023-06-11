@@ -103,7 +103,7 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
     ns.pop_back();
 
     fmt::print(m_output,
-        "import { hlib_codec } from \"hlib/codec.js\"\n"
+        "import {{ hlib_codec }} from \"hlib/codec.js\"\n"
         "\n"
         "export namespace {ns}\n"
         "{{\n"
