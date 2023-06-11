@@ -50,6 +50,8 @@ export interface Type
 
 export interface Encoder
 {
+    clear(): void;
+
     openType(name: string, value: Type): void;
     openArray(name: string, value: number): void;
     openMap(name: string, value: number): void;
@@ -92,6 +94,11 @@ class ProducerUint8Array
         this.data = new Uint8Array(this.grow_size);
         this.view = new DataView(this.data.buffer);
         this.size = 0;
+    }
+
+    getArrayBuffer(): ArrayBuffer
+    {
+        return this.data.buffer;
     }
 
     clear(): void
@@ -238,11 +245,25 @@ class BinaryEncoder implements Encoder
     //
     // Public
     //
-    constructor()
+    constructor(grow?: number)
     {
-        this.array = new ProducerUint8Array(config.binary.encoder.grow);
+        if (undefined === grow) {
+            grow = config.binary.encoder.grow;
+        }
+
+        this.array = new ProducerUint8Array(grow);
     }
-    
+
+    getArrayBuffer(): ArrayBuffer
+    {
+        return this.array.getArrayBuffer();
+    }
+
+    clear(): void
+    {
+        this.array.clear();
+    }
+
     openType(_name: string, _value: Type): void
     {
     }
@@ -339,6 +360,11 @@ class BinaryDecoder implements Decoder
 {
     constructor(buffer: ArrayBuffer)
     {
+        this.reset(buffer);
+    }
+
+    reset(buffer: ArrayBuffer)
+    {
         this.array = new ConsumerUint8Array(buffer);
     }
 
@@ -432,6 +458,26 @@ class BinaryDecoder implements Decoder
     //
     array: ConsumerUint8Array;
 };
+
+export function createEncoder(kind: string, grow?: number): Encoder
+{
+    switch (kind) {
+    case "binary":
+        return new BinaryEncoder(grow);
+    default:
+        throw new Error(`Invalid or unsupported hlib::Encoder kind '${kind}'`);
+    }
+}
+
+export function createDecoder(kind: string, buffer: ArrayBuffer): Decoder
+{
+    switch (kind) {
+    case "binary":
+        return new BinaryDecoder(buffer);
+    default:
+        throw new Error(`Invalid or unsupported hlib::Decoder kind '${kind}'`);
+    }
+}
 
 } // namespace hlib_codec
 
