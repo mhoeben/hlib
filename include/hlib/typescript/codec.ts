@@ -366,8 +366,12 @@ class BinaryEncoder implements Encoder
 
 class BinaryDecoder implements Decoder
 {
-    constructor(buffer: ArrayBuffer)
+    constructor(buffer?: ArrayBuffer)
     {
+        if (undefined === buffer) {
+            return;
+        }
+
         this.reset(buffer);
     }
 
@@ -477,7 +481,7 @@ export function createEncoder(kind: string, grow?: number): Encoder
     }
 }
 
-export function createDecoder(kind: string, buffer: ArrayBuffer): Decoder
+export function createDecoder(kind: string, buffer?: ArrayBuffer): Decoder
 {
     switch (kind) {
     case "binary":
