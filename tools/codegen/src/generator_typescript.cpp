@@ -235,6 +235,8 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
         fmt::print(m_output,
             "}};\n"
         );
+
+        ++id;
     }
 
     fmt::print(m_output,
