@@ -263,12 +263,12 @@ void hlib_codec_encoder_binary_open_type(hlib_codec_encoder_t* /* encoder */, ch
 
 void hlib_codec_encoder_binary_open_array(hlib_codec_encoder_t* encoder, char const* /* name */, size_t value)
 {
-    hlib_codec_encoder_binary_encode_int64(encoder, nullptr, value);
+    hlib_codec_encoder_binary_encode_int64(encoder, NULL, value);
 }
 
 void hlib_codec_encoder_binary_open_map(hlib_codec_encoder_t* encoder, char const* /* name */, size_t value)
 {
-    hlib_codec_encoder_binary_encode_int64(encoder, nullptr, value);
+    hlib_codec_encoder_binary_encode_int64(encoder, NULL, value);
 }
 
 void hlib_codec_encoder_binary_encode_bool(hlib_codec_encoder_t* encoder, char const* /* name */, bool value)
