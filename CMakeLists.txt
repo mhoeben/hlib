@@ -128,6 +128,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
     $<$<COMPILE_LANG_AND_ID:C,GNU>:
         -Wlogical-op
+        -Wmissing-prototypes
     >
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:
         -Wnoexcept
@@ -136,6 +137,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
     $<$<COMPILE_LANG_AND_ID:C,Clang>:
         -Wstring-conversion
+        -Wmissing-prototypes
     >
     $<$<COMPILE_LANG_AND_ID:CXX,Clang>:
         -Wstring-conversion
