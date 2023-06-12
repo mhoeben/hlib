@@ -24,6 +24,8 @@
 #pragma once
 
 #include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef HLIB_C_VISIBILITY_STATIC

@@ -72,7 +72,7 @@ typedef struct hlib_encoder_s
     void (*open_type)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_type_t const* value);
     void (*open_array)(struct hlib_encoder_s* encoder, char const* name, size_t value);
     void (*open_map)(struct hlib_encoder_s* encoder, char const* name, size_t value);
-    void (*encode_bool)(struct hlib_encoder_s* encoder, char const* name, char value);
+    void (*encode_bool)(struct hlib_encoder_s* encoder, char const* name, bool value);
     void (*encode_int32)(struct hlib_encoder_s* encoder, char const* name, int32_t value);
     void (*encode_int64)(struct hlib_encoder_s* encoder, char const* name, int64_t value);
     void (*encode_float)(struct hlib_encoder_s* encoder, char const* name, float value);
@@ -95,7 +95,7 @@ typedef struct hlib_decoder_s
     void (*open_type)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_type_t* value);
     void (*open_array)(struct hlib_decoder_s* decoder, char const* name, size_t* value);
     void (*open_map)(struct hlib_decoder_s* decoder, char const* name, size_t* value);
-    void (*decode_bool)(struct hlib_decoder_s* decoder, char const* name, char* value);
+    void (*decode_bool)(struct hlib_decoder_s* decoder, char const* name, bool* value);
     void (*decode_int32)(struct hlib_decoder_s* decoder, char const* name, int32_t* value);
     void (*decode_int64)(struct hlib_decoder_s* decoder, char const* name, int64_t* value);
     void (*decode_float)(struct hlib_decoder_s* decoder, char const* name, float* value);
