@@ -122,7 +122,7 @@ hlib_buffer_t* encode_Primitives(char const* kind)
     hlib_buffer_t* buffer = hlib_buffer_create();
     REQUIRE(nullptr != buffer);
 
-    hlib_encoder_t* encoder = hlib_encoder_create(kind, buffer);
+    hlib_codec_encoder_t* encoder = hlib_codec_encoder_create(kind, buffer);
     REQUIRE(nullptr != encoder);
 
     test_Primitives p;
@@ -145,7 +145,7 @@ hlib_buffer_t* encode_Primitives(char const* kind)
 
 void decode_Primitives(char const* kind, void const* data, size_t size)
 {
-    hlib_decoder_t* decoder = hlib_decoder_create(kind, data, size);
+    hlib_codec_decoder_t* decoder = hlib_codec_decoder_create(kind, data, size);
     REQUIRE(nullptr != decoder);
 
     test_Primitives p;
@@ -169,7 +169,7 @@ hlib_buffer_t* encode_PrimitiveArrays(char const* kind)
     hlib_buffer_t* buffer = hlib_buffer_create();
     REQUIRE(nullptr != buffer);
 
-    hlib_encoder_t* encoder = hlib_encoder_create(kind, buffer);
+    hlib_codec_encoder_t* encoder = hlib_codec_encoder_create(kind, buffer);
     REQUIRE(nullptr != encoder);
 
     test_PrimitiveArrays a;
@@ -200,7 +200,7 @@ hlib_buffer_t* encode_PrimitiveArrays(char const* kind)
 
 void decode_PrimitiveArrays(char const* kind, void const* data, size_t size)
 {
-    hlib_decoder_t* decoder = hlib_decoder_create(kind, data, size);
+    hlib_codec_decoder_t* decoder = hlib_codec_decoder_create(kind, data, size);
     REQUIRE(nullptr != decoder);
 
     test_PrimitiveArrays a;

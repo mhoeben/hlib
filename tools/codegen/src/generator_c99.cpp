@@ -184,12 +184,12 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
             fmt::arg("name", declaration.name)
         );
         fmt::print(m_output,
-            "void {ns}{name}_encode(hlib_encoder_t* encoder, struct {ns}{name}* const object);\n",
+            "void {ns}{name}_encode(hlib_codec_encoder_t* encoder, struct {ns}{name}* const object);\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
         fmt::print(m_output,
-            "void {ns}{name}_decode(hlib_decoder_t* decoder, struct {ns}{name}* object);\n",
+            "void {ns}{name}_decode(hlib_codec_decoder_t* decoder, struct {ns}{name}* object);\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
         );
@@ -248,7 +248,7 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
         // Encoder function.
         fmt::print(m_output,
-            "void {ns}{name}_encode(hlib_encoder_t* encoder, struct {ns}{name}* const self)\n"
+            "void {ns}{name}_encode(hlib_codec_encoder_t* encoder, struct {ns}{name}* const self)\n"
             "{{\n",
             fmt::arg("ns", ns),
             fmt::arg("name", declaration.name)
@@ -296,7 +296,7 @@ int GeneratorC99::generate(FILE* output, FILE* input, Side side)
 
         // Decoder function.
         fmt::print(m_output,
-            "void {ns}{name}_decode(hlib_decoder_t* decoder, struct {ns}{name}* self)\n"
+            "void {ns}{name}_decode(hlib_codec_decoder_t* decoder, struct {ns}{name}* self)\n"
             "{{\n"
             "    size_t array_size;\n"
             "    (void)array_size;\n",

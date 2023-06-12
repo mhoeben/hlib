@@ -44,10 +44,10 @@ typedef struct hlib_codec_type_s
 } hlib_codec_type_t;
 
 struct hlib_codec_encoder_s;
-typedef void(*hlib_codec_encode_type_t)(struct hlib_encoder_s*, hlib_codec_type_t const*);
+typedef void(*hlib_codec_encode_type_t)(struct hlib_codec_encoder_s*, hlib_codec_type_t const*);
 
 struct hlib_codec_decoder_s;
-typedef void(*hlib_codec_decode_type_t)(struct hlib_decoder_s*, hlib_codec_type_t*);
+typedef void(*hlib_codec_decode_type_t)(struct hlib_codec_decoder_s*, hlib_codec_type_t*);
 
 typedef struct hlib_codec_string_s
 {
@@ -61,53 +61,53 @@ typedef struct hlib_codec_binary_s
     size_t size;
 } hlib_codec_binary_t;
 
-typedef struct hlib_encoder_s
+typedef struct hlib_codec_encoder_s
 {
     hlib_error_t error;
 
-    void (*destroy)(struct hlib_encoder_s* encoder);
+    void (*destroy)(struct hlib_codec_encoder_s* encoder);
 
-    int (*is_binary)(struct hlib_encoder_s* encoder);
+    int (*is_binary)(struct hlib_codec_encoder_s* encoder);
 
-    void (*open_type)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_type_t const* value);
-    void (*open_array)(struct hlib_encoder_s* encoder, char const* name, size_t value);
-    void (*open_map)(struct hlib_encoder_s* encoder, char const* name, size_t value);
-    void (*encode_bool)(struct hlib_encoder_s* encoder, char const* name, bool value);
-    void (*encode_int32)(struct hlib_encoder_s* encoder, char const* name, int32_t value);
-    void (*encode_int64)(struct hlib_encoder_s* encoder, char const* name, int64_t value);
-    void (*encode_float)(struct hlib_encoder_s* encoder, char const* name, float value);
-    void (*encode_double)(struct hlib_encoder_s* encoder, char const* name, double value);
-    void (*encode_string)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_string_t const* value);
-    void (*encode_binary)(struct hlib_encoder_s* encoder, char const* name, hlib_codec_binary_t const* value);
-    void (*close)(struct hlib_encoder_s* encoder);
-} hlib_encoder_t;
+    void (*open_type)(struct hlib_codec_encoder_s* encoder, char const* name, hlib_codec_type_t const* value);
+    void (*open_array)(struct hlib_codec_encoder_s* encoder, char const* name, size_t value);
+    void (*open_map)(struct hlib_codec_encoder_s* encoder, char const* name, size_t value);
+    void (*encode_bool)(struct hlib_codec_encoder_s* encoder, char const* name, bool value);
+    void (*encode_int32)(struct hlib_codec_encoder_s* encoder, char const* name, int32_t value);
+    void (*encode_int64)(struct hlib_codec_encoder_s* encoder, char const* name, int64_t value);
+    void (*encode_float)(struct hlib_codec_encoder_s* encoder, char const* name, float value);
+    void (*encode_double)(struct hlib_codec_encoder_s* encoder, char const* name, double value);
+    void (*encode_string)(struct hlib_codec_encoder_s* encoder, char const* name, hlib_codec_string_t const* value);
+    void (*encode_binary)(struct hlib_codec_encoder_s* encoder, char const* name, hlib_codec_binary_t const* value);
+    void (*close)(struct hlib_codec_encoder_s* encoder);
+} hlib_codec_encoder_t;
 
-HLIB_C_VISIBILITY hlib_encoder_t* hlib_encoder_create(char const* name, struct hlib_buffer_s* buffer);
+HLIB_C_VISIBILITY hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_buffer_s* buffer);
 
-typedef struct hlib_decoder_s
+typedef struct hlib_codec_decoder_s
 {
     hlib_error_t error;
 
-    void (*destroy)(struct hlib_decoder_s* decoder);
+    void (*destroy)(struct hlib_codec_decoder_s* decoder);
 
-    void (*reset)(struct hlib_decoder_s* decoder, void const* data, size_t size);
+    void (*reset)(struct hlib_codec_decoder_s* decoder, void const* data, size_t size);
 
-    void (*open_type)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_type_t* value);
-    void (*open_array)(struct hlib_decoder_s* decoder, char const* name, size_t* value);
-    void (*open_map)(struct hlib_decoder_s* decoder, char const* name, size_t* value);
-    void (*decode_bool)(struct hlib_decoder_s* decoder, char const* name, bool* value);
-    void (*decode_int32)(struct hlib_decoder_s* decoder, char const* name, int32_t* value);
-    void (*decode_int64)(struct hlib_decoder_s* decoder, char const* name, int64_t* value);
-    void (*decode_float)(struct hlib_decoder_s* decoder, char const* name, float* value);
-    void (*decode_double)(struct hlib_decoder_s* decoder, char const* name, double* value);
-    void (*decode_string)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_string_t* value);
-    void (*decode_binary)(struct hlib_decoder_s* decoder, char const* name, hlib_codec_binary_t* value);
-    void (*close)(struct hlib_decoder_s* decoder);
+    void (*open_type)(struct hlib_codec_decoder_s* decoder, char const* name, hlib_codec_type_t* value);
+    void (*open_array)(struct hlib_codec_decoder_s* decoder, char const* name, size_t* value);
+    void (*open_map)(struct hlib_codec_decoder_s* decoder, char const* name, size_t* value);
+    void (*decode_bool)(struct hlib_codec_decoder_s* decoder, char const* name, bool* value);
+    void (*decode_int32)(struct hlib_codec_decoder_s* decoder, char const* name, int32_t* value);
+    void (*decode_int64)(struct hlib_codec_decoder_s* decoder, char const* name, int64_t* value);
+    void (*decode_float)(struct hlib_codec_decoder_s* decoder, char const* name, float* value);
+    void (*decode_double)(struct hlib_codec_decoder_s* decoder, char const* name, double* value);
+    void (*decode_string)(struct hlib_codec_decoder_s* decoder, char const* name, hlib_codec_string_t* value);
+    void (*decode_binary)(struct hlib_codec_decoder_s* decoder, char const* name, hlib_codec_binary_t* value);
+    void (*close)(struct hlib_codec_decoder_s* decoder);
 
-    int (*peek)(struct hlib_decoder_s* decoder);
-} hlib_decoder_t;
+    int (*peek)(struct hlib_codec_decoder_s* decoder);
+} hlib_codec_decoder_t;
 
-HLIB_C_VISIBILITY hlib_decoder_t* hlib_decoder_create(char const* name, void const* data, size_t size);
+HLIB_C_VISIBILITY hlib_codec_decoder_t* hlib_codec_decoder_create(char const* name, void const* data, size_t size);
 
 #endif // HLIB_C_CODEC_H
 
@@ -118,25 +118,25 @@ HLIB_C_VISIBILITY hlib_decoder_t* hlib_decoder_create(char const* name, void con
 
 #include <string.h>
 
-extern hlib_encoder_t* hlib_encoder_binary_create(struct hlib_buffer_s* buffer);
-extern hlib_decoder_t* hlib_decoder_binary_create(void const* data, size_t size);
+extern hlib_codec_encoder_t* hlib_codec_encoder_binary_create(struct hlib_buffer_s* buffer);
+extern hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, size_t size);
 
 //
 // Public
 //
-hlib_encoder_t* hlib_encoder_create(char const* name, struct hlib_buffer_s* buffer)
+hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_buffer_s* buffer)
 {
     if (0 == strcmp("binary", name)) {
-        return hlib_encoder_binary_create(buffer);
+        return hlib_codec_encoder_binary_create(buffer);
     }
 
     return NULL;
 }
 
-hlib_decoder_t* hlib_decoder_create(char const* name, void const* data, size_t size)
+hlib_codec_decoder_t* hlib_codec_decoder_create(char const* name, void const* data, size_t size)
 {
     if (0 == strcmp("binary", name)) {
-        return hlib_decoder_binary_create(data, size);
+        return hlib_codec_decoder_binary_create(data, size);
     }
 
     return NULL;
