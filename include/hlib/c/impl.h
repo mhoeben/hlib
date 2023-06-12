@@ -28,7 +28,6 @@
 #include "hlib/c/buffer.h"
 #undef HLIB_C_BUFFER_IMPL
 
-/*
 #define HLIB_C_CODEC_IMPL
 #include "hlib/c/codec.h"
 #undef HLIB_C_CODEC_IMPL
@@ -44,7 +43,6 @@
 #define HLIB_C_VECTOR_IMPL
 #include "hlib/c/vector.h"
 #undef HLIB_C_VECTOR_IMPL
-*/
 
 #endif // HLIB_C_IMPL
 
