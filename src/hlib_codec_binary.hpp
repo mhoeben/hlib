@@ -25,8 +25,8 @@
 
 #include "hlib/codec.hpp"
 
-struct hlib_encoder_s;
-struct hlib_decoder_s;
+struct hlib_codec_encoder_s;
+struct hlib_codec_decoder_s;
 
 namespace hlib
 {
@@ -54,7 +54,7 @@ public:
     void close() override;
 
 private:
-    struct hlib_encoder_s* m_encoder;
+    struct hlib_codec_encoder_s* m_encoder;
 };
 
 class BinaryDecoder : public Decoder
@@ -80,7 +80,7 @@ public:
     Type::Id peek() const override;
 
 private:
-    struct hlib_decoder_s* m_decoder;
+    struct hlib_codec_decoder_s* m_decoder;
 };
 
 } // namespace codec
