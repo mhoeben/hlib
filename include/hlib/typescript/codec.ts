@@ -405,7 +405,7 @@ class BinaryDecoder implements Decoder
         let byte = this.array.consumeByte();
 
         let value: number = byte & 0x3f;
-        let negative: boolean = Boolean(byte ^ 0x40);
+        let negative: boolean = Boolean(byte & 0x40);
         let shift = 6;
 
         while (byte & 0x80) {
