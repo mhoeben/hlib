@@ -176,10 +176,8 @@ void BinaryDecoder::open(char const* name, Map& value)
 
 void BinaryDecoder::decode(char const* name, bool& value)
 {
-    char v;
-    hlib_decoder_binary_decode_bool(m_decoder, name, &v);
+    hlib_decoder_binary_decode_bool(m_decoder, name, &value);
     check_error("decoding", m_decoder->error);
-    value = v;
 }
 
 void BinaryDecoder::decode(char const* name, std::int32_t& value)

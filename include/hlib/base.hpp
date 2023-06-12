@@ -25,6 +25,8 @@
 
 #include "hlib/c/base.h"
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 

@@ -39,7 +39,7 @@ std::string to_string(Type type)
 {
     std::unordered_map<Type, std::string> map =
     {
-        { Type::Bool,           "char" },
+        { Type::Bool,           "_Bool" },
         { Type::Int32,          "int32_t" },
         { Type::Int64,          "int64_t" },
         { Type::Float32,        "float" },

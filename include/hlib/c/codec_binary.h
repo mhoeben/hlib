@@ -36,7 +36,7 @@ HLIB_C_VISIBILITY void hlib_encoder_binary_destroy(hlib_encoder_t* encoder);
 HLIB_C_VISIBILITY void hlib_encoder_binary_open_type(hlib_encoder_t* encoder, char const* name, hlib_codec_type_t const* value);
 HLIB_C_VISIBILITY void hlib_encoder_binary_open_array(hlib_encoder_t* encoder, char const* name, size_t value);
 HLIB_C_VISIBILITY void hlib_encoder_binary_open_map(hlib_encoder_t* encoder, char const* name, size_t value);
-HLIB_C_VISIBILITY void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* name, char value);
+HLIB_C_VISIBILITY void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* name, bool value);
 HLIB_C_VISIBILITY void hlib_encoder_binary_encode_int32(hlib_encoder_t* encoder, char const* name, int32_t value);
 HLIB_C_VISIBILITY void hlib_encoder_binary_encode_int64(hlib_encoder_t* encoder, char const* name, int64_t value);
 HLIB_C_VISIBILITY void hlib_encoder_binary_encode_float(hlib_encoder_t* encoder, char const* name, float value);
@@ -50,7 +50,7 @@ HLIB_C_VISIBILITY void hlib_decoder_binary_reset(hlib_decoder_t* decoder, void c
 HLIB_C_VISIBILITY void hlib_decoder_binary_open_type(hlib_decoder_t* decoder, char const* name, hlib_codec_type_t* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_open_array(hlib_decoder_t* decoder, char const* name, size_t* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_open_map(hlib_decoder_t* decoder, char const* name, size_t* value);
-HLIB_C_VISIBILITY void hlib_decoder_binary_decode_bool(hlib_decoder_t* decoder, char const* name, char* value);
+HLIB_C_VISIBILITY void hlib_decoder_binary_decode_bool(hlib_decoder_t* decoder, char const* name, bool* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_decode_int32(hlib_decoder_t* decoder, char const* name, int32_t* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_decode_int64(hlib_decoder_t* decoder, char const* name, int64_t* value);
 HLIB_C_VISIBILITY void hlib_decoder_binary_decode_float(hlib_decoder_t* decoder, char const* name, float* value);
@@ -271,7 +271,7 @@ void hlib_encoder_binary_open_map(hlib_encoder_t* encoder, char const* /* name *
     hlib_encoder_binary_encode_int64(encoder, nullptr, value);
 }
 
-void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* /* name */, char value)
+void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* /* name */, bool value)
 {
     if (HLIB_ERROR_NONE != encoder->error) {
         return;
@@ -279,7 +279,7 @@ void hlib_encoder_binary_encode_bool(hlib_encoder_t* encoder, char const* /* nam
 
     hlib_encoder_binary_t* self = (hlib_encoder_binary_t*)encoder;
 
-    char b = !!value;
+    bool b = !!value;
     hlib_buffer_append(self->buffer, &b, 1);
 }
 
@@ -398,7 +398,7 @@ void hlib_decoder_binary_open_map(hlib_decoder_t* decoder, char const* /* name *
     *value = size;
 }
 
-void hlib_decoder_binary_decode_bool(hlib_decoder_t* decoder, char const* /* name */, char* value)
+void hlib_decoder_binary_decode_bool(hlib_decoder_t* decoder, char const* /* name */, bool* value)
 {
     if (HLIB_ERROR_NONE != decoder->error) {
         return;
