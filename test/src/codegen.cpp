@@ -111,12 +111,6 @@ void decode_PrimitiveArrays(std::string const& kind, void const* data, size_t si
 namespace c99
 {
 
-bool string_compare(std::string const& expected, hlib_codec_string_t const& test_string)
-{ 
-    return expected.length() == test_string.length
-        && 0 == memcmp(expected.data(), test_string.data, test_string.length);
-};
-
 hlib_buffer_t* encode_Primitives(char const* kind)
 {
     hlib_buffer_t* buffer = hlib_buffer_create();
@@ -145,6 +139,8 @@ hlib_buffer_t* encode_Primitives(char const* kind)
 
 void decode_Primitives(char const* kind, void const* data, size_t size)
 {
+    char string[8];
+
     hlib_codec_decoder_t* decoder = hlib_codec_decoder_create(kind, data, size);
     REQUIRE(nullptr != decoder);
 
@@ -159,7 +155,7 @@ void decode_Primitives(char const* kind, void const* data, size_t size)
     REQUIRE(0x123456789abcdefLL == p.int64);
     REQUIRE(3.14159265359f == p.float32);
     REQUIRE(2.71828182845904523536 == p.float64);
-    REQUIRE(true == string_compare("foo bar", p.string));
+    REQUIRE(std::string("foo bar") == hlib_codec_string_copy(string, &p.string, sizeof(string)));
 
     test_Primitives_free(&p);
 }
@@ -200,6 +196,8 @@ hlib_buffer_t* encode_PrimitiveArrays(char const* kind)
 
 void decode_PrimitiveArrays(char const* kind, void const* data, size_t size)
 {
+    char string[4];
+
     hlib_codec_decoder_t* decoder = hlib_codec_decoder_create(kind, data, size);
     REQUIRE(nullptr != decoder);
 
@@ -219,8 +217,8 @@ void decode_PrimitiveArrays(char const* kind, void const* data, size_t size)
     REQUIRE(2.7182818f == HLIB_VECTOR_AT(&a.float32s, float, 1));
     REQUIRE(3.14159265359 == HLIB_VECTOR_AT(&a.float64s, double, 0));
     REQUIRE(2.71828182845904523536 == HLIB_VECTOR_AT(&a.float64s, double, 1));
-    REQUIRE(true == string_compare("foo", HLIB_VECTOR_AT(&a.strings, hlib_codec_string_t, 0)));
-    REQUIRE(true == string_compare("bar", HLIB_VECTOR_AT(&a.strings, hlib_codec_string_t, 1)));
+    REQUIRE(std::string("foo") == hlib_codec_string_copy(string, &HLIB_VECTOR_AT(&a.strings, hlib_codec_string_t, 0), sizeof(string)));
+    REQUIRE(std::string("bar") == hlib_codec_string_copy(string, &HLIB_VECTOR_AT(&a.strings, hlib_codec_string_t, 1), sizeof(string)));
 
     test_PrimitiveArrays_free(&a);
 }

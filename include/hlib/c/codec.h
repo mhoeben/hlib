@@ -55,6 +55,8 @@ typedef struct hlib_codec_string_s
     size_t length;
 } hlib_codec_string_t;
 
+extern char* hlib_codec_string_copy(char* dest, hlib_codec_string_t const* src, size_t size);
+
 typedef struct hlib_codec_binary_s
 {
     void const* data;
@@ -124,6 +126,16 @@ extern hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, 
 //
 // Public
 //
+char* hlib_codec_string_copy(char* dest, hlib_codec_string_t const* src, size_t size)
+{
+    assert(size > 0);
+
+    size_t const n = src->length < size - 1 ? src->length : size - 1;
+    memcpy(dest, src->data, n);
+    dest[n] = 0;
+    return dest;
+}
+
 hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_buffer_s* buffer)
 {
     if (0 == strcmp("binary", name)) {
