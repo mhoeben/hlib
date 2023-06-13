@@ -150,7 +150,7 @@ hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_bu
 void hlib_codec_encoder_wrap(hlib_codec_encoder_t* encoder, hlib_codec_type_t const* type, hlib_codec_type_encode_t encode)
 {
     encoder->open_array(encoder, NULL, 2);
-    encoder->open_type(encoder, NULL, type);
+    encoder->encode_int32(encoder, NULL, type->id_);
     encode(encoder, type);
     encoder->close(encoder);
 }
@@ -170,8 +170,10 @@ void hlib_codec_decoder_unwrap(hlib_codec_decoder_t* decoder, hlib_codec_type_t*
     decoder->open_array(decoder, NULL, &array_size);
     assert(2 == array_size);
 
-    hlib_codec_type_t decoded_type;
-    decoder->open_type(decoder, NULL, &decoded_type);
+    hlib_codec_type_id_t type_id;
+    decoder->decode_int32(decoder, NULL, &type_id);
+    assert(type_id == type->id_);
+
     decode(decoder, type);
     decoder->close(decoder);
 }
