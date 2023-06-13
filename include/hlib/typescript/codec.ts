@@ -106,7 +106,7 @@ class ProducerUint8Array
 
     getArrayBuffer(): ArrayBuffer
     {
-        return this.data.buffer;
+        return this.data.slice(0, this.size).buffer;
     }
 
     clear(): void
