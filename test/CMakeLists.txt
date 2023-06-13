@@ -47,6 +47,7 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.h
     src/codegen.cpp
+    src/hash_map.cpp
     src/json.cpp
     src/sockaddr.cpp
 )
