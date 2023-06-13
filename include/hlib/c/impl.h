@@ -36,6 +36,10 @@
 #include "hlib/c/codec_binary.h"
 #undef HLIB_C_CODEC_BINARY_IMPL
 
+#define HLIB_C_HASH_MAP_IMPL
+#include "hlib/c/hash_map.h"
+#undef HLIB_C_HASH_MAP_IMPL
+
 #define HLIB_C_ERROR_IMPL
 #include "hlib/c/error.h"
 #undef HLIB_C_ERROR_IMPL
