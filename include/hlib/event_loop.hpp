@@ -42,6 +42,8 @@ class EventLoop final
 public:
     static constexpr std::uint32_t kRead{ EPOLLIN };
     static constexpr std::uint32_t kWrite{ EPOLLOUT };
+    static constexpr std::uint32_t kError{ EPOLLERR };
+    static constexpr std::uint32_t kHup{ EPOLLHUP };
 
     typedef std::function<void(int fd, std::uint32_t events)> Callback;
 
