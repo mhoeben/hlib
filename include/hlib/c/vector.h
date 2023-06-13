@@ -69,10 +69,9 @@ HLIB_C_VISIBILITY int hlib_vector_push_back(hlib_vector_t* vector, void* value);
 HLIB_C_VISIBILITY void hlib_vector_pop_back(hlib_vector_t* vector);
 
 #define HLIB_VECTOR_AT(vector, type, index)                                 \
-    *((type*)hlib_vector_at(vector, index))
+    (*((type*)hlib_vector_at(vector, index)))
 
 HLIB_C_VISIBILITY void* hlib_vector_at(hlib_vector_t* vector, size_t index);
-
 
 #endif // HLIB_C_VECTOR_H
 
