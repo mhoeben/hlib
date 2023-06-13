@@ -172,7 +172,6 @@ void hlib_codec_decoder_unwrap(hlib_codec_decoder_t* decoder, hlib_codec_type_t*
 
     hlib_codec_type_t decoded_type;
     decoder->open_type(decoder, NULL, &decoded_type);
-    assert(decoded_type.id_ == type->id_);
     decode(decoder, type);
     decoder->close(decoder);
 }
