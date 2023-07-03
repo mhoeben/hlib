@@ -1,0 +1,6 @@
+# Ignore build artifacts and directories
+build/
+dist/
+
+# Ignore vim's .swp files.
+*.swp

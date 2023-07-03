@@ -50,10 +50,11 @@ add_executable(${PROJECT_NAME}
     src/hash_map.cpp
     src/json.cpp
     src/sockaddr.cpp
+    src/string.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 14
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
 )
