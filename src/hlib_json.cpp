@@ -23,6 +23,7 @@
 //
 #include "hlib/json.hpp"
 #include "hlib/format.hpp"
+#include "hlib/string.hpp"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-default"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -68,24 +69,6 @@ void JSON::getPosition(int& line, int& column, int position) const
             ++column;
         }
     }
-}
-
-template<typename T>
-T JSON::convert(T(*function)(std::string const&, std::size_t* pos)) const
-{
-    if (Number != type()) {
-        throw std::invalid_argument("Value is not convertible in a number");
-    }
-
-    std::string value = this->value();
-    std::size_t pos = 0;
-    T result = function(value, &pos);
-
-    if (value.length() != pos) {
-        throw std::invalid_argument("Partial conversion");
-    }
-
-    return result;
 }
 
 //
@@ -270,50 +253,6 @@ int JSON::stop() const
     }
 }
 
-template<>
-bool JSON::as() const
-{
-    if (Bool != type()) {
-        throw std::invalid_argument("Value is not convertible in bool");
-    }
-
-    return "true" == value();
-}
-
-template<>
-std::int32_t JSON::as() const
-{
-    return convert<std::int32_t>([](std::string const& string, std::size_t* pos) -> int {
-        return std::stoi(string, pos, 0);
-    });
-}
-
-template<>
-std::int64_t JSON::as() const
-{
-    return convert<std::int64_t>([](std::string const& string, std::size_t* pos) -> int64_t {
-        return std::stoll(string, pos, 0);
-    });
-}
-
-template<>
-float JSON::as() const
-{
-    return convert<float>(&std::stof);
-}
-
-template<>
-double JSON::as() const
-{
-    return convert<double>(&std::stod);
-}
-
-template<>
-std::string JSON::as() const
-{
-    return value();
-}
-
 bool JSON::operator ==(JSON const& that) const
 {
     return m_data == that.m_data
@@ -356,6 +295,32 @@ JSON JSON::operator[](std::string const& name) const
     return JSON();
 }
 
+JSON JSON::operator[](JSONPointer const& pointer) const
+{
+    if (true == pointer.empty()) {
+        return *this;
+    }
+
+    JSON json = *this;
+
+    if (true == pointer.isDocument()) {
+        return json;
+    }
+
+
+    for (JSONPointer::Token const& token : pointer) {
+        if (std::holds_alternative<std::size_t>(token)) {
+            json = json.at(std::get<std::size_t>(token));
+        }
+        else {
+            assert(true == std::holds_alternative<std::string>(token));
+            json = json.at(std::get<std::string>(token));
+        }
+    }
+
+    return json;
+}
+
 JSON JSON::at(int index) const
 {
     if (Array != type() && Object != type()) {
@@ -374,6 +339,11 @@ JSON JSON::at(std::string const& name) const
         return JSON();
     }
     return (*this)[name];
+}
+
+JSON JSON::at(JSONPointer const& pointer) const
+{
+    return (*this)[pointer];
 }
 
 JSON::Iterator JSON::begin() const
@@ -567,4 +537,175 @@ JSONIterator& JSONIterator::operator++()
 
     return *this;
 }
+
+//
+// Implementation (JSONPointer)
+//
+void JSONPointer::unescape(Token& token)
+{
+    if (false == std::holds_alternative<std::string>(token)) {
+        return;
+    }
+
+    std::string& name = std::get<std::string>(token);
+    if (0 == name.length()) {
+        return;
+    }
+
+    std::string unescaped;
+    std::string::size_type i;
+
+    unescaped.reserve(name.length());
+
+    // RFC6901 - 4, first unescape "~1" => '/'.
+    for (i = 0; i < name.length(); ++i) {
+        if ('~' == name[i]) {
+            if (name.length() - 1 == i) {
+                throw std::invalid_argument("Escape character at end of token name");
+            }
+            if ('1' == name[i + 1]) {
+                unescaped.push_back('/');
+                ++i;
+                continue;
+            }
+        }
+
+        unescaped.push_back(name[i]);
+    }
+
+    name.swap(unescaped);
+    unescaped.clear();
+
+    // RFC6901 - 4, then, unescape "~0" => '~'.
+    for (i = 0; i < name.length(); ++i) {
+        if ('~' == name[i]) {
+            assert(i < name.length() - 1);
+            if ('0' == name[i + 1]) {
+                unescaped.push_back('~');
+                ++i;
+                continue;
+            }
+        }
+
+        unescaped.push_back(name[i]);
+    }
+
+    name = std::move(unescaped);
+}
+
+//
+// Public (JSONPointer)
+//
+JSONPointer::JSONPointer(std::string pointer)
+{
+    parse(pointer);
+}
+
+bool JSONPointer::empty() const noexcept
+{
+    return m_tokens.empty();
+}
+
+bool JSONPointer::isDocument() const noexcept
+{
+    return 1 == m_tokens.size()
+        && true == std::holds_alternative<std::string>(m_tokens[0])
+        && true == std::get<std::string>(m_tokens[0]).empty();
+}
+
+std::size_t JSONPointer::size() const noexcept
+{
+    return m_tokens.size();
+}
+
+JSONPointer::Token const& JSONPointer::back() const noexcept
+{
+    assert(false == m_tokens.empty());
+    return m_tokens.back();
+}
+
+void JSONPointer::clear() noexcept
+{
+    m_tokens.clear();
+}
+
+void JSONPointer::pushBack(std::size_t index)
+{
+    m_tokens.emplace_back(Token(index));
+}
+
+void JSONPointer::pushBack(std::string name)
+{
+    m_tokens.emplace_back(Token(std::move(name)));
+}
+
+void JSONPointer::pushBack(Token token)
+{
+    m_tokens.emplace_back(std::move(token));
+}
+
+void JSONPointer::popBack() noexcept
+{
+    m_tokens.pop_back();
+}
+
+JSONPointer::Token const& JSONPointer::operator[](std::size_t index) const noexcept
+{
+    assert(index < m_tokens.size());
+    return m_tokens[index];
+}
+
+JSONPointer::Iterator JSONPointer::begin() const
+{
+    return m_tokens.begin();
+}
+
+JSONPointer::Iterator JSONPointer::end() const
+{
+    return m_tokens.end();
+}
+
+void JSONPointer::parse(std::string const& pointer)
+{
+    clear();
+
+    if (true == pointer.empty()) {
+        return;
+    }
+    if ('/' != pointer.front()) {
+        throw std::invalid_argument("Invalid JSON pointer");
+    }
+
+    std::vector<std::string> tokens = split(pointer, '/');
+    assert(tokens.size() >= 2);
+
+    for (size_t i = 1; i < tokens.size(); ++i) {
+        auto index = try_to<std::size_t>(tokens[i]);
+        if (true == index.has_value()) {
+            m_tokens.emplace_back(index.value());
+        }
+        else {
+            m_tokens.emplace_back(std::move(tokens[i]));
+            unescape(m_tokens.back());
+        }
+    }
+}
+
+//
+// Public (User Defined Literals)
+//
+namespace hlib
+{
+
+JSON operator"" _json(char const* pointer, std::size_t size)
+{
+    return JSON(std::string(pointer, size));
+}
+
+JSONPointer operator"" _json_pointer(char const* pointer, std::size_t size)
+{
+    return JSONPointer(std::string(pointer, size));
+}
+
+} // namespace hlib
 
