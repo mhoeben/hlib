@@ -37,6 +37,67 @@ using namespace hlib;
 //
 // Implementation (JSONData)
 //
+namespace
+{
+
+std::string const empty_string("");
+std::string const comma_string(",");
+std::string const newline_string("\n");
+std::string const space_string(" ");
+
+void dump(fmt::memory_buffer& buffer, JSON const& json, int const level, std::string const& indent, std::string const& newline, std::string const& comma = empty_string)
+{
+    (void)level;
+    (void)indent;
+
+    auto do_indent = [&](int lvl) {
+        for (int i = 0; i < lvl; ++i) {
+            append_to(buffer, indent);
+        }
+    };
+
+    auto needs_comma = [&](std::size_t const index)
+    {
+        return index + 1 < json.size() ? comma_string : empty_string;
+    };
+
+
+    switch (json.type()) {
+    case JSON::Object:
+      {
+        std::string const& space = false == indent.empty()
+                                && false == newline.empty() ? space_string : empty_string;
+
+        fmt::format_to(std::back_inserter(buffer), "{{{}", newline);
+        for (size_t i = 0; i < json.size(); ++i) {
+            do_indent(level + 1);
+            fmt::format_to(std::back_inserter(buffer), "\"{}\":{}", json[i].name(), space);
+            dump(buffer, json[i], level + 1, indent, newline, needs_comma(i));
+        }
+        do_indent(level); fmt::format_to(std::back_inserter(buffer), "}}{}{}", comma, newline);
+        break;
+      }
+    case JSON::Array:
+        fmt::format_to(std::back_inserter(buffer), "[{}", newline);
+        for (size_t i = 0; i < json.size(); ++i) {
+            do_indent(level + 1);
+            dump(buffer, json[i], level + 1, indent, newline, needs_comma(i));
+        }
+        do_indent(level); fmt::format_to(std::back_inserter(buffer), "]{}{}", comma, newline);
+        break;
+
+    case JSON::String:
+        fmt::format_to(std::back_inserter(buffer), "\"{}\"{}{}", json.value(), comma, newline);
+        break;
+
+    default:
+        fmt::format_to(std::back_inserter(buffer), "{}{}{}", json.value(), comma, newline);
+        break;
+    }
+}
+
+} // namespace
+
 struct hlib::JSONData
 {
     std::string string;
@@ -438,6 +499,22 @@ void JSON::parse(std::string string)
 
     m_name = -1;
     m_value = 0;
+}
+
+std::string JSON::dump(int indent_count, char indent_char) const
+{
+    fmt::memory_buffer buffer;
+
+
+    ::dump(
+        buffer,
+        *this,
+        0,
+        std::string(std::max(indent_count, 0), indent_char),
+        indent_count >= 0 ? newline_string : empty_string
+    );
+
+    return fmt::to_string(buffer);
 }
 
 //
