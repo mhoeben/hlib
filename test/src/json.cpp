@@ -57,7 +57,8 @@ R"""({
         "Trevor"
     ],
     "spouse": null
-})""");
+}
+)""");
 
 } // namespace
 
@@ -236,5 +237,11 @@ TEST_CASE("JSONPointer At", "[json]")
     REQUIRE(JSON::Null == json.at("/spouse"_json_pointer).type());
 
     REQUIRE(JSON::Undefined == json.at("/foo").type());
+}
+
+TEST_CASE("JSON Dump", "[json]")
+{
+    JSON json(test_json);
+    REQUIRE(test_json == json.dump(4));
 }
 

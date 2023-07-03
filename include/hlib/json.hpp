@@ -94,6 +94,8 @@ public:
     void clear();
     void parse(std::string string);
 
+    std::string dump(int indent_count = -1, char indent_char = ' ') const;
+
 private:
     std::shared_ptr<JSONData> m_data;
     int m_name{ -1 };
