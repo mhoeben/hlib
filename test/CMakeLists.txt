@@ -51,6 +51,7 @@ add_executable(${PROJECT_NAME}
     src/json.cpp
     src/sockaddr.cpp
     src/string.cpp
+    src/uri.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
