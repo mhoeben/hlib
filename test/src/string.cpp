@@ -27,11 +27,6 @@
 
 using namespace hlib;
 
-namespace
-{
-
-} // namespace
-
 TEST_CASE("String Try To", "[string]")
 {
     REQUIRE( true == try_to<bool>("true").value());
