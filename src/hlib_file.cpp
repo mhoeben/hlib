@@ -25,6 +25,7 @@
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
 #include "hlib/scope_guard.hpp"
+#include <sys/stat.h>
 
 using namespace hlib;
 
@@ -76,7 +77,7 @@ Buffer file::read(FILE* file, std::size_t chunk_size)
     return buffer;
 }
 
-Buffer file::read(std::string const& pathname, std::size_t chunk_size)
+Buffer file::read(std::string const& pathname)
 {
     FILE* file = fopen(pathname.c_str(), "r");
     if (nullptr == file) {
@@ -88,7 +89,19 @@ Buffer file::read(std::string const& pathname, std::size_t chunk_size)
         fclose(file);
     });
 
-    return file::read(file, chunk_size);
+    struct stat st;
+    if (-1 == fstat(fileno(file), &st)) {
+        // Failed to stat file: progressively read file.
+        return file::read(file);
+    }
+
+    Buffer buffer;
+    ssize_t bytes = fread(buffer.resize(st.st_size), 1, st.st_size, file);
+    if (bytes < static_cast<ssize_t>(st.st_size)) {
+        throwf<std::runtime_error>("Failed to read ({})", get_error_string(errno));
+    }
+
+    return buffer;
 }
 
 void file::write(std::ostream& stream, Buffer const& buffer)

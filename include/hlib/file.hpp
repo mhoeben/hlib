@@ -25,8 +25,8 @@
 
 #include "hlib/buffer.hpp"
 #include "hlib/config.hpp"
+#include <cstdio>
 #include <iostream>
-#include <stdio.h>
 
 namespace hlib
 {
@@ -35,7 +35,7 @@ namespace file
 
 Buffer read(std::istream& stream, std::size_t chunk_size = Config::fileReadChunkSize());
 Buffer read(FILE* file, std::size_t chunk_size = Config::fileReadChunkSize());
-Buffer read(std::string const& pathname, std::size_t chunk_size = Config::fileReadChunkSize());
+Buffer read(std::string const& pathname);
 
 void write(std::ostream& stream, Buffer const& buffer);
 void write(FILE* file, Buffer const& buffer);

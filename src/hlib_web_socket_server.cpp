@@ -154,7 +154,7 @@ int Server::Socket::onInterrupt()
         return 0;
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in interrupt callback");
+        HLOGE(server.m_logger, "{}: Exception in interrupt callback", id);
         return -1;
     }
 }
@@ -167,7 +167,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
         switch (opcode) {
         case Opcode::Continuation:
             if (true == m_receive_queue.empty()) {
-                HLOGE(server.m_logger, "Invalid first Continuation frame");
+                HLOGE(server.m_logger, "{}: Invalid first Continuation frame", id);
                 return -1;
             }
 
@@ -181,7 +181,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
         case Opcode::Text:
         case Opcode::Binary:
             if (false == m_receive_queue.empty()) {
-                HLOGE(server.m_logger, "Invalid non-first {} frame", to_string(opcode));
+                HLOGE(server.m_logger, "{}: Invalid non-first {} frame", id, to_string(opcode));
                 return -1;
             }
 
@@ -195,7 +195,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
         case Opcode::Ping:
         case Opcode::Pong:
             if (0 != size) {
-                HLOGE(server.m_logger, "Invalid non-empty {} frame", to_string(opcode));
+                HLOGE(server.m_logger, "{}: Invalid non-empty {} frame", id, to_string(opcode));
                 return -1;
             }
 
@@ -210,14 +210,24 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
             break;
 
         default:
-            HLOGE(server.m_logger, "Invalid or unsupported WebSocket opcode {}", static_cast<int>(opcode));
+            HLOGE(server.m_logger, "{}: Invalid or unsupported WebSocket opcode {}", id, static_cast<int>(opcode));
+            return -1;
+        }
+
+        size_t queued_size = 0;
+        for (Frame& frame : m_receive_queue) {
+            queued_size += std::get<Buffer>(frame.message).size();
+        }
+
+        if (m_max_receive_message_size > 0 && queued_size + size > m_max_receive_message_size) {
+            HLOGE(server.m_logger, "{}: Unfragmented message size exceeds maximum", id);
             return -1;
         }
 
         return hws_socket_receive(m_hws, m_socket, buffer->reserve(size), size);
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in receive header callback");
+        HLOGE(server.m_logger, "{}: Exception in receive header callback", id);
         return -1;
     }
 }
@@ -320,7 +330,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
         return 0;
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in received callback");
+        HLOGE(server.m_logger, "{}: Exception in received callback", id);
         return -1;
     }
 }
@@ -340,7 +350,7 @@ int Server::Socket::onSent(void const* /* buffer */, std::size_t /* size */)
         return 0;
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in sent callback");
+        HLOGE(server.m_logger, "{}: Exception in sent callback", id);
         return -1;
     }
 }
@@ -367,7 +377,7 @@ void Server::Socket::onClosed(bool clean)
         }
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in closed callback");
+        HLOGE(server.m_logger, "{}: Exception in closed callback", id);
     }
 }
 
@@ -546,7 +556,7 @@ void Server::onSocketsTimer()
     // Remove closed sockets.
     for (auto it = m_sockets.begin(); m_sockets.end() != it;) {
         if (State::Closed == it->second->state()) {
-            HLOGD(m_logger, "{}: removing closed socket", it->second->id);
+            HLOGD(m_logger, "{}: Removing closed socket", it->second->id);
             it = m_sockets.erase(it);
         }
         else {

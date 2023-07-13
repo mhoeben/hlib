@@ -149,7 +149,7 @@ int Server::Transaction::onRequestContent(void* buffer, std::size_t size, std::s
         return 0;
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in request content callback");
+        HLOGE(server.m_logger, "{}: Exception in request content callback", id);
         return -1;
     }
 }
@@ -169,7 +169,7 @@ int Server::Transaction::onResponseContent(void const* buffer, std::size_t size,
         return 0;
     }
     catch (...) {
-        HLOGE(server.m_logger, "Exception in response content callback");
+        HLOGE(server.m_logger, "{}: Exception in response content callback", id);
         return -1;
     }
 }
@@ -351,8 +351,9 @@ void Server::onPoll(int fd, std::uint32_t events)
 
 int Server::onRequestStart(hserv_session_t* session)
 {
+    Transaction::Id const transaction_id = ++m_transaction_id;
+
     try {
-        Transaction::Id const transaction_id = ++m_transaction_id;
         Callbacks const* callbacks = &m_callbacks;
 
         // Canonicalize target and lookup callbacks.
@@ -377,16 +378,16 @@ int Server::onRequestStart(hserv_session_t* session)
         return 0;
     }
     catch (...) {
-        HLOGE(m_logger, "Exception in start transaction callback");
+        HLOGE(m_logger, "{}: Exception in start transaction callback", transaction_id);
         return -1;
     }
 }
 
 void Server::onRequestEnd(hserv_session_t* session, int failed)
 {
-    try {
-        auto transaction = static_cast<Transaction*>(hserv_session_get_user_data(session));
+    auto transaction = static_cast<Transaction*>(hserv_session_get_user_data(session));
 
+    try {
         // Callback.
         transaction->finish(!!failed);
 
@@ -394,7 +395,7 @@ void Server::onRequestEnd(hserv_session_t* session, int failed)
         m_transactions.erase(transaction->id);
     }
     catch (...) {
-        HLOGE(m_logger, "Exception in start transaction callback");
+        HLOGE(m_logger, "{}: Exception in start transaction callback", transaction->id);
     }
 }
 
