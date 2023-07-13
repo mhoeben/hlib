@@ -38,6 +38,7 @@ struct Config
     static constexpr bool        httpServerSecure()             { return true; }
     static constexpr std::size_t wsMaxReceiveMessageSize()      { return 1024 * 1024; }
     static constexpr std::size_t wsFragmentMessageThreshold()   { return 1024 * 1024; }
+    static constexpr double      wsServerMaintenanceInterval()  { return 1.0; }
 };
 
 } // namespace hlib

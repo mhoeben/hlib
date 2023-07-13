@@ -56,7 +56,7 @@ Overloaded(Ts...) -> Overloaded<Ts...>;
 } // namespace
 
 //
-// Implementation (Socket)
+// Public (Frame)
 //
 Server::Socket::Frame::Frame(Opcode a_opcode)
     : opcode{ a_opcode }
@@ -71,9 +71,12 @@ Server::Socket::Frame::Frame(Opcode a_opcode, bool a_fin, Message a_message)
 {
 }
 
+//
+// Implementation (Socket)
+//
 Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, http::Upgrade a_upgrade)
     : server(a_server)
-    , m_id{ a_id }
+    , id{ a_id }
     , m_hws(a_hws)
     , m_socket(nullptr)
     , m_ping_timer(server.m_event_loop, std::bind(&Socket::onPingTimer, this))
@@ -344,6 +347,8 @@ int Server::Socket::onSent(void const* /* buffer */, std::size_t /* size */)
 
 void Server::Socket::onClosed(bool clean)
 {
+    assert(HWS_STATE_CLOSED == hws_socket_get_state(m_socket));
+
     try {
         if (false == clean) {
             // Set abnormale close code.
@@ -525,12 +530,29 @@ void Server::onPoll(int fd, std::uint32_t events)
     }
 }
 
+void Server::onSocketsTimer()
+{
+    std::lock_guard<std::mutex> lock(m_sockets_mutex);
+
+    // Remove closed sockets.
+    for (auto it = m_sockets.begin(); m_sockets.end() != it;) {
+        if (State::Closed == it->second->state()) {
+            HLOGD(m_logger, "{}: removing closed socket", it->second->id);
+            it = m_sockets.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
 //
 // Public (Server)
 //
 Server::Server(log::Domain logger, std::weak_ptr<EventLoop> event_loop)
     : m_logger(std::move(logger))
-    , m_event_loop(std::move(event_loop))
+    , m_event_loop(event_loop)
+    , m_sockets_timer(std::move(event_loop), std::bind(&Server::onSocketsTimer, this))
 {
 }
 
@@ -570,10 +592,18 @@ void Server::start()
             std::bind(&Server::onPoll, this, _1, _2)
         );
     }));
+
+    // Set socket maintenance timer.
+    m_sockets_timer.set(
+        Config::wsServerMaintenanceInterval(),
+        Config::wsServerMaintenanceInterval()
+    );
 }
 
 void Server::stop()
 {
+    m_sockets_timer.clear();
+
     if (nullptr == m_hws) {
         return;
     }
