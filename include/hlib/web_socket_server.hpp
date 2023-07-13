@@ -92,6 +92,8 @@ public:
         Server& server;
         Id const id;
 
+        std::shared_ptr<void> user;
+
         State state() const;
 
         SockAddr getPeerAddress() const;
