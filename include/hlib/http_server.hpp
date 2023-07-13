@@ -148,8 +148,8 @@ class Server final
 public:
     class Transaction;
 
-    typedef std::function<void(Transaction& transaction)> StartTransactionCallback;
-    typedef std::function<void(Transaction& transaction, bool failed)> EndTransactionCallback;
+    typedef std::function<void(Transaction& transaction)> TransactionStartCallback;
+    typedef std::function<void(Transaction& transaction, bool failed)> TransactionEndCallback;
 
     typedef std::function<void(Transaction& transaction, std::shared_ptr<Buffer> buffer, std::size_t more)> RequestContentCallback;
     typedef std::function<void(Transaction& transaction, std::shared_ptr<Buffer const> buffer, std::size_t more)> ResponseContentCallback;
@@ -199,10 +199,10 @@ public:
         std::shared_ptr<Buffer const> m_response_content;
         ResponseContentCallback m_on_response_content;
 
-        EndTransactionCallback m_on_end_transaction;
+        TransactionEndCallback m_on_transaction_end;
 
         Transaction(Server& a_server, struct hserv_s* a_hserv, struct hserv_session_s* a_session,
-            Id a_id, EndTransactionCallback a_on_end_transaction);
+            Id a_id, TransactionEndCallback a_on_transaction_end);
 
         std::vector<char const*> toFieldsArray(std::vector<HeaderField> const& header_fields) const;
         int onRequestContent(void* buffer, std::size_t size, std::size_t more);
@@ -219,8 +219,8 @@ public:
         std::string certificate_file;
         std::string private_key_file;
 
-        StartTransactionCallback on_start_transaction;
-        EndTransactionCallback on_end_transaction;
+        TransactionStartCallback on_transaction_start;
+        TransactionEndCallback on_transaction_end;
 
         Config();
     };
@@ -232,7 +232,7 @@ public:
     std::shared_ptr<EventLoop> getEventLoop() const;
     std::optional<std::reference_wrapper<Transaction>> getTransaction(Transaction::Id id) const;
 
-    void addPath(std::string path, StartTransactionCallback on_start_transaction, EndTransactionCallback on_end_transaction);
+    void addPath(std::string path, TransactionStartCallback on_transaction_start, TransactionEndCallback on_transaction_end);
     void removePath(std::string const& path);
 
     void start(Config const& config);
@@ -248,8 +248,8 @@ private:
 
     struct Callbacks
     {
-        StartTransactionCallback on_start_transaction;
-        EndTransactionCallback on_end_transaction;
+        TransactionStartCallback on_transaction_start;
+        TransactionEndCallback on_transaction_end;
     };
     Callbacks m_callbacks;
 

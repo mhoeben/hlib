@@ -51,14 +51,14 @@ TEST_CASE("WebSocket", "[websocket]")
     http::Server::Config config;
     config.binding = SockAddr("127.0.0.1:6502");
     config.secure = false;
-    config.on_start_transaction = [&](http::Server::Transaction& transaction) noexcept
+    config.on_transaction_start = [&](http::Server::Transaction& transaction) noexcept
     {
         std::optional<std::vector<std::string>> protocols = ws::is_upgrade(transaction);
         REQUIRE("test" == protocols->at(0));
 
         ws::upgrade(transaction, protocols->at(0));
     };
-    config.on_end_transaction = [&](http::Server::Transaction& transaction, bool failed) noexcept
+    config.on_transaction_end = [&](http::Server::Transaction& transaction, bool failed) noexcept
     {
         REQUIRE(false == failed);
 
