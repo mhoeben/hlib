@@ -188,10 +188,10 @@ void Server::Transaction::finish(bool failed)
 //
 SockAddr Server::Transaction::getPeerAddress() const
 {
-    sockaddr_storage storage;
+    sockaddr_storage storage{};
     socklen_t length = sizeof(storage);
 
-    hverify(-1 != hserv_session_get_peer(m_session, reinterpret_cast<sockaddr*>(&storage), &length));
+    hserv_session_get_peer(m_session, reinterpret_cast<sockaddr*>(&storage), &length);
     return SockAddr(storage);
 }
 
