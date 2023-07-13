@@ -30,6 +30,21 @@ using namespace hlib;
 //
 // Public
 //
+Buffer::Buffer(std::size_t reservation)
+{
+    reserve(reservation);
+}
+
+Buffer::Buffer(void const* data, size_t size)
+{
+    assign(data, size);
+}
+
+Buffer::Buffer(std::string const& string)
+{
+    assign(string.data(), string.size());
+}
+
 Buffer::Buffer(Buffer&& that) noexcept
 {
     hlib_buffer_move(&m_buffer, &that.m_buffer);
@@ -74,6 +89,21 @@ std::size_t Buffer::size() const noexcept
 bool Buffer::empty() const noexcept
 {
     return 0 == m_buffer.size;
+}
+
+void const* Buffer::operator[](std::size_t index) noexcept
+{
+    assert(index < m_buffer.size);
+    return static_cast<uint8_t const*>(m_buffer.data) + index;
+}
+
+void const* Buffer::at(std::size_t index)
+{
+    if (index >= m_buffer.size) {
+        throw std::out_of_range("Buffer::at index argument exceeds buffer size");
+    }
+
+    return (*this)[index];
 }
 
 void Buffer::reset() noexcept
@@ -135,6 +165,9 @@ void Buffer::erase(std::size_t offset, std::size_t size)
     hlib_buffer_erase(&m_buffer, offset, size);
 }
 
+//
+// Utility
+//
 std::string hlib::to_string(Buffer const& buffer)
 {
     return std::string(static_cast<char const*>(buffer.data()), buffer.size());

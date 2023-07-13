@@ -25,6 +25,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project("hlib" VERSION 0.1 LANGUAGES CXX)
 
+find_package(OpenSSL REQUIRED)
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(third_party/fmt fmt)
@@ -43,6 +45,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/error.hpp
     include/hlib/event_loop.hpp
     include/hlib/file.hpp
+    include/hlib/http_server.hpp
     include/hlib/format.hpp
     include/hlib/json.hpp
     include/hlib/log.hpp
@@ -57,6 +60,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/utility.hpp
     include/hlib/uuid.hpp
     include/hlib/wait.hpp
+    include/hlib/web_socket.hpp
 
     include/hlib/c/base.h
     include/hlib/c/buffer.h
@@ -76,6 +80,8 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_error.cpp
     src/hlib_event_loop.cpp
     src/hlib_file.cpp
+    src/hlib_format.cpp
+    src/hlib_http_server.cpp
     src/hlib_json.cpp
     src/hlib_log.cpp
     src/hlib_scope_guard.cpp
@@ -88,6 +94,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_utility.cpp
     src/hlib_uuid.cpp
     src/hlib_wait.cpp
+    src/hlib_web_socket.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -151,11 +158,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     include
     third_party/fmt/include
     third_party/pegtl/include
+    ${OPENSSL_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     fmt
     uuid
+    ${OPENSSL_LIBRARIES}
 )
 
 if (ENABLE_TESTS)

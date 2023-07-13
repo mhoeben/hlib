@@ -23,6 +23,8 @@
 //
 #include "hlib/timer.hpp"
 #include "hlib/event_loop.hpp"
+#include "hlib/error.hpp"
+#include "hlib/format.hpp"
 #include "hlib/memory.hpp"
 #include "hlib/utility.hpp"
 #include <sys/timerfd.h>
@@ -37,7 +39,9 @@ void Timer::onExpire(int fd, std::uint32_t /* events */)
 {
     std::uint64_t data;
     ssize_t r = read(fd, &data, sizeof(data));
-    hcheck(-1 != r);
+    if (-1 == r) {
+        throwf<std::runtime_error>("read failed ({})", get_error_string(errno));
+    }
     assert(sizeof(data) == r);
 
     m_callback();
@@ -54,11 +58,15 @@ Timer::Timer(std::weak_ptr<EventLoop> event_loop, Callback callback)
     assert(-1 != m_fd);
 
     with_weak_ptr_locked<>(m_event_loop, [this](EventLoop& loop) {
-        loop.add(m_fd, EventLoop::kRead, std::bind(&Timer::onExpire, this, std::placeholders::_1, std::placeholders::_2));
+        loop.add(
+            m_fd,
+            EventLoop::Read,
+            std::bind(&Timer::onExpire, this, std::placeholders::_1, std::placeholders::_2)
+        );
     });
 }
 
-Timer::Timer(std::weak_ptr<EventLoop> event_loop, Callback callback, timespec const& expire, timespec const& interval)
+Timer::Timer(std::weak_ptr<EventLoop> event_loop, Callback callback, Duration const& expire, Duration const& interval)
     : Timer(std::move(event_loop), std::move(callback))
 {
     set(expire, interval);
@@ -84,12 +92,14 @@ void Timer::clear()
     set({}, {});
 }
 
-void Timer::set(timespec const& expire, timespec const& interval)
+void Timer::set(Duration const& expire, Duration const& interval)
 {
     itimerspec ts = {};
-    ts.it_value = expire;
-    ts.it_interval = interval;
+    ts.it_value = expire.timespec;
+    ts.it_interval = interval.timespec;
 
-    hcheck(-1 != timerfd_settime(m_fd, 0, &ts, nullptr));
+    if (-1 == timerfd_settime(m_fd, 0, &ts, nullptr)) {
+        throwf<std::runtime_error>("timerfd_settime failed ({})", get_error_string(errno));
+    }
 }
 

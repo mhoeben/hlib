@@ -64,12 +64,6 @@ private:
 using FormatBuffer = BasicFormatBuffer<char>;
 
 template<typename MEMORY_BUFFER>
-void append_to(MEMORY_BUFFER& buffer, std::string const& string)
-{
-    buffer.append(string.data(), string.data() + string.length());
-}
-
-template<typename MEMORY_BUFFER>
 void append_to(MEMORY_BUFFER& buffer, char c)
 {
     buffer.append(&c, (&c) + 1);
@@ -81,21 +75,27 @@ void append_to(fmt::basic_memory_buffer<T>& buffer, char const* string)
     buffer.append(string, string + strlen(string));
 }
 
+template<typename MEMORY_BUFFER>
+void append_to(MEMORY_BUFFER& buffer, std::string const& string)
+{
+    buffer.append(string.data(), string.data() + string.length());
+}
+
 template<typename T, typename... PARAMS>
-void append_to(fmt::basic_memory_buffer<T>& buffer, PARAMS&&... params)
+void format_to(fmt::basic_memory_buffer<T>& buffer, PARAMS&&... params)
 {
     fmt::format_to(std::back_inserter(buffer), std::forward<PARAMS>(params)...);
 }
 
 template<typename T, typename... PARAMS>
-void append_to(Buffer& buffer, PARAMS&&... params)
+void format_to(Buffer& buffer, PARAMS&&... params)
 {
     BasicFormatBuffer<T> format_buffer(buffer);
     fmt::format_to(std::back_inserter(format_buffer), std::forward<PARAMS>(params)...);
 }
 
 template<typename... PARAMS>
-void append_to(Buffer& buffer, PARAMS&&... params)
+void format_to(Buffer& buffer, PARAMS&&... params)
 {
     FormatBuffer format_buffer(buffer);
     fmt::format_to(std::back_inserter(format_buffer), std::forward<PARAMS>(params)...);
@@ -106,6 +106,12 @@ template<typename EXCEPTION, typename... PARAMS>
 {
     throw EXCEPTION(fmt::format(fmt, std::forward<PARAMS>(params)...));
 }
+
+void hexdump(FILE* output, void const* data, std::size_t size, std::size_t columns = 16, bool ascii = true);
+void hexdump(void const* data, std::size_t size, std::size_t columns = 16, bool ascii = true);
+
+void hexdump(FILE* output, Buffer const& buffer, std::size_t columns = 16, bool ascii = true);
+void hexdump(Buffer const& buffer, std::size_t columns = 16, bool ascii = true);
 
 } // namespace hlib
 

@@ -13,3 +13,6 @@
 [submodule "third_party/jsmn"]
 	path = third_party/jsmn
 	url = https://github.com/zserge/jsmn.git
+[submodule "third_party/hserv"]
+	path = third_party/hserv
+	url = https://github.com/mhoeben/hserv.git

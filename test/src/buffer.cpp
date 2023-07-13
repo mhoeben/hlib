@@ -72,7 +72,7 @@ TEST_CASE("Buffer Iterator", "[buffer,format]")
     Buffer buffer;
     buffer.append("foo", 3);
 
-    append_to(buffer, " bar {}", "baz");
+    format_to(buffer, " bar {}", "baz");
 
     REQUIRE("foo bar baz" == to_string(buffer));
 }

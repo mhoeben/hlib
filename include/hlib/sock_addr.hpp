@@ -33,16 +33,20 @@ namespace hlib
 
 class SockAddr final
 {
-    HLIB_NOT_MOVABLE(SockAddr);
-
 public:
     SockAddr();
+
+    SockAddr(std::string const& that);
+
+    explicit SockAddr(SockAddr&& that);
+
     explicit SockAddr(SockAddr const& that);
     explicit SockAddr(sockaddr_in const& that);
     explicit SockAddr(sockaddr_in6 const& that);
     explicit SockAddr(sockaddr_un const& that);
     explicit SockAddr(sockaddr_storage const& that);
-    SockAddr(std::string const& that);
+
+    SockAddr& operator = (SockAddr&& that);
 
     SockAddr& operator = (SockAddr const& that);
     SockAddr& operator = (sockaddr_in const& that);

@@ -416,6 +416,23 @@ double hlib::stof64(std::string const& value)
     return r;
 }
 
+bool hlib::iequals(std::string const &lhs, std::string const& rhs)
+{
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    std::locale locale;
+
+    for (std::size_t i = 0; i < lhs.size(); ++i) {
+        if (std::tolower(lhs[i], locale) != std::tolower(rhs[i], locale)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 std::string hlib::to_upper(std::string string)
 {
     std::locale locale;
@@ -435,6 +452,33 @@ std::string hlib::to_lower(std::string string)
         c = std::tolower(c, locale);
     }
 
+    return string;
+}
+
+std::string hlib::strip_left(std::string string, std::string const& chars)
+{
+    return string.erase(0, string.find_first_not_of(chars));
+}
+
+std::string hlib::strip_right(std::string string, std::string const& chars)
+{
+    std::string::size_type pos = 0;
+
+    for (auto it = string.rbegin(); it != string.rend(); ++it) {
+        if (std::string::npos == chars.find(*it)) {
+            break;
+        }
+        ++pos;
+    }
+
+    string.resize(string.size() - pos);
+    return string;
+}
+
+std::string hlib::strip(std::string string, std::string const& chars)
+{
+    string = strip_left(std::move(string), chars);
+    string = strip_right(std::move(string), chars);
     return string;
 }
 

@@ -48,10 +48,14 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.h
     src/codegen.cpp
     src/hash_map.cpp
+    src/http_server.cpp
     src/json.cpp
     src/sockaddr.cpp
     src/string.cpp
+    src/test.cpp
+    src/test.hpp
     src/uri.cpp
+    src/web_socket.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

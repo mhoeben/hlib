@@ -35,10 +35,10 @@ void JSONEncoder::encode(char const* name, T const& value)
 {
     if (true == m_state.map) {
         assert(nullptr != name);
-        append_to(m_buffer, "{}\"{}\": {}{}", m_indent, name, value, newline());
+        format_to(m_buffer, "{}\"{}\": {}{}", m_indent, name, value, newline());
     }
     else {
-        append_to(m_buffer, "{}{}{}", m_indent, value, newline());
+        format_to(m_buffer, "{}{}{}", m_indent, value, newline());
     }
 
     ++m_state.index;
@@ -74,10 +74,10 @@ void JSONEncoder::open(char const* name, Array const& value)
 
     if (true == m_state.map) {
         assert(nullptr != name);
-        append_to(m_buffer, "{}\"{}\": [\n", m_indent, name);
+        format_to(m_buffer, "{}\"{}\": [\n", m_indent, name);
     }
     else {
-        append_to(m_buffer, "{}[\n", m_indent);
+        format_to(m_buffer, "{}[\n", m_indent);
     }
 
     m_stack.push_back(m_state);
@@ -94,10 +94,10 @@ void JSONEncoder::open(char const* name, Map const& value)
 
     if (true == m_state.map) {
         assert(nullptr != name);
-        append_to(m_buffer, "{}\"{}\": {{\n", m_indent, name);
+        format_to(m_buffer, "{}\"{}\": {{\n", m_indent, name);
     }
     else {
-        append_to(m_buffer, "{}{{\n", m_indent);
+        format_to(m_buffer, "{}{{\n", m_indent);
     }
 
     m_stack.push_back(m_state);
@@ -137,10 +137,10 @@ void JSONEncoder::encode(char const* name, std::string const& value)
 {
     if (true == m_state.map) {
         assert(nullptr != name);
-        append_to(m_buffer, "{}\"{}\": \"{}\"{}", m_indent, name, value, newline());
+        format_to(m_buffer, "{}\"{}\": \"{}\"{}", m_indent, name, value, newline());
     }
     else {
-        append_to(m_buffer, "{}\"{}\"{}", m_indent, value, newline());
+        format_to(m_buffer, "{}\"{}\"{}", m_indent, value, newline());
     }
 
     ++m_state.index;
@@ -166,10 +166,10 @@ void JSONEncoder::close()
     m_indent = std::string(m_stack.size() * 4, ' ');
 
     if (true == map) {
-        append_to(m_buffer, "{}}}{}", m_indent, newline());
+        format_to(m_buffer, "{}}}{}", m_indent, newline());
     }
     else {
-        append_to(m_buffer, "{}]{}", m_indent, newline());
+        format_to(m_buffer, "{}]{}", m_indent, newline());
     }
 
     ++m_state.index;

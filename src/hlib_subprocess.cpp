@@ -35,12 +35,17 @@ using namespace hlib;
 //
 // Public
 //
+Subprocess::Subprocess(std::string const& command, std::vector<std::string> const& args)
+{ 
+    run(command, args);
+}
+
 Subprocess::Subprocess(Subprocess&& that) noexcept
     : m_return_code{ that.m_return_code }
     , m_output{ std::move(that.m_output) }
     , m_error{ std::move(that.m_error) }
 {
-    that.m_return_code = 0;
+    that.m_return_code = -1;
 }
 
 Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
@@ -68,15 +73,13 @@ Buffer const& Subprocess::error() const
     return m_error;
 }
 
-void Subprocess::run(std::string command, std::vector<std::string> args)
+void Subprocess::run(std::string const& command, std::vector<std::string> const& args)
 {
-    (void)command;
-    (void)args;
-
     std::vector<char const*> argv;
     std::array<int, 2> output_pipe{ -1, -1 };
     std::array<int, 2> error_pipe{ -1, -1 };
     pid_t pid{ -1 };
+    int status;
 
     auto cleanup = [&]()
     {
@@ -92,8 +95,6 @@ void Subprocess::run(std::string command, std::vector<std::string> args)
         if (-1 != error_pipe[1]) {
             close(error_pipe[1]);
         }
-
-        hverify(pid == waitpid(pid, nullptr, 0));
     };
 
     auto read_pipe = [&](int fd, Buffer& buffer) -> bool
@@ -120,6 +121,7 @@ void Subprocess::run(std::string command, std::vector<std::string> args)
     };
 
     try {
+        m_return_code = -1;
         m_output.clear();
         m_error.clear();
 
@@ -150,8 +152,14 @@ void Subprocess::run(std::string command, std::vector<std::string> args)
             close(error_pipe[1]);
             error_pipe[1] = -1;
 
-            argv.reserve(args.size() + 1);
+            argv.reserve(args.size() + 2);
 
+            // man execvp: The char *const argv[] argument is an array of pointers to
+            // null-terminated strings that represent the argument list available to
+            // the new program. The first argument, by convention, should point to the
+            // filename associated with the file being executed. The array of pointers
+            // must be terminated by a null pointer.
+            argv.push_back(command.c_str());
             for (auto const& arg : args) {
                 argv.push_back(arg.c_str());
             }
@@ -171,11 +179,19 @@ void Subprocess::run(std::string command, std::vector<std::string> args)
             error_pipe[1] = -1;
 
             if (false == read_pipe(output_pipe[0], m_output)) {
-                throw std::runtime_error(fmt::format("Failed to read from output pipe for '{}' ({})", command, get_error_string(errno)));
+                throwf<std::runtime_error>("Failed to read from output pipe for '{}' ({})", command, get_error_string(errno));
             }
 
             if (false == read_pipe(error_pipe[0], m_error)) {
-                throw std::runtime_error(fmt::format("Failed to read from error pipe for '{}' ({})", command, get_error_string(errno)));
+                throwf<std::runtime_error>("Failed to read from error pipe for '{}' ({})", command, get_error_string(errno));
+            }
+
+            if (pid != waitpid(pid, &status, 0)) {
+                throwf<std::runtime_error>("Failed to wait for '{}' pid to exit ({})", command, get_error_string(errno));
+            }
+
+            if (WIFEXITED(status)) {
+                m_return_code = WEXITSTATUS(status);
             }
             break;
         }

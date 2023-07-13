@@ -269,8 +269,14 @@ to(std::string const& value)
     return stof64(value);
 }
 
+bool iequals(std::string const &lhs, std::string const& rhs);
+
 std::string to_upper(std::string string);
 std::string to_lower(std::string string);
+
+std::string strip_left(std::string string, std::string const& chars = " \t\v\f\r\n");
+std::string strip_right(std::string string, std::string const& chars = " \t\v\f\r\n");
+std::string strip(std::string, std::string const& chars = " \t\v\f\r\n");
 
 std::vector<std::string> split(std::string const& string, std::function<bool(char)> const& is_delimiter, bool filter_empty = false);
 std::vector<std::string> split(std::string const& string, char delimiter, bool filter_empty = false);

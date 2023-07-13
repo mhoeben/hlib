@@ -25,10 +25,13 @@
 
 #include "hlib/base.hpp"
 #include "hlib/log.hpp"
+#include "hlib/time.hpp"
 #include <array>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <sys/epoll.h>
+#include <thread>
 #include <unordered_map>
 
 namespace hlib
@@ -40,36 +43,43 @@ class EventLoop final
     HLIB_NOT_MOVABLE(EventLoop);
 
 public:
-    static constexpr std::uint32_t kRead{ EPOLLIN };
-    static constexpr std::uint32_t kWrite{ EPOLLOUT };
-    static constexpr std::uint32_t kError{ EPOLLERR };
-    static constexpr std::uint32_t kHup{ EPOLLHUP };
+    static constexpr std::uint32_t Read{ EPOLLIN };
+    static constexpr std::uint32_t Write{ EPOLLOUT };
+    static constexpr std::uint32_t Error{ EPOLLERR };
+    static constexpr std::uint32_t Hup{ EPOLLHUP };
 
     typedef std::function<void(int fd, std::uint32_t events)> Callback;
 
 public:
-    EventLoop(std::string m_name = std::string());
+    EventLoop(log::Domain logger);
     ~EventLoop();
 
     int fd() const noexcept;
+    std::thread::id threadId() const noexcept;
 
     void add(int fd, std::uint32_t events, Callback callback);
     void modify(int fd, std::uint32_t events);
     void remove(int fd);
 
-    void dispatch(int timeout_ms = 0);
+    void dispatch();
+    void dispatch(Duration const& timeout);
     void interrupt();
 
 private:
     log::Domain const m_logger;
-    std::string m_name;
     int m_fd{ -1 };
     std::array<int, 2> m_pipe{ -1, -1 };
     bool m_interrupt{ false };
 
     std::mutex m_mutex;
+    std::thread::id m_thread_id;
     std::unordered_map<int, Callback> m_callbacks;
+
+    void dispatch(Duration const* timeout);
 };
+
+bool callback_from(EventLoop const& event_loop);
+bool callback_from(std::weak_ptr<EventLoop> const& event_loop);
 
 } // namespace hlib
 

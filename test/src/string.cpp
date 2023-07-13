@@ -225,6 +225,14 @@ TEST_CASE("String To", "[string]")
     REQUIRE_THROWS(to<double>("0.0 "));
 }
 
+TEST_CASE("String Strip", "[string]")
+{
+    REQUIRE("foo" == strip(" \tfoo\r\n"));
+    REQUIRE("foo bar" == strip(" \tfoo bar\r\n"));
+    REQUIRE("foo-bar" == strip("*#*foo-bar#*#", "#*-"));
+    REQUIRE(true == strip(" \t\f\v\r\n").empty());
+}
+
 TEST_CASE("String Split", "[string]")
 {
     std::vector<std::string> tokens;

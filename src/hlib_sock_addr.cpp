@@ -99,7 +99,9 @@ void SockAddr::parse(std::string const& string)
 
     auto to_unix = [&]()
     {
-        hcheck(string.length() + 1 <= sizeof(sockaddr_un::sun_path));
+        if (string.length() + 1 > sizeof(sockaddr_un::sun_path)) {
+            throwf<std::runtime_error>("String length exceeds sockaddr_un path space");
+        }
 
         m_unix.sun_family = AF_UNIX;
 
@@ -162,6 +164,17 @@ SockAddr::SockAddr()
     m_family = AF_UNSPEC;
 }
 
+SockAddr::SockAddr(sockaddr_storage const& that)
+{
+    m_storage = that;
+}
+
+SockAddr::SockAddr(SockAddr&& that)
+{
+    memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
+    that.m_family = AF_UNSPEC;
+}
+
 SockAddr::SockAddr(SockAddr const& that)
 {
     m_storage = that.m_storage;
@@ -185,14 +198,16 @@ SockAddr::SockAddr(sockaddr_un const& that)
     m_unix = that;
 } 
 
-SockAddr::SockAddr(sockaddr_storage const& that)
-{
-    m_storage = that;
-}
-
 SockAddr::SockAddr(std::string const& that)
 {
     parse(that);
+}
+
+SockAddr& SockAddr::operator = (SockAddr&& that)
+{
+    memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
+    that.m_family = AF_UNSPEC;
+    return *this;
 }
 
 SockAddr& SockAddr::operator = (SockAddr const& that)
