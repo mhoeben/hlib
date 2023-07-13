@@ -94,6 +94,8 @@ public:
 
         State state() const;
 
+        SockAddr getPeerAddress() const;
+
         void setPongCallback(PongCallback callback);
         void setMessageCallback(MessageCallback callback);
         void setErrorCallback(ErrorCallback callback);
