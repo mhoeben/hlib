@@ -186,6 +186,15 @@ void Server::Transaction::finish(bool failed)
 //
 // Public (Transaction)
 //
+SockAddr Server::Transaction::getPeerAddress() const
+{
+    sockaddr_storage storage;
+    socklen_t length = sizeof(storage);
+
+    hverify(-1 != hserv_session_get_peer(m_session, reinterpret_cast<sockaddr*>(&storage), &length));
+    return SockAddr(storage);
+}
+
 std::optional<std::string> Server::Transaction::getRequestValue(std::string const& name, std::size_t index) const
 {
     assert(true == callback_from(server.m_event_loop));
