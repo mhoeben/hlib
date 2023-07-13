@@ -16,3 +16,4 @@
 [submodule "third_party/hserv"]
 	path = third_party/hserv
 	url = https://github.com/mhoeben/hserv.git
+    branch = main
