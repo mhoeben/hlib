@@ -281,5 +281,22 @@ std::string strip(std::string, std::string const& chars = " \t\v\f\r\n");
 std::vector<std::string> split(std::string const& string, std::function<bool(char)> const& is_delimiter, bool filter_empty = false);
 std::vector<std::string> split(std::string const& string, char delimiter, bool filter_empty = false);
 
+std::string join(std::vector<std::string> const& vector, std::string const& separator);
+
+template<typename T>
+std::string join(std::vector<T> const& vector, std::string const& separator)
+{
+    using namespace std;
+
+    std::vector<std::string> strings;
+    strings.reserve(vector.size());
+
+    for (auto const& value : vector) {
+        strings.emplace_back(to_string(value));
+    }
+
+    return join(strings, separator);
+}
+
 } // namespace hlib
 
