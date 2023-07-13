@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/string.hpp"
+#include "hlib/format.hpp"
 #include <cstdlib>
 #include <climits>
 #include <locale>
@@ -517,5 +518,10 @@ std::vector<std::string> hlib::split(std::string const& string, std::function<bo
 std::vector<std::string> hlib::split(std::string const& string, char delimiter, bool filter_empty)
 {
     return split(string, [delimiter](char c) noexcept { return delimiter == c; }, filter_empty);
+}
+
+std::string hlib::join(std::vector<std::string> const& vector, std::string const& separator)
+{
+    return fmt::format("{}", fmt::join(vector, separator));
 }
 

@@ -282,3 +282,9 @@ TEST_CASE("String Split", "[string]")
     REQUIRE(std::vector<std::string>{ "foo", "bar", "baz", "xxx", "yyy" } == tokens);
 }
 
+TEST_CASE("String Join", "[string]")
+{
+    REQUIRE("foo bar" == join({ "foo", "bar" }, " "));
+    REQUIRE("13, 11, 1971" == join<int>({ 13, 11, 1971 }, ", "));
+}
+
