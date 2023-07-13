@@ -25,7 +25,7 @@
 #include "hlib/event_loop.hpp"
 #include "hlib/http_server.hpp"
 #include "hlib/subprocess.hpp"
-#include "hlib/web_socket.hpp"
+#include "hlib/web_socket_server.hpp"
 
 using namespace hlib;
 

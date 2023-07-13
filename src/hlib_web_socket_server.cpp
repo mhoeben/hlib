@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/web_socket.hpp"
+#include "hlib/web_socket_server.hpp"
 #include "hlib/config.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
@@ -665,8 +665,7 @@ void ws::upgrade(http::Server::Transaction& transaction, std::string subprotocol
             { "Upgrade",                "websocket" },
             { "Sec-WebSocket-Accept",   accept.get() },
             { "Sec-WebSocket-Protocol", std::move(subprotocol) }
-        },
-        nullptr
+        }
     );
 }
 
