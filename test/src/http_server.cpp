@@ -101,7 +101,7 @@ TEST_CASE("HTTP Server", "[http]")
     http::Server::Config config;
     config.binding = SockAddr("127.0.0.1:6502");
     config.secure = false;
-    config.on_start_transaction = [&](http::Server::Transaction& transaction) noexcept
+    config.on_transaction_start = [&](http::Server::Transaction& transaction) noexcept
     {
         REQUIRE("GET" == transaction.request_method);
         REQUIRE("/" == transaction.request_target);
@@ -110,7 +110,7 @@ TEST_CASE("HTTP Server", "[http]")
 
         transaction.respond(http::StatusCode::Ok, {}, std::make_unique<Buffer>(test_string));
     };
-    config.on_end_transaction = [&](http::Server::Transaction const& /* transaction */, bool failed) noexcept
+    config.on_transaction_end = [&](http::Server::Transaction const& /* transaction */, bool failed) noexcept
     {
         REQUIRE(false == failed);
         event_loop->interrupt();

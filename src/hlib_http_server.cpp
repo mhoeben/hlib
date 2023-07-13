@@ -94,7 +94,7 @@ Upgrade& Upgrade::operator = (Upgrade&& that) noexcept
 // Implementation (Transaction)
 //
 Server::Transaction::Transaction(Server& a_server, hserv_s* a_hserv, hserv_session_t* a_session,
-    Id a_id, EndTransactionCallback a_on_end_transaction)
+    Id a_id, TransactionEndCallback a_on_transaction_end)
     : server(a_server)
     , id{ a_id }
     , request_method(hserv_request_get_method(a_session))
@@ -106,7 +106,7 @@ Server::Transaction::Transaction(Server& a_server, hserv_s* a_hserv, hserv_sessi
         : hserv_request_get_content_length(a_session) }
     , m_hserv(a_hserv)
     , m_session(a_session)
-    , m_on_end_transaction(std::move(a_on_end_transaction))
+    , m_on_transaction_end(std::move(a_on_transaction_end))
 {
     int size = hserv_header_fields_copy(
         hserv_request_get_header_fields(a_session),
@@ -176,11 +176,11 @@ int Server::Transaction::onResponseContent(void const* buffer, std::size_t size,
 
 void Server::Transaction::finish(bool failed)
 {
-    if (nullptr == m_on_end_transaction) {
+    if (nullptr == m_on_transaction_end) {
         return;
     }
 
-    m_on_end_transaction(*this, failed);
+    m_on_transaction_end(*this, failed);
 }
 
 //
@@ -366,8 +366,8 @@ int Server::onRequestStart(hserv_session_t* session)
 
         // Create a new transaction and callback user.
         std::unique_ptr<Transaction> transaction(new Transaction(*this, m_hserv, session,
-            transaction_id, callbacks->on_end_transaction));
-        callbacks->on_start_transaction(*transaction);
+            transaction_id, callbacks->on_transaction_end));
+        callbacks->on_transaction_start(*transaction);
 
         // Set transaction as session's user data.
         hserv_session_set_user_data(session, transaction.get());
@@ -435,9 +435,9 @@ std::optional<std::reference_wrapper<Server::Transaction>> Server::getTransactio
         : std::optional<std::reference_wrapper<Transaction>>();
 }
 
-void Server::addPath(std::string path, StartTransactionCallback on_start_transaction, EndTransactionCallback on_end_transaction)
+void Server::addPath(std::string path, TransactionStartCallback on_transaction_start, TransactionEndCallback on_transaction_end)
 {
-    m_path_callbacks.emplace(std::move(path), Callbacks{ std::move(on_start_transaction), std::move(on_end_transaction) });
+    m_path_callbacks.emplace(std::move(path), Callbacks{ std::move(on_transaction_start), std::move(on_transaction_end) });
 }
 
 void Server::removePath(std::string const& path)
@@ -498,9 +498,9 @@ void Server::start(Config const& config)
         );
     }));
 
-    assert(nullptr != config.on_start_transaction);
-    m_callbacks.on_start_transaction = config.on_start_transaction;
-    m_callbacks.on_end_transaction = config.on_end_transaction;
+    assert(nullptr != config.on_transaction_start);
+    m_callbacks.on_transaction_start = config.on_transaction_start;
+    m_callbacks.on_transaction_end = config.on_transaction_end;
 }
 
 void Server::stop()
