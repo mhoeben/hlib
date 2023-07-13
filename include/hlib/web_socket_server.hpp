@@ -90,6 +90,7 @@ public:
 
     public:
         Server& server;
+        Id const id;
 
         State state() const;
 
@@ -108,7 +109,6 @@ public:
         void close(uint16_t code = 1005, Buffer reason = Buffer());
 
     private:
-        Id const m_id;
         struct hws_s* m_hws;
         struct hws_socket_s* m_socket;
 
@@ -171,10 +171,12 @@ private:
     struct hws_s* m_hws{ nullptr };
 
     Socket::Id m_socket_id{ 0 };
+    Timer m_sockets_timer;
     mutable std::mutex m_sockets_mutex;
     std::unordered_map<Socket::Id, std::unique_ptr<Socket>> m_sockets;
 
     void onPoll(int fd, std::uint32_t events);
+    void onSocketsTimer();
 };
 
 std::optional<std::vector<std::string>> is_upgrade(http::Server::Transaction const& transaction);
