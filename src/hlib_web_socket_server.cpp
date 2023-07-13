@@ -379,6 +379,15 @@ State Server::Socket::state() const
     return static_cast<State>(hws_socket_get_state(m_socket));
 }
 
+SockAddr Server::Socket::getPeerAddress() const
+{
+    sockaddr_storage storage{};
+    socklen_t length = sizeof(storage);
+
+    hws_socket_get_peer(m_socket, reinterpret_cast<sockaddr*>(&storage), &length);
+    return SockAddr(storage);
+}
+
 void Server::Socket::setPongCallback(PongCallback callback)
 {
     assert(true == callback_from(server.m_event_loop));
