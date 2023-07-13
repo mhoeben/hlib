@@ -23,7 +23,7 @@
 //
 #pragma once
 
-#include "hlib/base.hpp"
+#include "hlib/time.hpp"
 #include <functional>
 #include <memory>
 #include <time.h>
@@ -43,11 +43,11 @@ public:
 
 public:
     Timer(std::weak_ptr<EventLoop> event_loop, Callback callback);
-    Timer(std::weak_ptr<EventLoop> event_loop, Callback callback, timespec const& expire, timespec const& interval = {});
+    Timer(std::weak_ptr<EventLoop> event_loop, Callback callback, Duration const& expire, Duration const& interval = {});
     ~Timer();
 
     void clear();
-    void set(timespec const& expire, timespec const& interval = {});
+    void set(Duration const& expire, Duration const& interval = {});
 
 private:
     std::weak_ptr<EventLoop> m_event_loop;

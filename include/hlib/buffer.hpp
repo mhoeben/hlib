@@ -36,6 +36,9 @@ class Buffer final
 
 public:
     Buffer() = default;
+    Buffer(std::size_t reservation);
+    Buffer(void const* data, size_t size);
+    Buffer(std::string const& string);
     Buffer(Buffer&& that) noexcept;
     ~Buffer();
 
@@ -48,6 +51,9 @@ public:
     std::size_t capacity() const noexcept;
     std::size_t size() const noexcept;
     bool empty() const noexcept;
+
+    void const* operator[](std::size_t index) noexcept;
+    void const* at(std::size_t index);
 
     void reset() noexcept;
     void clear() noexcept;
@@ -101,13 +107,13 @@ private:
 };
 
 template <typename T, typename U>
-bool operator ==(BufferAllocator<T> const& a, BufferAllocator<U> const& b)
+bool operator == (BufferAllocator<T> const& a, BufferAllocator<U> const& b)
 {
     return a->data() == b->data();
 }
 
 template <typename T, typename U>
-bool operator !=(BufferAllocator<T> const& a, BufferAllocator<U> const& b)
+bool operator != (BufferAllocator<T> const& a, BufferAllocator<U> const& b)
 {
     return a->data() != b->data();
 }

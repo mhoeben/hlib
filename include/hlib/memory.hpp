@@ -29,12 +29,6 @@
 namespace hlib
 {
 
-template <typename T, typename... PARAMS>
-std::unique_ptr<T> make_unique(PARAMS&&... params)
-{
-    return std::unique_ptr<T>(new T(std::forward<PARAMS>(params)...));
-}
-
 template<typename T, typename LAMBDA>
 bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, LAMBDA lambda)
 {

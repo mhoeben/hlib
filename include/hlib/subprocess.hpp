@@ -37,6 +37,7 @@ class Subprocess final
 public:
     Subprocess() = default;
     Subprocess(Subprocess&& that) noexcept;
+    Subprocess(std::string const& command, std::vector<std::string> const& args);
 
     Subprocess& operator =(Subprocess&& that) noexcept;
 
@@ -44,10 +45,10 @@ public:
     Buffer const& output() const;
     Buffer const& error() const;
 
-    void run(std::string command, std::vector<std::string> args);
+    void run(std::string const& command, std::vector<std::string> const& args);
 
 private:
-    int m_return_code{ 0 };
+    int m_return_code{ -1 };
     Buffer m_output;
     Buffer m_error;
 };

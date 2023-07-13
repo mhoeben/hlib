@@ -34,13 +34,13 @@ namespace log
 
 enum Level
 {
-    kFatal,
-    kError,
-    kWarning,
-    kNotice,
-    kInfo,
-    kDebug,
-    kTrace
+    Fatal,
+    Error,
+    Warning,
+    Notice,
+    Info,
+    Debug,
+    Trace
 };
 
 std::string const& to_string(Level level);
@@ -50,33 +50,33 @@ struct Domain
     std::string name;
     Level level;
 
-    Domain(std::string name, Level level = kNotice);
+    Domain(std::string name, Level level = Notice);
     Domain(std::string name, std::string const& env_name);
 };
 
 void log(Domain const& domain, Level level, std::string const& message);
 
-#define HLOGF(domain, ...) do {                                              hlib::log::log(domain, hlib::log::kFatal,   fmt::format(__VA_ARGS__));   } while (false)
-#define HLOGE(domain, ...) do { if (hlib::log::kError   <= (domain).level) { hlib::log::log(domain, hlib::log::kError,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGW(domain, ...) do { if (hlib::log::kWarning <= (domain).level) { hlib::log::log(domain, hlib::log::kWarning, fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGN(domain, ...) do { if (hlib::log::kNotice  <= (domain).level) { hlib::log::log(domain, hlib::log::kNotice,  fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGI(domain, ...) do { if (hlib::log::kInfo    <= (domain).level) { hlib::log::log(domain, hlib::log::kInfo,    fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGF(domain, ...) do {                                             hlib::log::log(domain, hlib::log::Fatal,   fmt::format(__VA_ARGS__));   } while (false)
+#define HLOGE(domain, ...) do { if (hlib::log::Error   <= (domain).level) { hlib::log::log(domain, hlib::log::Error,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGW(domain, ...) do { if (hlib::log::Warning <= (domain).level) { hlib::log::log(domain, hlib::log::Warning, fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGN(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { hlib::log::log(domain, hlib::log::Notice,  fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGI(domain, ...) do { if (hlib::log::Info    <= (domain).level) { hlib::log::log(domain, hlib::log::Info,    fmt::format(__VA_ARGS__)); } } while (false)
 #ifndef NDEBUG
-#define HLOGD(domain, ...) do { if (hlib::log::kDebug   <= (domain).level) { hlib::log::log(domain, hlib::log::kDebug,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGT(domain, ...) do { if (hlib::log::kTrace   <= (domain).level) { hlib::log::log(domain, hlib::log::kTrace,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGD(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { hlib::log::log(domain, hlib::log::Debug,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGT(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { hlib::log::log(domain, hlib::log::Trace,   fmt::format(__VA_ARGS__)); } } while (false)
 #else
 #define HLOGD(domain, ...) do { } while (false)
 #define HLOGT(domain, ...) do { } while (false)
 #endif
 
-#define HLOGFS(domain, ...) do {                                              std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kFatal,   s.str());   } while (false)
-#define HLOGES(domain, ...) do { if (hlib::log::kError   <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kError,   s.str()); } } while (false)
-#define HLOGWS(domain, ...) do { if (hlib::log::kWarning <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kWarning, s.str()); } } while (false)
-#define HLOGNS(domain, ...) do { if (hlib::log::kNotice  <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kNotice,  s.str()); } } while (false)
-#define HLOGIS(domain, ...) do { if (hlib::log::kInfo    <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kInfo,    s.str()); } } while (false)
+#define HLOGFS(domain, ...) do {                                             std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Fatal,   s.str());   } while (false)
+#define HLOGES(domain, ...) do { if (hlib::log::Error   <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Error,   s.str()); } } while (false)
+#define HLOGWS(domain, ...) do { if (hlib::log::Warning <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Warning, s.str()); } } while (false)
+#define HLOGNS(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Notice,  s.str()); } } while (false)
+#define HLOGIS(domain, ...) do { if (hlib::log::Info    <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Info,    s.str()); } } while (false)
 #ifndef NDEBUG
-#define HLOGDS(domain, ...) do { if (hlib::log::kDebug   <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kDebug,   s.str()); } } while (false)
-#define HLOGTS(domain, ...) do { if (hlib::log::kTrace   <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::kTrace,   s.str()); } } while (false)
+#define HLOGDS(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Debug,   s.str()); } } while (false)
+#define HLOGTS(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { std::stringstream s; s << __VA_ARGS__; hlib::log::log(domain, hlib::log::Trace,   s.str()); } } while (false)
 #else
 #define HLOGD(domain, ...) do { } while (false)
 #define HLOGT(domain, ...) do { } while (false)

@@ -43,12 +43,5 @@ namespace hlib
 
 std::string format_assert_string(char const* file, int line, char const* expression);
 
-#define hcheck(expression) \
-    do { \
-        if (!(expression)) { \
-            throw std::runtime_error(hlib::format_assert_string(__FILE__, __LINE__, #expression)); \
-        } \
-    } while (false)
-
 } // namespace hlib
 

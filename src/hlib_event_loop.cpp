@@ -24,6 +24,9 @@
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
+#include "hlib/memory.hpp"
+#include "hlib/scope_guard.hpp"
+#include "hlib/time.hpp"
 #include "hlib/utility.hpp"
 #include <stdexcept>
 #include <unistd.h>
@@ -31,108 +34,28 @@
 using namespace hlib;
 
 //
-// Public
+// Implementation
 //
-EventLoop::EventLoop(std::string name)
-    : m_logger("HEVENTS", "HLIB_EVENTS_LOG_LEVEL")
-    , m_name(std::move(name))
-    , m_fd{ epoll_create1(0) }
+void EventLoop::dispatch(Duration const* timeout)
 {
-    hcheck(-1 != m_fd);
-    hcheck(-1 != pipe(m_pipe.data()));
-    assert(-1 != m_pipe[0] && -1 != m_pipe[1]);
+    ScopeGuard thread_scope(
+        [this]{
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_thread_id = std::this_thread::get_id();
+        },
+        [this]{
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_thread_id = std::thread::id();
+        }
+    );
 
-    if (true == m_name.empty()) {
-        m_name = fmt::format("{}", static_cast<void*>(this));
+    int timeout_ms = -1;
+    Clock expire;
+
+    if (nullptr != timeout) {
+        expire = now() + *timeout;
     }
 
-    add(m_pipe[0], kRead, [this](int fd, std::uint32_t events) {
-        assert(0 != (EPOLLIN & events));
-
-        std::uint8_t cmd;
-        hverify(1 == read(fd, &cmd, 1));
-
-        m_interrupt = true;
-    });
-
-    HLOGD(m_logger, "EventLoop[{}]: constructed", m_name);
-}
-
-EventLoop::~EventLoop()
-{
-    if (-1 != m_pipe[0]) {
-        close(m_pipe[0]);
-    }
-    if (-1 != m_pipe[1]) {
-        close(m_pipe[1]);
-    }
-    close(m_fd);
-
-    HLOGD(m_logger, "EventLoop[{}]: destructed", m_name);
-}
-
-int EventLoop::fd() const noexcept
-{
-    return m_fd;
-}
-
-void EventLoop::add(int fd, std::uint32_t events, Callback callback)
-{
-    assert(-1 != fd);
-    assert(nullptr != callback);
-
-    HLOGD(m_logger, "EventLoop[{}]: fd: {:3}, events: {:#04x} (adding)", m_name, fd, events);
-
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    assert(m_callbacks.end() == m_callbacks.find(fd));
-
-    try {
-        m_callbacks.emplace(fd, std::move(callback));
-
-        epoll_event event{};
-        event.events = events;
-        event.data.fd = fd;
-        hcheck(-1 != epoll_ctl(m_fd, EPOLL_CTL_ADD, fd, &event));
-    }
-    catch (...) {
-        m_callbacks.erase(fd);
-        throw;
-    }
-}
-
-void EventLoop::modify(int fd, std::uint32_t events)
-{
-    assert(-1 != fd);
-
-    HLOGT(m_logger, "EventLoop[{}]: fd: {:3}, events: {:#04x} (modifying)", m_name, fd, events);
-
-    epoll_event event{};
-    event.events = events;
-    event.data.fd = fd;
-    hcheck(-1 != epoll_ctl(m_fd, EPOLL_CTL_MOD, fd, &event));
-}
-
-void EventLoop::remove(int fd)
-{
-    assert(-1 != fd);
-
-    HLOGT(m_logger, "EventLoop[{}]: fd: {:3}, events: {:#04x} (removing)", m_name, fd, 0);
-
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    assert(m_callbacks.end() != m_callbacks.find(fd));
-
-    struct epoll_event event;
-    event.events = 0;
-    event.data.fd = fd;
-    hverify(-1 != epoll_ctl(m_fd, EPOLL_CTL_DEL, fd, &event));
-
-    m_callbacks.erase(fd);
-}
-
-void EventLoop::dispatch(int timeout_ms)
-{
     std::unique_lock<std::mutex> lock(m_mutex, std::defer_lock);
     Callback callback;
 
@@ -143,11 +66,22 @@ void EventLoop::dispatch(int timeout_ms)
             break;
         }
 
-        epoll_event event;
+        if (nullptr != timeout) {
+            Clock const current = now();
+            if (current < expire) {
+                timeout_ms = to<MilliSeconds>(expire - current);
+            }
+            else {
+                timeout_ms = 0;
+            }
+        }
 
+        epoll_event event;
         switch (epoll_wait(m_fd, &event, 1, timeout_ms)) {
         case -1:
-            hcheck(EINTR == errno);
+            if (EINTR != errno) {
+                throwf<std::runtime_error>("epoll_wait failed ({})", get_error_string(errno));
+            }
             break;
 
         case 1:
@@ -173,11 +107,150 @@ void EventLoop::dispatch(int timeout_ms)
     while (true);
 }
 
+
+//
+// Public
+//
+EventLoop::EventLoop(log::Domain logger)
+    : m_logger(std::move(logger))
+    , m_fd{ epoll_create1(0) }
+{
+    if (-1 == m_fd) {
+        throwf<std::runtime_error>("epoll_create failed ({})", get_error_string(errno));
+    }
+    if (-1 == pipe(m_pipe.data())) {
+        throwf<std::runtime_error>("pipe failed ({})", get_error_string(errno));
+    }
+    assert(-1 != m_pipe[0] && -1 != m_pipe[1]);
+
+    add(m_pipe[0], Read, [this](int fd, std::uint32_t events) {
+        assert(0 != (EPOLLIN & events));
+
+        std::uint8_t cmd;
+        hverify(1 == read(fd, &cmd, 1));
+
+        m_interrupt = true;
+    });
+
+    HLOGD(m_logger, "constructed");
+}
+
+EventLoop::~EventLoop()
+{
+    if (-1 != m_pipe[0]) {
+        close(m_pipe[0]);
+    }
+    if (-1 != m_pipe[1]) {
+        close(m_pipe[1]);
+    }
+    close(m_fd);
+
+    HLOGD(m_logger, "destructed");
+}
+
+int EventLoop::fd() const noexcept
+{
+    return m_fd;
+}
+
+std::thread::id EventLoop::threadId() const noexcept
+{
+    return m_thread_id;
+}
+
+void EventLoop::add(int fd, std::uint32_t events, Callback callback)
+{
+    assert(-1 != fd);
+    assert(nullptr != callback);
+
+    HLOGD(m_logger, "fd: {:3}, events: {:#04x} (adding)", fd, events);
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    assert(m_callbacks.end() == m_callbacks.find(fd));
+
+    try {
+        m_callbacks.emplace(fd, std::move(callback));
+
+        epoll_event event{};
+        event.events = events;
+        event.data.fd = fd;
+        if (-1 == epoll_ctl(m_fd, EPOLL_CTL_ADD, fd, &event)) {
+            throwf<std::runtime_error>("epoll_ctl failed ({})", get_error_string(errno));
+        }
+    }
+    catch (...) {
+        m_callbacks.erase(fd);
+        throw;
+    }
+}
+
+void EventLoop::modify(int fd, std::uint32_t events)
+{
+    assert(-1 != fd);
+
+    HLOGT(m_logger, "fd: {:3}, events: {:#04x} (modifying)", fd, events);
+
+    epoll_event event{};
+    event.events = events;
+    event.data.fd = fd;
+    if (-1 == epoll_ctl(m_fd, EPOLL_CTL_MOD, fd, &event)) {
+        throwf<std::runtime_error>("epoll_ctl failed ({})", get_error_string(errno));
+    }
+}
+
+void EventLoop::remove(int fd)
+{
+    assert(-1 != fd);
+
+    HLOGT(m_logger, "fd: {:3}, events: {:#04x} (removing)", fd, 0);
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    assert(m_callbacks.end() != m_callbacks.find(fd));
+
+    struct epoll_event event;
+    event.events = 0;
+    event.data.fd = fd;
+    hverify(-1 != epoll_ctl(m_fd, EPOLL_CTL_DEL, fd, &event));
+
+    m_callbacks.erase(fd);
+}
+
+void EventLoop::dispatch()
+{
+    dispatch(nullptr);
+}
+
+void EventLoop::dispatch(Duration const& timeout)
+{
+    dispatch(&timeout);
+}
+
 void EventLoop::interrupt()
 {
     std::uint8_t const cmd = 0;
     hverify(1 == write(m_pipe[1], &cmd, 1));
 
-    HLOGT(m_logger, "EventLoop[{}]: interrupted", m_name);
+    HLOGT(m_logger, "interrupted");
+}
+
+//
+// Utility
+//
+bool hlib::callback_from(EventLoop const& event_loop)
+{
+    return std::this_thread::get_id() == event_loop.threadId();
+}
+
+bool hlib::callback_from(std::weak_ptr<EventLoop> const& event_loop)
+{
+    bool result;
+
+    with_weak_ptr_locked(event_loop, [&](EventLoop const& loop) {
+        result = callback_from(loop);
+    });
+
+    return result;
 }
 
