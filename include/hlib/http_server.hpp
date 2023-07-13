@@ -173,6 +173,8 @@ public:
 
         std::shared_ptr<void> user;
 
+        SockAddr getPeerAddress() const;
+
         std::optional<std::string> getRequestValue(std::string const& name, std::size_t index = 0) const;
         bool containsRequestValue(std::string const& name, std::string const& value, std::string const& delim) const noexcept;
 
