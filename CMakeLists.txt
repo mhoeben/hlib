@@ -60,7 +60,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/utility.hpp
     include/hlib/uuid.hpp
     include/hlib/wait.hpp
-    include/hlib/web_socket.hpp
+    include/hlib/web_socket_server.hpp
 
     include/hlib/c/base.h
     include/hlib/c/buffer.h
@@ -94,7 +94,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_utility.cpp
     src/hlib_uuid.cpp
     src/hlib_wait.cpp
-    src/hlib_web_socket.cpp
+    src/hlib_web_socket_server.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
