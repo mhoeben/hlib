@@ -83,10 +83,10 @@ public:
     public:
         typedef uint64_t Id;
 
-        typedef std::function<void(Socket& socket)> PongCallback;
-        typedef std::function<void(Socket& socket, Message& message)> MessageCallback;
-        typedef std::function<void(Socket const& socket)> ErrorCallback;
-        typedef std::function<void(Socket const& socket, bool clean, uint16_t code, Buffer const& reason)> CloseCallback;
+        typedef std::function<void()> PongCallback;
+        typedef std::function<void(Message& message)> MessageCallback;
+        typedef std::function<void()> ErrorCallback;
+        typedef std::function<void(bool clean, uint16_t code, Buffer const& reason)> CloseCallback;
 
     public:
         Server& server;

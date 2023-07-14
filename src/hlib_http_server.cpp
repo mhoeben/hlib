@@ -400,7 +400,7 @@ void Server::onRequestEnd(hserv_session_t* session, int failed)
 }
 
 //
-// Public
+// Public (Server::Config)
 //
 Server::Config::Config()
     : binding{ hlib::Config::httpServerBinding() }
@@ -408,6 +408,9 @@ Server::Config::Config()
 {
 }
 
+//
+// Public (Server)
+//
 Server::Server(log::Domain logger, std::weak_ptr<EventLoop> event_loop)
     : m_logger(std::move(logger))
     , m_event_loop(std::move(event_loop))

@@ -58,6 +58,7 @@ HLIB_C_VISIBILITY void hlib_codec_decoder_binary_decode_double(hlib_codec_decode
 HLIB_C_VISIBILITY void hlib_codec_decoder_binary_decode_string(hlib_codec_decoder_t* decoder, char const* name, hlib_codec_string_t* value);
 HLIB_C_VISIBILITY void hlib_codec_decoder_binary_decode_binary(hlib_codec_decoder_t* decoder, char const* name, hlib_codec_binary_t* value);
 HLIB_C_VISIBILITY void hlib_codec_decoder_binary_close(hlib_codec_decoder_t* decoder);
+HLIB_C_VISIBILITY int hlib_codec_decoder_binary_more(hlib_codec_decoder_t* decoder);
 HLIB_C_VISIBILITY int hlib_codec_decoder_binary_peek(hlib_codec_decoder_t* decoder);
 
 #endif // HLIB_C_CODEC_BINARY_H
@@ -92,7 +93,7 @@ do {                                                                        \
         return;                                                             \
     }                                                                       \
                                                                             \
-    hlib_codec_encoder_binary_t* self = (hlib_codec_encoder_binary_t*)encoder;          \
+    hlib_codec_encoder_binary_t* self = (hlib_codec_encoder_binary_t*)encoder; \
                                                                             \
     uint8_t data[32];                                                       \
     size_t size = 0;                                                        \
@@ -130,7 +131,7 @@ do {                                                                        \
         return;                                                             \
     }                                                                       \
                                                                             \
-    hlib_codec_encoder_binary_t* self = (hlib_codec_encoder_binary_t*)encoder;          \
+    hlib_codec_encoder_binary_t* self = (hlib_codec_encoder_binary_t*)encoder; \
                                                                             \
     union                                                                   \
     {                                                                       \
@@ -159,7 +160,7 @@ do {                                                                        \
         return;                                                             \
     }                                                                       \
                                                                             \
-    hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder;          \
+    hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder; \
                                                                             \
     uint8_t const* ptr = self->data + self->offset;                         \
     uint8_t const* end = self->data + self->size;                           \
@@ -196,7 +197,7 @@ do {                                                                        \
         return;                                                             \
     }                                                                       \
                                                                             \
-    hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder;          \
+    hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder; \
     if (self->offset + sizeof(type) > self->size) {                         \
         decoder->error = HLIB_ERROR_PARSING;                                \
         return;                                                             \
@@ -352,6 +353,7 @@ hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, size_t 
     self->base.decode_string = hlib_codec_decoder_binary_decode_string;
     self->base.decode_binary = hlib_codec_decoder_binary_decode_binary;
     self->base.close = hlib_codec_decoder_binary_close;
+    self->base.more = hlib_codec_decoder_binary_more;
     self->base.peek = hlib_codec_decoder_binary_peek;
 
     self->data = (uint8_t const*)data;
@@ -476,6 +478,12 @@ void hlib_codec_decoder_binary_decode_binary(hlib_codec_decoder_t* decoder, char
 
 void hlib_codec_decoder_binary_close(hlib_codec_decoder_t* /* decoder */)
 {
+}
+
+hlib_codec_type_id_t hlib_codec_decoder_binary_more(hlib_codec_decoder_t* decoder)
+{
+    hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder;
+    return self->offset < self->size;
 }
 
 hlib_codec_type_id_t hlib_codec_decoder_binary_peek(hlib_codec_decoder_t* decoder)

@@ -154,6 +154,7 @@ public:
         close();
     }
 
+    virtual bool more() const = 0;
     virtual Type::Id peek() const = 0;
     virtual void unwrap(Type& value);
 };

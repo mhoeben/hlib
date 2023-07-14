@@ -267,7 +267,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
 
             case Opcode::Pong:
                 if (nullptr != m_on_pong) {
-                    m_on_pong(*this);
+                    m_on_pong();
                 }
                 break;
 
@@ -322,7 +322,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
             }
 
             // Callback with front frame's (defragmented) message.
-            m_on_message(*this, front.message);
+            m_on_message(front.message);
         }
 
         // Clear receive queue for next frame(s).
@@ -367,13 +367,13 @@ void Server::Socket::onClosed(bool clean)
 
             // Emit an error callback?
             if (nullptr != m_on_error) {
-                m_on_error(*this);
+                m_on_error();
             }
         }
 
         // Emit close callback?
         if (nullptr != m_on_close) {
-            m_on_close(*this, clean, m_close_code, m_close_reason);
+            m_on_close(clean, m_close_code, m_close_reason);
         }
     }
     catch (...) {
