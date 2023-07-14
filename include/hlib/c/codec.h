@@ -107,6 +107,7 @@ typedef struct hlib_codec_decoder_s
     void (*decode_binary)(struct hlib_codec_decoder_s* decoder, char const* name, hlib_codec_binary_t* value);
     void (*close)(struct hlib_codec_decoder_s* decoder);
 
+    int (*more)(struct hlib_codec_decoder_s* decoder);
     int (*peek)(struct hlib_codec_decoder_s* decoder);
 } hlib_codec_decoder_t;
 

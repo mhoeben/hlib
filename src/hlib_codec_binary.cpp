@@ -224,6 +224,11 @@ void BinaryDecoder::close()
     hlib_codec_decoder_binary_close(m_decoder);
 }
 
+bool BinaryDecoder::more() const
+{
+    return !!hlib_codec_decoder_binary_more(m_decoder);
+}
+
 Type::Id BinaryDecoder::peek() const
 {
     Type::Id id = hlib_codec_decoder_binary_peek(m_decoder);

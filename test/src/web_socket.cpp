@@ -64,12 +64,12 @@ TEST_CASE("WebSocket", "[websocket]")
 
         ws::Server::Socket& socket = ws_server.add(transaction.upgraded());
 
-        socket.setMessageCallback([&](ws::Server::Socket& sock, ws::Message& message) {
+        socket.setMessageCallback([&](ws::Message& message) {
             REQUIRE("Hello World" == std::get<std::string>(message));
-            sock.close();
+            socket.close();
         });
 
-        socket.setCloseCallback([&](ws::Server::Socket const& /* sock */, bool /* clean */, uint16_t /* code */, Buffer const& /* reason */) {
+        socket.setCloseCallback([&](bool /* clean */, uint16_t /* code */, Buffer const& /* reason */) {
             // TODO REQUIRE(true == clean);
             event_loop->interrupt();
         });

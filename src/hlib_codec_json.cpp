@@ -332,6 +332,13 @@ void JSONDecoder::close()
     ++m_index;
 }
 
+bool JSONDecoder::more() const
+{
+    return JSON::Undefined != m_root.type()
+        && true == m_stack.empty()
+        && 0 == m_index;
+}
+
 Type::Id JSONDecoder::peek() const
 {
     if (JSON::Array != m_root.type()) {

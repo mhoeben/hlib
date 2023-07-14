@@ -88,6 +88,7 @@ public:
     void decode(char const* name, Binary& value) override;
     void close() override;
 
+    bool more() const override;
     Type::Id peek() const override;
 
 private:
