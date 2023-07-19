@@ -21,4 +21,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
+#include "catch2/catch_test_macros.hpp"
 #include "test.hpp"
+#include "hlib/container.hpp"
+#include "hlib/subprocess.hpp"
+
+#include <vector>
+
+using namespace hlib;
+
+//
+// Scratch tests.
+//
+TEST_CASE("Test")
+{
+    std::vector<std::string> lhs{ "a", "b", "c" };
+    std::vector<std::string> rhs{ "b", "c", "d" };
+    std::vector<std::string> r = container::make_union(lhs, rhs);
+
+    REQUIRE(4 == r.size());
+}
+
+//
+// Public
+//
+bool test::is_curl_installed()
+{
+    return 0 == Subprocess("curl", { "--version" }).returnCode();
+}
+
+bool test::is_uwsc_installed()
+{
+    return 0 == Subprocess("uwsc", { "--version" }).returnCode();
+}
+

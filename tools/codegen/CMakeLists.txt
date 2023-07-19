@@ -28,6 +28,7 @@ project("codegen" VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_executable(${PROJECT_NAME}
+    src/config.hpp
     src/generator.cpp
     src/generator.hpp
     src/generator_c99.cpp

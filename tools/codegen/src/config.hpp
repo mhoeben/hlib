@@ -25,22 +25,8 @@
 
 #include <cstddef>
 
-namespace hlib
-{
-
 struct Config
 {
-    static constexpr int         defaultLogLevel()              { return 3; }
-    static constexpr std::size_t maxErrorString()               { return 256; }
-    static constexpr std::size_t subprocessOutputBatchSize()    { return 1024; }
-    static constexpr char const* httpServerBinding()            { return "0.0.0.0:8443"; }
-    static constexpr bool        httpServerSecure()             { return true; }
-    static constexpr std::size_t httpServerContentChunkSize()   { return 65536; }
-    static constexpr char const* httpServerDefaultMimeType()    { return "application/octet-stream"; }
-    static constexpr std::size_t wsMaxReceiveMessageSize()      { return 1024 * 1024; }
-    static constexpr std::size_t wsFragmentMessageThreshold()   { return 1024 * 1024; }
-    static constexpr double      wsServerMaintenanceInterval()  { return 1.0; }
+    static constexpr std::size_t inputProgressiveReadSize()     { return 65536; }
 };
-
-} // namespace hlib
 

@@ -21,26 +21,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#include "test.hpp"
+#include "hlib/type_traits.hpp"
+#include <array>
+#include <forward_list>
+#include <list>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-#include <cstddef>
+using namespace hlib;
 
-namespace hlib
+TEST_CASE("IsAssociative", "[type_traits]")
 {
+    REQUIRE(false == is_associative<std::array<int, 1>>::value);
+    REQUIRE(false == is_associative<std::forward_list<int>>::value);
+    REQUIRE(false == is_associative<std::list<int>>::value);
+    REQUIRE(false == is_associative<std::vector<int>>::value);
 
-struct Config
-{
-    static constexpr int         defaultLogLevel()              { return 3; }
-    static constexpr std::size_t maxErrorString()               { return 256; }
-    static constexpr std::size_t subprocessOutputBatchSize()    { return 1024; }
-    static constexpr char const* httpServerBinding()            { return "0.0.0.0:8443"; }
-    static constexpr bool        httpServerSecure()             { return true; }
-    static constexpr std::size_t httpServerContentChunkSize()   { return 65536; }
-    static constexpr char const* httpServerDefaultMimeType()    { return "application/octet-stream"; }
-    static constexpr std::size_t wsMaxReceiveMessageSize()      { return 1024 * 1024; }
-    static constexpr std::size_t wsFragmentMessageThreshold()   { return 1024 * 1024; }
-    static constexpr double      wsServerMaintenanceInterval()  { return 1.0; }
-};
-
-} // namespace hlib
+    REQUIRE(true == is_associative<std::map<int, int>>::value);
+    REQUIRE(true == is_associative<std::set<int>>::value);
+    REQUIRE(true == is_associative<std::multimap<int, int>>::value);
+    REQUIRE(true == is_associative<std::multiset<int>>::value);
+    REQUIRE(true == is_associative<std::unordered_map<int, int>>::value);
+    REQUIRE(true == is_associative<std::unordered_set<int>>::value);
+}
 

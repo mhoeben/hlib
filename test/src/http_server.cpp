@@ -21,23 +21,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "catch2/catch_test_macros.hpp"
+#include "test.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/http_server.hpp"
 #include "hlib/subprocess.hpp"
 #include <thread>
 
 using namespace hlib;
-
-namespace
-{
-
-bool is_curl_installed()
-{ 
-    return 0 == Subprocess("curl", { "--version" }).returnCode();
-}
-
-} // namespace
 
 TEST_CASE("HTTP Canonicalize", "[http]")
 {
@@ -91,24 +81,22 @@ TEST_CASE("HTTP Canonicalize", "[http]")
 
 TEST_CASE("HTTP Server", "[http]")
 {
-    static std::string const& test_string = "Hello World";
+    REQUIRE(true == test::is_curl_installed());
 
-    REQUIRE(true == is_curl_installed());
-
-    auto event_loop = std::make_shared<EventLoop>(log::Domain("EVENTLOOP"));
-    http::Server server(log::Domain("HTTP-SERVER"), event_loop);
+    auto event_loop = std::make_shared<EventLoop>();
+    http::Server server("HTTP_SERVER", event_loop);
 
     http::Server::Config config;
     config.binding = SockAddr("127.0.0.1:6502");
     config.secure = false;
     config.on_transaction_start = [&](http::Server::Transaction& transaction) noexcept
     {
-        REQUIRE("GET" == transaction.request_method);
+        REQUIRE(http::Method::Get == transaction.request_method);
         REQUIRE("/" == transaction.request_target);
         REQUIRE("HTTP/1.1" == transaction.request_version);
         REQUIRE(0 == transaction.request_content_length);
 
-        transaction.respond(http::StatusCode::Ok, {}, std::make_unique<Buffer>(test_string));
+        transaction.respond(http::StatusCode::Ok, {}, std::make_unique<Buffer>("Hello World"));
     };
     config.on_transaction_end = [&](http::Server::Transaction const& /* transaction */, bool failed) noexcept
     {
@@ -122,9 +110,9 @@ TEST_CASE("HTTP Server", "[http]")
         event_loop->dispatch();
     });
 
-    Subprocess request("curl", { "http://localhost:6502" });
-    REQUIRE(0 == request.returnCode());
-    REQUIRE(test_string == to_string(request.output()));
+    Subprocess curl("curl", { "http://localhost:6502" });
+    REQUIRE(0 == curl.returnCode());
+    REQUIRE("Hello World" == to_string(curl.output()));
 
     thread.join();
 }

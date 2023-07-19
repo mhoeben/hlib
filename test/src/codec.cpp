@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "catch2/catch_test_macros.hpp"
+#include "test.hpp"
 #include "hlib/buffer.hpp"
 #include "hlib/codec.hpp"
 
@@ -31,7 +31,7 @@ using namespace hlib::codec;
 namespace
 {
 
-void test(std::string kind)
+void test_codec(std::string kind)
 {
     Buffer buffer;
     std::unique_ptr<Encoder> encoder = Encoder::create(kind, buffer);
@@ -98,11 +98,11 @@ void test(std::string kind)
 
 TEST_CASE("Binary Codec", "[codec]")
 {
-    test("binary");
+    test_codec("binary");
 }
 
 TEST_CASE("JSON Codec", "[codec,json]")
 {
-    test("json");
+    test_codec("json");
 }
 

@@ -51,7 +51,7 @@ public:
     typedef std::function<void(int fd, std::uint32_t events)> Callback;
 
 public:
-    EventLoop(log::Domain logger);
+    EventLoop(log::Domain logger = log::Domain("EVENTLOOP"));
     ~EventLoop();
 
     int fd() const noexcept;

@@ -23,56 +23,69 @@
 //
 #include "test.hpp"
 #include "hlib/event_loop.hpp"
-#include "hlib/http_server.hpp"
+#include "hlib/file.hpp"
+#include "hlib/format.hpp"
+#include "hlib/file_server.hpp"
 #include "hlib/subprocess.hpp"
-#include "hlib/web_socket_server.hpp"
+#include <filesystem>
 
 using namespace hlib;
 
-TEST_CASE("WebSocket", "[websocket]")
+TEST_CASE("File Server", "[file,http]")
 {
-    REQUIRE(true == test::is_uwsc_installed());
+    REQUIRE(true == test::is_curl_installed());
 
     auto event_loop = std::make_shared<EventLoop>();
+    http::Server server("SERVER", event_loop);
 
-    ws::Server ws_server("WS_SERVER", event_loop);
-    ws_server.start();
-
-    http::Server http_server("HTTP_SERVER", event_loop);
     http::Server::Config config;
     config.binding = SockAddr("127.0.0.1:6502");
     config.secure = false;
     config.on_transaction_start = [&](http::Server::Transaction& transaction) noexcept
     {
-        std::optional<std::vector<std::string>> protocols = ws::is_upgrade(transaction);
-        REQUIRE("test" == protocols->at(0));
+        REQUIRE("/test.txt" == transaction.request_target);
 
-        ws::upgrade(transaction, protocols->at(0));
+        std::filesystem::path filepath(fmt::format("/tmp/hlib_test{}", transaction.request_target));
+
+        switch (transaction.request_method) {
+        case http::Method::Get:
+            transaction.delegateTo<file::server::GetFile>(std::move(filepath));
+            break;
+
+        case http::Method::Put:
+            transaction.delegateTo<file::server::PutFile>(std::move(filepath));
+            break;
+
+        case http::Method::Delete:
+            transaction.delegateTo<file::server::DeleteFile>(std::move(filepath));
+            break;
+
+        default:
+            REQUIRE(false);
+        }
     };
-    config.on_transaction_end = [&](http::Server::Transaction& transaction, bool failed) noexcept
-    {
-        REQUIRE(false == failed);
 
-        ws::Server::Socket& socket = ws_server.add(transaction.upgraded());
-
-        socket.setMessageCallback([&](ws::Message& message) {
-            REQUIRE("Hello World" == std::get<std::string>(message));
-            socket.close();
-        });
-
-        socket.setCloseCallback([&](bool /* clean */, uint16_t /* code */, Buffer const& /* reason */) {
-            // TODO REQUIRE(true == clean);
-            event_loop->interrupt();
-        });
-    };
-    http_server.start(config);
+    server.start(config);
 
     std::thread thread([&] {
         event_loop->dispatch();
     });
 
-    system("echo \"Hello World\" | uwsc -p test ws://localhost:6502/ >/dev/null");
+    std::filesystem::create_directory("/tmp/hlib_test");
 
+    Subprocess curl;
+
+    curl.run("curl", { "-X", "PUT", "-H", "\"Content-Type: text/plain\"", "-d", "Hello World", "http://127.0.0.1:6502/test.txt" });
+    REQUIRE(0 == curl.returnCode());
+
+    curl.run("curl", { "http://127.0.0.1:6502/test.txt" });
+    REQUIRE(0 == curl.returnCode());
+    REQUIRE("Hello World" == to_string(curl.output()));
+
+    curl.run("curl", { "-X", "DELETE", "http://127.0.0.1:6502/test.txt" });
+    REQUIRE(0 == curl.returnCode());
+
+    event_loop->interrupt();
     thread.join();
 }
 

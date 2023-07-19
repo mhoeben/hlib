@@ -23,24 +23,55 @@
 //
 #pragma once
 
-#include <cstddef>
+#include "hlib/http_server.hpp"
+#include <filesystem>
+#include <fstream>
 
 namespace hlib
 {
-
-struct Config
+namespace file
 {
-    static constexpr int         defaultLogLevel()              { return 3; }
-    static constexpr std::size_t maxErrorString()               { return 256; }
-    static constexpr std::size_t subprocessOutputBatchSize()    { return 1024; }
-    static constexpr char const* httpServerBinding()            { return "0.0.0.0:8443"; }
-    static constexpr bool        httpServerSecure()             { return true; }
-    static constexpr std::size_t httpServerContentChunkSize()   { return 65536; }
-    static constexpr char const* httpServerDefaultMimeType()    { return "application/octet-stream"; }
-    static constexpr std::size_t wsMaxReceiveMessageSize()      { return 1024 * 1024; }
-    static constexpr std::size_t wsFragmentMessageThreshold()   { return 1024 * 1024; }
-    static constexpr double      wsServerMaintenanceInterval()  { return 1.0; }
+namespace server
+{
+
+class GetFile final
+{
+    HLIB_NOT_COPYABLE(GetFile);
+    HLIB_NOT_MOVABLE(GetFile);
+
+public:
+    GetFile(http::Server::Transaction& transaction, std::filesystem::path filepath);
+
+private:
+    std::ifstream m_stream;
+
+    void onSend(http::Server::Transaction& transaction, std::shared_ptr<Buffer const> buffer, std::size_t more);
 };
 
+class PutFile final
+{
+    HLIB_NOT_COPYABLE(PutFile);
+    HLIB_NOT_MOVABLE(PutFile);
+
+public:
+    PutFile(http::Server::Transaction& transaction, std::filesystem::path filepath);
+
+private:
+    std::ofstream m_stream;
+
+    void onReceive(http::Server::Transaction& transaction, std::shared_ptr<Buffer> buffer, std::size_t more);
+};
+
+class DeleteFile final
+{
+    HLIB_NOT_COPYABLE(DeleteFile);
+    HLIB_NOT_MOVABLE(DeleteFile);
+
+public:
+    DeleteFile(http::Server::Transaction& transaction, std::filesystem::path filepath);
+};
+
+} // namespace server
+} // namespace file
 } // namespace hlib
 

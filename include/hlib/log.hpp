@@ -43,15 +43,14 @@ enum Level
     Trace
 };
 
-std::string const& to_string(Level level);
-
 struct Domain
 {
     std::string name;
     Level level;
 
-    Domain(std::string name, Level level = Notice);
-    Domain(std::string name, std::string const& env_name);
+    Domain(char const* a_name, Level a_level = Level::Notice);
+    Domain(std::string a_name, Level a_level = Level::Notice);
+    Domain(std::string a_name, std::string const& a_env_name);
 };
 
 void log(Domain const& domain, Level level, std::string const& message);
@@ -83,5 +82,8 @@ void log(Domain const& domain, Level level, std::string const& message);
 #endif
 
 } // namespace log
+
+std::string const& to_string(log::Level level);
+
 } // namespace hlib
 

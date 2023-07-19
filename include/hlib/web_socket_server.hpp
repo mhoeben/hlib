@@ -51,8 +51,6 @@ enum class State
     Closed
 };
 
-std::string const& to_string(State state);
-
 enum class Opcode
 {
     Continuation = 0,
@@ -62,8 +60,6 @@ enum class Opcode
     Ping = 9,
     Pong = 10
 };
-
-std::string const& to_string(Opcode opcode);
 
 typedef std::variant<std::monostate, std::string, Buffer> Message;
 
@@ -83,10 +79,10 @@ public:
     public:
         typedef uint64_t Id;
 
-        typedef std::function<void()> PongCallback;
-        typedef std::function<void(Message& message)> MessageCallback;
-        typedef std::function<void()> ErrorCallback;
-        typedef std::function<void(bool clean, uint16_t code, Buffer const& reason)> CloseCallback;
+        typedef std::function<void()> OnPong;
+        typedef std::function<void(Message& message)> OnMessage;
+        typedef std::function<void()> OnError;
+        typedef std::function<void(bool clean, uint16_t code, Buffer const& reason)> OnClose;
 
     public:
         Server& server;
@@ -98,10 +94,10 @@ public:
 
         SockAddr getPeerAddress() const;
 
-        void setPongCallback(PongCallback callback);
-        void setMessageCallback(MessageCallback callback);
-        void setErrorCallback(ErrorCallback callback);
-        void setCloseCallback(CloseCallback callback);
+        void setPongCallback(OnPong callback);
+        void setMessageCallback(OnMessage callback);
+        void setErrorCallback(OnError callback);
+        void setCloseCallback(OnClose callback);
 
         void setNoDelay(bool enable);
         void setPingInterval(Duration interval);
@@ -116,10 +112,10 @@ public:
         struct hws_s* m_hws;
         struct hws_socket_s* m_socket;
 
-        PongCallback m_on_pong;
-        MessageCallback m_on_message;
-        ErrorCallback m_on_error;
-        CloseCallback m_on_close;
+        OnPong m_on_pong;
+        OnMessage m_on_message;
+        OnError m_on_error;
+        OnClose m_on_close;
 
         Timer m_ping_timer;
         std::size_t m_max_receive_message_size;
@@ -144,7 +140,7 @@ public:
         uint16_t m_close_code{ 1005 };
         Buffer m_close_reason;
 
-        Socket(Server& server, Socket::Id a_id, struct hws_s* a_hws, http::Upgrade a_upgrade);
+        Socket(Server& server, Socket::Id a_id, struct hws_s* a_hws, http::Socket a_http_socket);
 
         void restart_locked();
 
@@ -166,7 +162,7 @@ public:
     void start();
     void stop();
 
-    Socket& add(http::Upgrade upgrade);
+    Socket& add(http::Socket socket);
     void remove(Socket::Id socket_id);
 
 private:
@@ -187,5 +183,9 @@ std::optional<std::vector<std::string>> is_upgrade(http::Server::Transaction con
 void upgrade(http::Server::Transaction& transaction, std::string subprotocol);
 
 } // namespace ws
+
+std::string const& to_string(ws::State state);
+std::string const& to_string(ws::Opcode opcode);
+
 } // namespace hlib
 

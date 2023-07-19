@@ -23,6 +23,7 @@
 //
 #include "hlib/web_socket_server.hpp"
 #include "hlib/config.hpp"
+#include "hlib/container.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
@@ -74,7 +75,7 @@ Server::Socket::Frame::Frame(Opcode a_opcode, bool a_fin, Message a_message)
 //
 // Implementation (Socket)
 //
-Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, http::Upgrade a_upgrade)
+Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, http::Socket a_http_socket)
     : server(a_server)
     , id{ a_id }
     , m_hws(a_hws)
@@ -106,15 +107,15 @@ Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, h
         }
     };
 
-    m_socket = hws_socket_create(a_hws, a_upgrade.fd, a_upgrade.ssl, &callbacks);
+    m_socket = hws_socket_create(a_hws, a_http_socket.fd, a_http_socket.ssl, &callbacks);
     if (nullptr == m_socket) {
         throwf<std::runtime_error>("Failed to create websocket");
     }
     hws_socket_set_user_data(m_socket, this);
 
     // Reset HTTP upgrade resources.
-    a_upgrade.fd = -1;
-    a_upgrade.ssl = nullptr;
+    a_http_socket.fd = -1;
+    a_http_socket.ssl = nullptr;
 }
 
 void Server::Socket::restart_locked()
@@ -398,28 +399,28 @@ SockAddr Server::Socket::getPeerAddress() const
     return SockAddr(storage);
 }
 
-void Server::Socket::setPongCallback(PongCallback callback)
+void Server::Socket::setPongCallback(OnPong callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_pong = std::move(callback);
 }
 
-void Server::Socket::setMessageCallback(MessageCallback callback)
+void Server::Socket::setMessageCallback(OnMessage callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_message = std::move(callback);
 }
 
-void Server::Socket::setErrorCallback(ErrorCallback callback)
+void Server::Socket::setErrorCallback(OnError callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_error = std::move(callback);
 }
 
-void Server::Socket::setCloseCallback(CloseCallback callback)
+void Server::Socket::setCloseCallback(OnClose callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
@@ -632,12 +633,12 @@ void Server::stop()
     }));
 }
 
-Server::Socket& Server::add(http::Upgrade upgrade)
+Server::Socket& Server::add(http::Socket http_socket)
 {
-    assert(true == iequals("websocket", upgrade.subprotocol));
+    assert(true == iequals("websocket", http_socket.protocol));
 
     Socket::Id const socket_id = ++m_socket_id;
-    std::unique_ptr<Socket> socket(new Socket(*this, socket_id, m_hws, std::move(upgrade)));
+    std::unique_ptr<Socket> socket(new Socket(*this, socket_id, m_hws, std::move(http_socket)));
 
     std::lock_guard<std::mutex> lock(m_sockets_mutex);
     m_sockets.emplace(socket_id, std::move(socket));
@@ -652,7 +653,7 @@ void Server::remove(Socket::Id socket_id)
 }
 
 //
-// Utility
+// Public (Utility)
 //
 std::optional<std::vector<std::string>> ws::is_upgrade(http::Server::Transaction const& transaction)
 {
@@ -660,6 +661,10 @@ std::optional<std::vector<std::string>> ws::is_upgrade(http::Server::Transaction
 
     value = http::is_upgrade(transaction);
     if (false == value.has_value() || false == iequals("websocket", value.value())) {
+        return std::optional<std::vector<std::string>>();
+    }
+
+    if (0 != transaction.request_content_length) {
         return std::optional<std::vector<std::string>>();
     }
 
@@ -719,9 +724,9 @@ void ws::upgrade(http::Server::Transaction& transaction, std::string subprotocol
 }
 
 //
-// Utility
+// Public (Utility
 //
-std::string const& hlib::ws::to_string(State state)
+std::string const& hlib::to_string(State state)
 {
     static std::unordered_map<State, std::string> const table =
     {
@@ -736,7 +741,7 @@ std::string const& hlib::ws::to_string(State state)
     return table.end() != it ? it->second : invalid;
 }
 
-std::string const& hlib::ws::to_string(Opcode opcode)
+std::string const& hlib::to_string(Opcode opcode)
 {
     static std::unordered_map<Opcode, std::string> const table =
     {

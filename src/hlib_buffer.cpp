@@ -121,6 +121,11 @@ void Buffer::shrink() noexcept
     hlib_buffer_shrink(&m_buffer);
 }
 
+void* Buffer::reserve(std::size_t capacity, std::nothrow_t) noexcept
+{
+    return hlib_buffer_reserve(&m_buffer, capacity);
+}
+
 void* Buffer::reserve(std::size_t capacity)
 {
     void* data = hlib_buffer_reserve(&m_buffer, capacity);
@@ -128,6 +133,11 @@ void* Buffer::reserve(std::size_t capacity)
         throw std::bad_alloc();
     }
     return data;
+}
+
+void* Buffer::resize(std::size_t size, std::nothrow_t) noexcept
+{
+    return hlib_buffer_resize(&m_buffer, size);
 }
 
 void* Buffer::resize(std::size_t size)
@@ -139,11 +149,21 @@ void* Buffer::resize(std::size_t size)
     return data;
 }
 
+bool Buffer::assign(void const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    return -1 != hlib_buffer_assign(&m_buffer, data, size);
+}
+
 void Buffer::assign(void const* data, std::size_t size)
 {
     if (-1 == hlib_buffer_assign(&m_buffer, data, size)) {
         throw std::bad_alloc();
     }
+}
+
+bool Buffer::append(void const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    return -1 != hlib_buffer_append(&m_buffer, data, size);
 }
 
 void Buffer::append(void const* data, std::size_t size)
@@ -153,6 +173,11 @@ void Buffer::append(void const* data, std::size_t size)
     }
 }
 
+bool Buffer::insert(std::size_t offset, void const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    return -1 != hlib_buffer_insert(&m_buffer, offset, data, size);
+}
+
 void Buffer::insert(std::size_t offset, void const* data, std::size_t size)
 {
     if (-1 == hlib_buffer_insert(&m_buffer, offset, data, size)) {
@@ -160,7 +185,7 @@ void Buffer::insert(std::size_t offset, void const* data, std::size_t size)
     }
 }
 
-void Buffer::erase(std::size_t offset, std::size_t size)
+void Buffer::erase(std::size_t offset, std::size_t size) noexcept
 {
     hlib_buffer_erase(&m_buffer, offset, size);
 }

@@ -45,6 +45,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/error.hpp
     include/hlib/event_loop.hpp
     include/hlib/file.hpp
+    include/hlib/file_server.hpp
     include/hlib/http_server.hpp
     include/hlib/format.hpp
     include/hlib/json.hpp
@@ -56,6 +57,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/subprocess.hpp
     include/hlib/time.hpp
     include/hlib/timer.hpp
+    include/hlib/type_traits.hpp
     include/hlib/uri.hpp
     include/hlib/utility.hpp
     include/hlib/uuid.hpp
@@ -80,6 +82,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_error.cpp
     src/hlib_event_loop.cpp
     src/hlib_file.cpp
+    src/hlib_file_server.cpp
     src/hlib_format.cpp
     src/hlib_http_server.cpp
     src/hlib_json.cpp

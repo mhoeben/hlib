@@ -25,6 +25,7 @@
 
 #include "hlib/base.hpp"
 #include "hlib/c/buffer.h"
+#include <new>
 #include <string>
 
 namespace hlib
@@ -59,13 +60,22 @@ public:
     void clear() noexcept;
     void shrink() noexcept;
 
+    void* reserve(std::size_t capacity, std::nothrow_t) noexcept;
     void* reserve(std::size_t capacity);
+
+    void* resize(std::size_t size, std::nothrow_t) noexcept;
     void* resize(std::size_t size);
 
+    bool assign(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void assign(void const* data, std::size_t size);
+
+    bool append(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void append(void const* data, std::size_t size);
+
+    bool insert(std::size_t offset, void const* data, std::size_t size, std::nothrow_t) noexcept;
     void insert(std::size_t offset, void const* data, std::size_t size);
-    void erase(std::size_t offset, std::size_t size);
+
+    void erase(std::size_t offset, std::size_t size) noexcept;
 
 private:
     hlib_buffer_t m_buffer{};

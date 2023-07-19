@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
+#include "config.hpp"
 #include "generator.hpp"
 #include "generator_c99.hpp"
 #include "generator_cpp11.hpp"
@@ -122,7 +123,7 @@ std::unique_ptr<Generator> Generator::create(Language language)
 int Generator::generate(FILE* output, FILE* input, Side side)
 {
     try {
-        m_input.parse(to_string(file::read(input)));
+        m_input.parse(to_string(file::read(input, ::Config::inputProgressiveReadSize())));
     }
     catch (std::exception const& e) {
         fmt::print(stderr, "codegen: failed to read or parse input: {}\n", e.what());

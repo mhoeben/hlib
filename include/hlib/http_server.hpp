@@ -26,6 +26,7 @@
 #include "hlib/buffer.hpp"
 #include "hlib/log.hpp"
 #include "hlib/sock_addr.hpp"
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <openssl/ssl.h>
@@ -48,6 +49,21 @@ class EventLoop;
 
 namespace http
 {
+
+enum class Method
+{
+    Invalid,
+
+    Get,
+    Head,
+    Post,
+    Put,
+    Delete,
+    Connect,
+    Options,
+    Trace,
+    Patch
+};
 
 enum class StatusCode
 {
@@ -111,33 +127,29 @@ enum class StatusCode
     NetworkAuthenticationRequired = 511
 };
 
-std::string to_string(StatusCode status_code);
-
 struct HeaderField final
 {
     std::string name;
     std::string value;
 };
 
-std::string to_string(HeaderField const& header_field);
-
 static constexpr std::size_t ChunkedTransferEncoding{ ~std::size_t(0) };
 
-class Upgrade final
+class Socket final
 {
-    HLIB_NOT_COPYABLE(Upgrade);
+    HLIB_NOT_COPYABLE(Socket);
 
 public:
-    std::string subprotocol;
     int fd{ -1 };
     SSL* ssl{ nullptr };
+    std::string protocol;
 
-    Upgrade() noexcept = default;
-    Upgrade(std::string a_subprotocol, int a_fd, SSL* a_ssl) noexcept;
-    Upgrade(Upgrade&& that) noexcept;
-    ~Upgrade();
+    Socket() noexcept = default;
+    Socket(int a_fd, SSL* a_ssl, std::string a_protocol = "") noexcept;
+    Socket(Socket&& that) noexcept;
+    ~Socket();
 
-    Upgrade& operator = (Upgrade&& that) noexcept;
+    Socket& operator = (Socket&& that) noexcept;
 };
 
 class Server final
@@ -148,11 +160,13 @@ class Server final
 public:
     class Transaction;
 
-    typedef std::function<void(Transaction& transaction)> TransactionStartCallback;
-    typedef std::function<void(Transaction& transaction, bool failed)> TransactionEndCallback;
+    typedef std::function<void(Transaction& transaction)> OnTransactionStart;
+    typedef std::function<void(Transaction& transaction, bool failed)> OnTransactionEnd;
 
-    typedef std::function<void(Transaction& transaction, std::shared_ptr<Buffer> buffer, std::size_t more)> RequestContentCallback;
-    typedef std::function<void(Transaction& transaction, std::shared_ptr<Buffer const> buffer, std::size_t more)> ResponseContentCallback;
+    typedef std::function<void(Transaction& transaction, std::shared_ptr<Buffer> buffer, std::size_t more)> OnRequestContent;
+    typedef std::function<void(Transaction& transaction)> OnRequestContentFlushed;
+
+    typedef std::function<void(Transaction& transaction, std::shared_ptr<Buffer const> buffer, std::size_t more)> OnResponseContent;
 
     class Transaction final
     {
@@ -166,7 +180,7 @@ public:
 
         Server& server;
         Transaction::Id const id;
-        std::string const request_method;
+        Method const request_method;
         std::string const request_target;
         std::string const request_version;
         std::size_t const request_content_length;
@@ -178,14 +192,23 @@ public:
         std::optional<std::string> getRequestValue(std::string const& name, std::size_t index = 0) const;
         bool containsRequestValue(std::string const& name, std::string const& value, std::string const& delim) const noexcept;
 
-        void receive(std::shared_ptr<Buffer> content, RequestContentCallback callback);
+        void setTransactionEnd(OnTransactionEnd on_transaction_end);
+
+        template<typename T, typename... Args>
+        void delegateTo(Args&&... args)
+        {
+            user = std::static_pointer_cast<void>(std::make_shared<T>(*this, std::forward<Args>(args)...));
+        }
+
+        void receive(std::shared_ptr<Buffer> content, OnRequestContent callback);
+        void flush(OnRequestContentFlushed callback);
 
         void respond(StatusCode status_code, std::string reason, std::vector<HeaderField> const& header_fields, std::size_t content_length);
         void respond(StatusCode status_code, std::vector<HeaderField> const& header_fields, std::shared_ptr<Buffer const> content = nullptr);
 
-        void send(std::shared_ptr<Buffer const> content, ResponseContentCallback callback);
+        void send(std::shared_ptr<Buffer const> content, OnResponseContent callback);
 
-        Upgrade upgraded();
+        Socket upgraded();
 
     private:
         struct hserv_s* m_hserv;
@@ -194,23 +217,25 @@ public:
         Buffer m_request_fields;
 
         std::shared_ptr<Buffer> m_request_content;
-        RequestContentCallback m_on_request_content;
+        OnRequestContent m_on_request_content;
 
         std::shared_ptr<Buffer const> m_response_content;
-        ResponseContentCallback m_on_response_content;
+        OnResponseContent m_on_response_content;
 
-        TransactionEndCallback m_on_transaction_end;
+        OnTransactionEnd m_on_transaction_end;
 
         Transaction(Server& a_server, struct hserv_s* a_hserv, struct hserv_session_s* a_session,
-            Id a_id, TransactionEndCallback a_on_transaction_end);
+            Id a_id, OnTransactionEnd a_on_transaction_end);
 
         std::vector<char const*> toFieldsArray(std::vector<HeaderField> const& header_fields) const;
+
+        void onRequestContentFlushed(Transaction& transaction, std::shared_ptr<Buffer> buffer, std::size_t more, OnRequestContentFlushed callback);
+
         int onRequestContent(void* buffer, std::size_t size, std::size_t more);
         int onResponseContent(void const* buffer, std::size_t size, std::size_t more);
 
         void finish(bool failed);
     };
-
     struct Config
     {
         SockAddr binding;
@@ -219,8 +244,8 @@ public:
         std::string certificate_file;
         std::string private_key_file;
 
-        TransactionStartCallback on_transaction_start;
-        TransactionEndCallback on_transaction_end;
+        OnTransactionStart on_transaction_start;
+        OnTransactionEnd on_transaction_end;
 
         Config();
     };
@@ -231,9 +256,6 @@ public:
 
     std::shared_ptr<EventLoop> getEventLoop() const;
     std::optional<std::reference_wrapper<Transaction>> getTransaction(Transaction::Id id) const;
-
-    void addPath(std::string path, TransactionStartCallback on_transaction_start, TransactionEndCallback on_transaction_end);
-    void removePath(std::string const& path);
 
     void start(Config const& config);
     void stop();
@@ -246,14 +268,8 @@ private:
     Transaction::Id m_transaction_id{ 0 };
     std::unordered_map<Transaction::Id, std::unique_ptr<Transaction>> m_transactions;
 
-    struct Callbacks
-    {
-        TransactionStartCallback on_transaction_start;
-        TransactionEndCallback on_transaction_end;
-    };
-    Callbacks m_callbacks;
-
-    std::unordered_map<std::string, Callbacks> m_path_callbacks;
+    OnTransactionStart m_on_transaction_start;
+    OnTransactionEnd m_on_transaction_end;
 
     void onPoll(int fd, std::uint32_t events);
     int onRequestStart(struct hserv_session_s* session);
@@ -264,6 +280,11 @@ std::optional<std::string> canonicalize(std::string target);
 
 std::optional<std::string> is_upgrade(Server::Transaction const& transaction);
 
-
 } // namespace http
+
+std::string to_string(http::Method method);
+std::string to_string(http::StatusCode status_code);
+std::string to_string(http::HeaderField const& header_field);
+
 } // namespace hlib
+

@@ -26,20 +26,51 @@
 #include "hlib/buffer.hpp"
 #include "hlib/config.hpp"
 #include <cstdio>
+#include <filesystem>
 #include <iostream>
+#include <string>
 
 namespace hlib
 {
 namespace file
 {
 
-Buffer read(std::istream& stream, std::size_t chunk_size = Config::fileReadChunkSize());
-Buffer read(FILE* file, std::size_t chunk_size = Config::fileReadChunkSize());
-Buffer read(std::string const& pathname);
+bool is_creatable(std::filesystem::path const& filepath) noexcept;
+bool is_readable(std::filesystem::path const& filepath) noexcept;
+bool is_writable(std::filesystem::path const& filepath) noexcept;
 
+std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
+std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size);
+
+Buffer read(std::istream& stream, std::size_t partial_size, std::error_code& error_code) noexcept;
+Buffer read(std::istream& stream, std::size_t partial_size);
+
+ssize_t read(FILE* file, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
+ssize_t read(FILE* file, Buffer& buffer, std::size_t size);
+
+Buffer read(FILE* file, std::size_t partial_size, std::error_code& error_code) noexcept;
+Buffer read(FILE* file, std::size_t partial_size);
+
+Buffer read(std::string const& filepath, std::error_code& error_code) noexcept;
+Buffer read(std::string const& filepath);
+
+std::ostream& write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept;
+std::ostream& write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size);
+
+void write(std::ostream& stream, Buffer const& buffer, std::error_code& error_code) noexcept;
 void write(std::ostream& stream, Buffer const& buffer);
+
+ssize_t write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept;
+ssize_t write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size);
+
+void write(FILE* file, Buffer const& buffer, std::error_code& error_code) noexcept;
 void write(FILE* file, Buffer const& buffer);
-void write(std::string const& pathname, Buffer const& buffer, bool append = false);
+
+void write(std::string const& filepath, Buffer const& buffer, std::error_code& error_code) noexcept;
+void write(std::string const& filepath, Buffer const& buffer);
+
+std::string get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type);
+std::string get_mime_type_from_file(std::string const& pathname, std::string const& default_mime_type);
 
 } // namespace file
 } // namespace hlib

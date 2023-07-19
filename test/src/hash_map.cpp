@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "catch2/catch_test_macros.hpp"
+#include "test.hpp"
 #include "hlib/c/hash_map.h"
 
 TEST_CASE("HashMap")

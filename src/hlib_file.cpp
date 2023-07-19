@@ -25,111 +25,386 @@
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
 #include "hlib/scope_guard.hpp"
-#include <sys/stat.h>
+#include "hlib/string.hpp"
+#include <array>
+#include <filesystem>
+#include <fstream>
+#include <system_error>
+#include <unordered_map>
 
 using namespace hlib;
 
-Buffer file::read(std::istream& stream, std::size_t chunk_size)
+//
+// Public
+//
+bool file::is_creatable(std::filesystem::path const& filepath) noexcept
 {
-    assert(chunk_size > 0);
-    chunk_size += 0 == chunk_size;
+    try
+    {
+        // Get the parent directory of the file path.
+        std::filesystem::path const parent = filepath.parent_path();
+
+        // Check the permissions of the parent directory.
+        std::filesystem::file_status const status = std::filesystem::status(parent);
+        std::filesystem::perms const permissions = status.permissions();
+
+        // Check if write permission is granted for the parent directory
+        return std::filesystem::perms::none != (std::filesystem::perms::owner_write & permissions);
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+bool file::is_readable(std::filesystem::path const& filepath) noexcept
+{
+    std::error_code error_code;
+
+    std::filesystem::file_status const status = std::filesystem::status(filepath, error_code);
+    if (error_code) {
+        return false;
+    }
+
+    std::filesystem::perms const permissions = status.permissions();
+    return std::filesystem::perms::none != (std::filesystem::perms::owner_read & permissions)
+        || std::filesystem::perms::none != (std::filesystem::perms::group_read & permissions)
+        || std::filesystem::perms::none != (std::filesystem::perms::others_read & permissions);
+}
+
+bool file::is_writable(std::filesystem::path const& filepath) noexcept
+{
+    std::error_code error_code;
+
+    std::filesystem::file_status const status = std::filesystem::status(filepath, error_code);
+    if (error_code) {
+        return false;
+    }
+
+    std::filesystem::perms const permissions = status.permissions();
+    return std::filesystem::perms::none != (std::filesystem::perms::owner_write & permissions)
+        || std::filesystem::perms::none != (std::filesystem::perms::group_write & permissions)
+        || std::filesystem::perms::none != (std::filesystem::perms::others_write & permissions);
+}
+
+std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
+{
+    void* ptr = buffer.reserve(buffer.size() + size, std::nothrow);
+    if (ptr == nullptr) {
+        error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+    }
+
+    stream.read(static_cast<char*>(ptr), size);
+    if (true == stream.fail()) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return stream;
+    }
+
+    hverify(nullptr != buffer.resize(buffer.size() + stream.gcount(), std::nothrow));
+    return stream;
+}
+
+std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size)
+{
+    std::error_code error_code;
+
+    read(stream, buffer, size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to read from stream to buffer");
+    }
+
+    return stream;
+}
+
+Buffer file::read(std::istream& stream, std::size_t partial_size, std::error_code& error_code) noexcept
+{
+    assert(partial_size > 0);
+    partial_size += 0 == partial_size;
 
     Buffer buffer;
 
     do {
-        stream.read(
-            static_cast<char*>(buffer.reserve(buffer.size() + chunk_size)),
-            chunk_size
-        );
-        if (true == stream.fail()) {
-            throwf<std::runtime_error>("Failed to read ({})", get_error_string(errno));
-        }
-
-        buffer.resize(buffer.size() + stream.gcount());
-        stream.clear();
+        read(stream, buffer, partial_size, error_code);
     }
-    while (false == stream.eof());
+    while (false == stream.fail() && false == stream.eof());
 
     return buffer;
 }
 
-Buffer file::read(FILE* file, std::size_t chunk_size)
+Buffer file::read(std::istream& stream, std::size_t partial_size)
 {
-    assert(chunk_size > 0);
-    chunk_size += 0 == chunk_size;
+    std::error_code error_code;
+
+    Buffer buffer = read(stream, partial_size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to read from stream to buffer");
+    }
+
+    return buffer;
+}
+
+ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
+{
+    void* ptr = buffer.reserve(buffer.size() + size, std::nothrow);
+    if (ptr == nullptr) {
+        error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+    }
+
+    ssize_t count = fread(ptr, 1, size, file);
+    if (count < 0) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return -1;
+    }
+
+    hverify(nullptr != buffer.resize(buffer.size() + count, std::nothrow));
+    return count;
+}
+
+ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size)
+{
+    std::error_code error_code;
+
+    ssize_t count = read(file, buffer, size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to read from file to buffer");
+    }
+
+    return count;
+}
+
+Buffer file::read(FILE* file, std::size_t partial_size, std::error_code& error_code) noexcept
+{
+    assert(partial_size > 0);
+    partial_size += 0 == partial_size;
 
     Buffer buffer;
 
     do {
-        std::uint8_t* ptr = static_cast<std::uint8_t*>(buffer.reserve(buffer.size() + chunk_size));
-        ssize_t bytes = fread(ptr + buffer.size(), 1, chunk_size, file);
-        if (0 == bytes) {
-            if (0 != ferror(file)) {
-                throwf<std::runtime_error>("Failed to read ({})", get_error_string(errno));
-            }
-            break;
-        }
-
-        buffer.resize(buffer.size() + bytes);
+        read(file, buffer, partial_size, error_code);
     }
-    while (true);
+    while (0 == ferror(file) && 0 == feof(file));
 
     return buffer;
 }
 
-Buffer file::read(std::string const& pathname)
+Buffer file::read(FILE* file, std::size_t partial_size)
 {
-    FILE* file = fopen(pathname.c_str(), "r");
-    if (nullptr == file) {
-        throwf<std::runtime_error>("Failed to open '{}' for reading ({})", pathname, get_error_string(errno));
-    }
+    std::error_code error_code;
 
-    ScopeGuard cleanup([&file] {
-        assert(nullptr != file);
-        fclose(file);
-    });
-
-    struct stat st;
-    if (-1 == fstat(fileno(file), &st)) {
-        // Failed to stat file: progressively read file.
-        return file::read(file);
-    }
-
-    Buffer buffer;
-    ssize_t bytes = fread(buffer.resize(st.st_size), 1, st.st_size, file);
-    if (bytes < static_cast<ssize_t>(st.st_size)) {
-        throwf<std::runtime_error>("Failed to read ({})", get_error_string(errno));
+    Buffer buffer = read(file, partial_size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to read from file to buffer");
     }
 
     return buffer;
+}
+
+Buffer file::read(std::string const& filepath, std::error_code& error_code) noexcept
+{
+    Buffer buffer;
+
+    std::size_t size = std::filesystem::file_size(filepath, error_code);
+    if (error_code) {
+        return buffer;
+    }
+
+    if (0 == size) {
+        return buffer;
+    }
+
+    std::ifstream stream(filepath);
+    read(stream, buffer, size, error_code);
+    return buffer;
+}
+
+Buffer file::read(std::string const& filepath)
+{
+    std::error_code error_code;
+
+    Buffer buffer = read(filepath, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to read from file to buffer");
+    }
+
+    return buffer;
+}
+
+std::ostream& file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept
+{
+    if (offset >= buffer.size()) {
+        error_code = std::make_error_code(static_cast<std::errc>(EINVAL));
+        return stream;
+    }
+
+    size = std::min(size, buffer.size() - offset);
+
+    std::streampos pos = stream.tellp();
+
+    stream.write(static_cast<char const*>(buffer.data()) + offset, size);
+    if (true == stream.fail()) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return stream;
+    }
+
+    offset += stream.tellp() - pos;
+    return stream;
+}
+
+std::ostream& file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size)
+{
+    std::error_code error_code;
+
+    write(stream, buffer, offset, size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to write from buffer to stream");
+    }
+
+    return stream;
+}
+
+void file::write(std::ostream& stream, Buffer const& buffer, std::error_code& error_code) noexcept
+{
+    std::size_t offset = 0;
+    write(stream, buffer, offset, buffer.size(), error_code);
 }
 
 void file::write(std::ostream& stream, Buffer const& buffer)
 {
-    if (true == stream.write(static_cast<char const*>(buffer.data()), buffer.size()).fail()) {
-        throwf<std::runtime_error>("Failed to write {} bytes ({})", buffer.size(), get_error_string(errno));
+    std::size_t offset = 0;
+    write(stream, buffer, offset, buffer.size());
+}
+
+ssize_t file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept
+{
+    if (offset >= buffer.size()) {
+        error_code = std::make_error_code(static_cast<std::errc>(EINVAL));
+        return -1;
     }
+
+    size = std::min(size, buffer.size() - offset);
+
+    ssize_t count = fwrite(static_cast<char const*>(buffer.data()) + offset, 1, size, file);
+    if (count < 0) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return -1;
+    }
+
+    offset += count;
+    return count;
+}
+
+ssize_t file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size)
+{
+    std::error_code error_code;
+
+    ssize_t count = write(file, buffer, offset, size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to write from buffer to file");
+    }
+
+    return count;
+}
+
+void file::write(FILE* file, Buffer const& buffer, std::error_code& error_code) noexcept
+{
+    std::size_t offset = 0;
+    write(file, buffer, offset, buffer.size(), error_code);
 }
 
 void file::write(FILE* file, Buffer const& buffer)
 {
-    if (1 != fwrite(buffer.data(), buffer.size(), 1, file)) {
-        throwf<std::runtime_error>("Failed to write {} bytes ({})", buffer.size(), get_error_string(errno));
+    std::size_t offset = 0; 
+    write(file, buffer, offset, buffer.size());
+}
+
+void file::write(std::string const& filepath, Buffer const& buffer, std::error_code& error_code) noexcept
+{
+    std::ofstream stream(filepath);
+    if (!stream) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return;
+    }
+
+    write(stream, buffer, error_code);
+}
+
+void file::write(std::string const& filepath, Buffer const& buffer)
+{
+    std::error_code error_code;
+
+    write(filepath, buffer, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "Failed to write from buffer to file");
     }
 }
 
-void file::write(std::string const& pathname, Buffer const& buffer, bool append)
+std::string file::get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type)
 {
-    FILE* file = fopen(pathname.c_str(), append ? "a":"w");
-    if (nullptr == file) {
-        throwf<std::runtime_error>("Failed to open '{}' for {} ({})", pathname, append ? "appending":"writing", get_error_string(errno));
+    static std::unordered_map<std::string, std::string> const table =
+    {
+        { "txt",  "text/plain" },
+        { "htm",  "text/html" },
+        { "html", "text/html" },
+        { "js",   "text/javascript" },
+        { "xml",  "text/xml" },
+        { "json", "application/json" },
+        { "pdf",  "application/pdf" },
+        { "png",  "image/png" },
+        { "jpg",  "image/jpeg" },
+        { "jpeg", "image/jpeg" },
+        { "webp", "image/webp" },
+        { "gif",  "image/gif" },
+        { "bmp",  "image/bmp" }
+    };
+
+    auto it = table.find(strip_left(extension, "."));
+    return table.end() != it ? it->second : default_mime_type;
+}
+
+std::string file::get_mime_type_from_file(std::string const& pathname, std::string const& default_mime_type)
+{
+    std::filesystem::path path(pathname);
+
+    if (false == std::filesystem::exists(path)) {
+        throw std::runtime_error("File not found");
     }
 
-    ScopeGuard cleanup([&file] {
-        assert(nullptr != file);
-        fclose(file);
-    });
+    if (std::filesystem::file_type::regular != std::filesystem::status(path).type()) {
+        throw std::runtime_error("File not a regular file");
+    }
 
-    file::write(file, buffer);
+    std::size_t size = std::filesystem::file_size(path);
+    std::array<char, 8> header;
+    std::ifstream file(pathname, std::ios::binary);
+    file.read(header.data(), 8);
+
+    if (file.gcount() < 8) {
+        return get_mime_type_from_extension(path.extension(), default_mime_type);
+    }
+
+    auto matches = [&](char const* signature, std::size_t length) {
+        return !memcmp(header.data(), signature, length);
+    };
+
+    /* Look at data to make an educated guess. */
+    if (true == matches("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A", 8)) {
+        return "image/png";
+    }
+    if (true == matches("RIFF", 4) || true == matches("WEBP", 4)) {
+        return "image/webp";
+    }
+    if (true == matches("\xFF\xD8\xFF", 3)) {
+        return "image/jpeg";
+    }
+    if (true == matches("GIF87a", 6) || true == matches("GIF89a", 6)) {
+        return "image/gif";
+    }
+    if (true == matches("BM", 2)) {
+        return "image/bmp";
+    }
+    if (size >= 8 && 0 == memcmp(header.data() + 4, "\x66\x74\x79\x70", 4)) {
+        return "video/mp4";
+    }
+
+    return get_mime_type_from_extension(path.extension(), default_mime_type);
 }
 

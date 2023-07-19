@@ -23,24 +23,31 @@
 //
 #pragma once
 
-#include <cstddef>
+#include <type_traits>
 
 namespace hlib
 {
 
-struct Config
+#if 0
+namespace detail
 {
-    static constexpr int         defaultLogLevel()              { return 3; }
-    static constexpr std::size_t maxErrorString()               { return 256; }
-    static constexpr std::size_t subprocessOutputBatchSize()    { return 1024; }
-    static constexpr char const* httpServerBinding()            { return "0.0.0.0:8443"; }
-    static constexpr bool        httpServerSecure()             { return true; }
-    static constexpr std::size_t httpServerContentChunkSize()   { return 65536; }
-    static constexpr char const* httpServerDefaultMimeType()    { return "application/octet-stream"; }
-    static constexpr std::size_t wsMaxReceiveMessageSize()      { return 1024 * 1024; }
-    static constexpr std::size_t wsFragmentMessageThreshold()   { return 1024 * 1024; }
-    static constexpr double      wsServerMaintenanceInterval()  { return 1.0; }
-};
+    // Needed for some older versions of GCC.
+    template<typename...> struct voider { using type = void; };
+
+    template<typename T, typename U = void> struct is_associative : std::false_type {};
+    template<typename T> struct is_associative<T, std::void_t<typename T::key_type, typename T::mapped_type, decltype(std::declval<T&>()[std::declval<const typename T::key_type&>()])>> : std::true_type {};
+} // namespace detail
+
+template<typename T> struct is_associative : detail::is_associative<T>::type {};
+
+#endif
+
+template <typename Container, typename = void>
+struct is_associative : std::false_type {};
+
+template <typename Container>
+struct is_associative<Container, std::void_t<typename Container::key_type>> : std::true_type {};
+
 
 } // namespace hlib
 

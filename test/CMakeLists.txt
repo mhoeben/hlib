@@ -47,6 +47,8 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.h
     src/codegen.cpp
+    src/container.cpp
+    src/file_server.cpp
     src/hash_map.cpp
     src/http_server.cpp
     src/json.cpp
@@ -54,6 +56,7 @@ add_executable(${PROJECT_NAME}
     src/string.cpp
     src/test.cpp
     src/test.hpp
+    src/type_traits.cpp
     src/uri.cpp
     src/web_socket.cpp
 )

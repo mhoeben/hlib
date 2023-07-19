@@ -43,26 +43,52 @@
 using namespace hlib;
 using namespace hlib::http;
 
+namespace
+{
+
+http::Method stomethod(std::string string)
+{
+    static std::unordered_map<std::string, http::Method> const table =
+    {
+        { "INVALID",    Method::Invalid },
+
+        { "GET",        Method::Get },
+        { "HEAD",       Method::Head },
+        { "POST",       Method::Post },
+        { "PUT",        Method::Put },
+        { "DELETE",     Method::Delete },
+        { "CONNECT",    Method::Connect },
+        { "OPTIONS",    Method::Options },
+        { "TRACE",      Method::Trace },
+        { "PATCH",      Method::Patch }
+    };
+
+    auto it = table.find(string);
+    return table.end() == it ? Method::Invalid : it->second;
+}
+
+} // namespace
+
 //
-// Public (Upgrade)
+// Public (Socket)
 //
-Upgrade::Upgrade(std::string a_subprotocol, int a_fd, SSL* a_ssl) noexcept
-    : subprotocol(std::move(a_subprotocol))
-    , fd{ a_fd }
+Socket::Socket(int a_fd, SSL* a_ssl, std::string a_protocol) noexcept
+    : fd{ a_fd }
     , ssl(a_ssl)
+    , protocol(std::move(a_protocol))
 {
 }
 
-Upgrade::Upgrade(Upgrade&& that) noexcept
-    : subprotocol(std::move(that.subprotocol))
-    , fd{ that.fd }
+Socket::Socket(Socket&& that) noexcept
+    : fd{ that.fd }
     , ssl(that.ssl)
+    , protocol(std::move(that.protocol))
 {
     that.fd = -1;
     that.ssl = nullptr;
 }
 
-Upgrade::~Upgrade()
+Socket::~Socket()
 {
     if (nullptr != ssl) {
         SSL_free(ssl);
@@ -72,7 +98,7 @@ Upgrade::~Upgrade()
     }
 }
 
-Upgrade& Upgrade::operator = (Upgrade&& that) noexcept
+Socket& Socket::operator = (Socket&& that) noexcept
 {
     if (nullptr != ssl) {
         SSL_free(ssl);
@@ -82,9 +108,9 @@ Upgrade& Upgrade::operator = (Upgrade&& that) noexcept
         close(fd);
         fd = -1;
     }
-    subprotocol.clear();
+    protocol.clear();
 
-    std::swap(subprotocol, that.subprotocol);
+    std::swap(protocol, that.protocol);
     std::swap(fd, that.fd);
     std::swap(ssl, that.ssl);
     return *this;
@@ -94,10 +120,10 @@ Upgrade& Upgrade::operator = (Upgrade&& that) noexcept
 // Implementation (Transaction)
 //
 Server::Transaction::Transaction(Server& a_server, hserv_s* a_hserv, hserv_session_t* a_session,
-    Id a_id, TransactionEndCallback a_on_transaction_end)
+    Id a_id, OnTransactionEnd a_on_transaction_end)
     : server(a_server)
     , id{ a_id }
-    , request_method(hserv_request_get_method(a_session))
+    , request_method(stomethod(hserv_request_get_method(a_session)))
     , request_target(hserv_request_get_target(a_session))
     , request_version(hserv_request_get_version(a_session))
     , request_content_length{
@@ -131,6 +157,26 @@ std::vector<char const*> Server::Transaction::toFieldsArray(std::vector<HeaderFi
     return fields;
 }
 
+void Server::Transaction::onRequestContentFlushed(Transaction& transaction, std::shared_ptr<Buffer> buffer, std::size_t more, OnRequestContentFlushed callback)
+{
+    using namespace std::placeholders;
+
+    if (more > 0) {
+        // Clear buffer for flushing more data.
+        buffer->clear();
+
+        // Receive more data to the flush buffer.
+        receive(
+            std::move(buffer),
+            std::bind(&Server::Transaction::onRequestContentFlushed, this, _1, _2, _3, std::move(callback))
+        );
+        return;
+    }
+
+    // Everything is flushed, callback.
+    callback(transaction);
+}
+
 int Server::Transaction::onRequestContent(void* buffer, std::size_t size, std::size_t more)
 {
     try {
@@ -138,7 +184,7 @@ int Server::Transaction::onRequestContent(void* buffer, std::size_t size, std::s
         assert(m_request_content->size() + size <= m_request_content->capacity());
 
         // Remove callback and content buffer from transaction.
-        RequestContentCallback callback(std::move(m_on_request_content));
+        OnRequestContent callback(std::move(m_on_request_content));
         std::shared_ptr<Buffer> content(std::move(m_request_content));
 
         // Resize content to received size.
@@ -161,7 +207,7 @@ int Server::Transaction::onResponseContent(void const* buffer, std::size_t size,
         assert(m_response_content->size() == size);
 
         // Remove callback and content buffer from transaction.
-        ResponseContentCallback callback(std::move(m_on_response_content));
+        OnResponseContent callback(std::move(m_on_response_content));
         std::shared_ptr<Buffer const> content(std::move(m_response_content));
 
         // Callback to user.
@@ -226,7 +272,12 @@ bool Server::Transaction::containsRequestValue(std::string const& name, std::str
     ) > 0;
 }
 
-void Server::Transaction::receive(std::shared_ptr<Buffer> content, RequestContentCallback callback)
+void Server::Transaction::setTransactionEnd(OnTransactionEnd on_transaction_end)
+{
+    m_on_transaction_end = std::move(on_transaction_end);
+}
+
+void Server::Transaction::receive(std::shared_ptr<Buffer> content, OnRequestContent callback)
 {
     assert(nullptr != content);
     assert(content->capacity() > content->size());
@@ -255,6 +306,16 @@ void Server::Transaction::receive(std::shared_ptr<Buffer> content, RequestConten
             return static_cast<Transaction*>(hserv_session_get_user_data(session))->onRequestContent(buffer, size, more);
         }
     ) != -1);
+}
+
+void Server::Transaction::flush(OnRequestContentFlushed callback)
+{
+    using namespace std::placeholders;
+
+    receive(
+        std::make_shared<Buffer>(::Config::httpServerContentChunkSize()),
+        std::bind(&Server::Transaction::onRequestContentFlushed, this, _1, _2, _3, std::move(callback))
+    );
 }
 
 void Server::Transaction::respond(StatusCode status_code, std::string reason, std::vector<HeaderField> const& header_fields, std::size_t content_length)
@@ -297,7 +358,7 @@ void Server::Transaction::respond(StatusCode status_code, std::vector<HeaderFiel
     ) != -1);
 }
 
-void Server::Transaction::send(std::shared_ptr<Buffer const> content, ResponseContentCallback callback)
+void Server::Transaction::send(std::shared_ptr<Buffer const> content, OnResponseContent callback)
 {
     assert(nullptr != content);
     assert(content->size() > 0);
@@ -325,14 +386,14 @@ void Server::Transaction::send(std::shared_ptr<Buffer const> content, ResponseCo
     ) != -1);
 }
 
-Upgrade Server::Transaction::upgraded()
+Socket Server::Transaction::upgraded()
 {
     SSL* ssl = hserv_session_get_ssl(m_session);
 
-    return Upgrade(
-        getRequestValue("Upgrade").value(),
-        hserv_session_upgraded(m_hserv, m_session)
-        , ssl
+    return Socket(
+        hserv_session_upgraded(m_hserv, m_session),
+        ssl,
+        getRequestValue("Upgrade").value()
     );
 }
 
@@ -354,21 +415,10 @@ int Server::onRequestStart(hserv_session_t* session)
     Transaction::Id const transaction_id = ++m_transaction_id;
 
     try {
-        Callbacks const* callbacks = &m_callbacks;
-
-        // Canonicalize target and lookup callbacks.
-        std::optional<std::string> target = canonicalize(hserv_request_get_target(session));
-        if (true == target.has_value()) {
-            auto it = m_path_callbacks.find(target.value());
-            if (m_path_callbacks.end() != it) {
-                callbacks = &it->second;
-            }
-        }
-
         // Create a new transaction and callback user.
         std::unique_ptr<Transaction> transaction(new Transaction(*this, m_hserv, session,
-            transaction_id, callbacks->on_transaction_end));
-        callbacks->on_transaction_start(*transaction);
+            transaction_id, m_on_transaction_end));
+        m_on_transaction_start(*transaction);
 
         // Set transaction as session's user data.
         hserv_session_set_user_data(session, transaction.get());
@@ -439,16 +489,6 @@ std::optional<std::reference_wrapper<Server::Transaction>> Server::getTransactio
         : std::optional<std::reference_wrapper<Transaction>>();
 }
 
-void Server::addPath(std::string path, TransactionStartCallback on_transaction_start, TransactionEndCallback on_transaction_end)
-{
-    m_path_callbacks.emplace(std::move(path), Callbacks{ std::move(on_transaction_start), std::move(on_transaction_end) });
-}
-
-void Server::removePath(std::string const& path)
-{
-    m_path_callbacks.erase(path);
-}
-
 void Server::start(Config const& config)
 {
     using namespace std::placeholders;
@@ -503,8 +543,8 @@ void Server::start(Config const& config)
     }));
 
     assert(nullptr != config.on_transaction_start);
-    m_callbacks.on_transaction_start = config.on_transaction_start;
-    m_callbacks.on_transaction_end = config.on_transaction_end;
+    m_on_transaction_start = config.on_transaction_start;
+    m_on_transaction_end = config.on_transaction_end;
 }
 
 void Server::stop()
@@ -519,11 +559,103 @@ void Server::stop()
 }
 
 //
+// Utility
+//
+std::optional<std::string> http::canonicalize(std::string target)
+{
+    std::vector<std::string> components = split(target, '/', true);
+    if (true == components.empty()) {
+        return "/";
+    }
+
+    std::vector<std::string> canonical;
+    canonical.reserve(components.size());
+
+    for (std::string& component : components) {
+        if ("." == component) {
+            continue;
+        }
+
+        if (".." == component) {
+            if (true == canonical.empty()) {
+                return std::optional<std::string>();
+            }
+
+            canonical.pop_back();
+            continue;
+        }
+
+        canonical.emplace_back(std::move(component));
+    }
+
+    if (true == canonical.empty()) {
+        return "/";
+    }
+
+    fmt::memory_buffer buffer;
+
+    for (std::string& component : canonical) {
+        format_to(buffer, "/{}", component);
+    }
+
+    return fmt::to_string(buffer);
+}
+
+std::optional<std::string> http::is_upgrade(Server::Transaction const& transaction)
+{
+    std::optional<std::string> value;
+
+    if (Method::Get != transaction.request_method) {
+        return std::optional<std::string>();
+    }
+
+    value = transaction.getRequestValue("Connection");
+    if (false == value.has_value() || false == iequals("upgrade", value.value())) {
+        return std::optional<std::string>();
+    }
+
+    value = transaction.getRequestValue("Upgrade");
+    if (false == value.has_value()) {
+        return std::optional<std::string>();
+    }
+
+    if (0 != transaction.request_content_length) {
+        return std::optional<std::string>();
+    }
+
+    return value;
+}
+
+//
 // Public (Utility)
 //
-std::string http::to_string(StatusCode status_code)
+std::string hlib::to_string(Method method)
 {
-    static std::unordered_map<StatusCode, std::string> const table = {
+    static std::unordered_map<Method, std::string> const table =
+    {
+        { Method::Invalid,  "INVALID" },
+
+        { Method::Get,      "GET" },
+        { Method::Head,     "HEAD" },
+        { Method::Post,     "POST" },
+        { Method::Put,      "PUT" },
+        { Method::Delete,   "DELETE" },
+        { Method::Connect,  "CONNECT" },
+        { Method::Options,  "OPTIONS" },
+        { Method::Trace,    "TRACE" },
+        { Method::Patch,    "PATCH" }
+    };
+
+    auto it = table.find(method);
+    assert(table.end() != it);
+
+    return it->second;
+}
+
+std::string hlib::to_string(StatusCode status_code)
+{
+    static std::unordered_map<StatusCode, std::string> const table =
+    {
         { StatusCode::Continue, "Continue" },
         { StatusCode::SwitchingProtocols, "SwitchingProtocols" },
         { StatusCode::EarlyHints, "EarlyHints" },
@@ -588,73 +720,7 @@ std::string http::to_string(StatusCode status_code)
     return table.end() == it ? fmt::format("Unknown_{}", static_cast<int>(status_code)) : it->second;
 }
 
-std::string to_string(HeaderField const& header_field)
+std::string hlib::to_string(HeaderField const& header_field)
 {
     return fmt::format("{}: {}", header_field.name, header_field.value);
 }
-
-std::optional<std::string> http::canonicalize(std::string target)
-{
-    std::vector<std::string> components = split(target, '/', true);
-    if (true == components.empty()) {
-        return "/";
-    }
-
-    std::vector<std::string> canonical;
-    canonical.reserve(components.size());
-
-    for (std::string& component : components) {
-        if ("." == component) {
-            continue;
-        }
-
-        if (".." == component) {
-            if (true == canonical.empty()) {
-                return std::optional<std::string>();
-            }
-
-            canonical.pop_back();
-            continue;
-        }
-
-        canonical.emplace_back(std::move(component));
-    }
-
-    if (true == canonical.empty()) {
-        return "/";
-    }
-
-    fmt::memory_buffer buffer;
-
-    for (std::string& component : canonical) {
-        format_to(buffer, "/{}", component);
-    }
-
-    return fmt::to_string(buffer);
-}
-
-std::optional<std::string> http::is_upgrade(Server::Transaction const& transaction)
-{
-    std::optional<std::string> value;
-
-    if ("GET" != transaction.request_method) {
-        return std::optional<std::string>();
-    }
-
-    value = transaction.getRequestValue("Connection");
-    if (false == value.has_value() || false == iequals("upgrade", value.value())) {
-        return std::optional<std::string>();
-    }
-
-    value = transaction.getRequestValue("Upgrade");
-    if (false == value.has_value()) {
-        return std::optional<std::string>();
-    }
-
-    if (0 != transaction.request_content_length) {
-        return std::optional<std::string>();
-    }
-
-    return value;
-}
-
