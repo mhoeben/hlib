@@ -592,7 +592,7 @@ std::optional<std::reference_wrapper<Server::Socket>> Server::getSocket(Socket::
 {
     std::lock_guard<std::mutex> lock(m_sockets_mutex);
     auto it = m_sockets.find(id);
-    return m_sockets.end() == it
+    return m_sockets.end() != it
         ? *it->second
         : std::optional<std::reference_wrapper<Socket>>();
 }
