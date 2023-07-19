@@ -339,10 +339,28 @@ void Server::Transaction::respond(StatusCode status_code, std::string reason, st
 
 void Server::Transaction::respond(StatusCode status_code, std::vector<HeaderField> const& header_fields, std::shared_ptr<Buffer const> content)
 {
+    respond(false, status_code, std::move(header_fields), std::move(content));
+}
+
+void Server::Transaction::respond(bool flush, StatusCode status_code, std::vector<HeaderField> const& header_fields, std::shared_ptr<Buffer const> content)
+{
     assert(nullptr == m_response_content);
     assert(nullptr == m_on_response_content);
 
     assert(true == callback_from(server.m_event_loop));
+
+    if (true == flush && request_content_length > 0) {
+        // Flush and then respond with status-code, header fields and content.
+        this->flush(
+            [this, status_code, header_fields = std::move(header_fields), content = std::move(content)]
+            (http::Server::Transaction& /* transaction */)
+            {
+                // Respond with content.
+                respond(false, status_code, header_fields, std::move(content));
+            }
+        );
+        return;
+    }
 
     m_response_content = std::move(content);
 

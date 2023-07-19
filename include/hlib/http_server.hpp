@@ -205,6 +205,7 @@ public:
 
         void respond(StatusCode status_code, std::string reason, std::vector<HeaderField> const& header_fields, std::size_t content_length);
         void respond(StatusCode status_code, std::vector<HeaderField> const& header_fields, std::shared_ptr<Buffer const> content = nullptr);
+        void respond(bool flush, StatusCode status_code, std::vector<HeaderField> const& header_fields, std::shared_ptr<Buffer const> content = nullptr);
 
         void send(std::shared_ptr<Buffer const> content, OnResponseContent callback);
 

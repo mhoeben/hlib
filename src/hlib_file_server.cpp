@@ -28,33 +28,6 @@
 using namespace hlib;
 using namespace file::server;
 
-namespace
-{
-
-void respond(http::Server::Transaction& transaction, bool flush, http::StatusCode status_code,
-    std::vector<http::HeaderField> header_fields, std::shared_ptr<Buffer const> content = nullptr)
-{
-    if (true == flush) {
-        assert(transaction.request_content_length > 0);
-
-        // Flush and then respond with status-code, header fields and content.
-        transaction.flush(
-            [&transaction, status_code, header_fields = std::move(header_fields), content = std::move(content)]
-            (http::Server::Transaction& /* transaction */)
-            {
-                // Respond with content.
-                transaction.respond(status_code, header_fields, std::move(content));
-            }
-        );
-        return;
-    }
-
-    // Respond with content.
-    transaction.respond(status_code, header_fields, std::move(content));
-}
-
-} // namespace
-
 //
 // Implementation (GetFile)
 //
@@ -90,12 +63,12 @@ GetFile::GetFile(http::Server::Transaction& transaction, std::filesystem::path f
     bool const flush = transaction.request_content_length > 0;
 
     if (false == std::filesystem::exists(filepath)) {
-        respond(transaction, flush, http::StatusCode::NotFound, {});
+        transaction.respond(flush, http::StatusCode::NotFound, {});
         return;
     }
     if (false == std::filesystem::is_regular_file(filepath)
      || false == file::is_readable(filepath)) {
-        respond(transaction, flush, http::StatusCode::Forbidden, {});
+        transaction.respond(flush, http::StatusCode::Forbidden, {});
         return;
     }
 
@@ -166,7 +139,7 @@ void PutFile::onReceive(http::Server::Transaction& transaction, std::shared_ptr<
     // Complete file received?
     if (0 == more) {
         // Respond with ok.
-        return respond(transaction, false, http::StatusCode::Ok, {});
+        return transaction.respond(false, http::StatusCode::Ok, {});
     }
 
     // Clear content buffer.
@@ -196,7 +169,7 @@ PutFile::PutFile(http::Server::Transaction& transaction, std::filesystem::path f
     // Create file.
     m_stream.open(filepath);
     if (false == m_stream.is_open()) {
-        respond(transaction, flush, http::StatusCode::Forbidden, {});
+        transaction.respond(flush, http::StatusCode::Forbidden, {});
         return;
     }
 
@@ -205,7 +178,7 @@ PutFile::PutFile(http::Server::Transaction& transaction, std::filesystem::path f
 
     // Content in PUT request?
     if (0 == transaction.request_content_length) {
-        respond(transaction, false, http::StatusCode::Ok, {});
+        transaction.respond(false, http::StatusCode::Ok, {});
         return;
     }
 
@@ -224,15 +197,15 @@ DeleteFile::DeleteFile(http::Server::Transaction& transaction, std::filesystem::
     bool const flush = transaction.request_content_length > 0;
 
     if (false == std::filesystem::exists(filepath)) {
-        respond(transaction, flush, http::StatusCode::NotFound, {});
+        transaction.respond(flush, http::StatusCode::NotFound, {});
         return;
     }
     else if (false == file::is_writable(filepath)) {
-        respond(transaction, flush, http::StatusCode::Forbidden, {});
+        transaction.respond(flush, http::StatusCode::Forbidden, {});
         return;
     }
     else if (std::filesystem::file_type::regular != std::filesystem::status(filepath).type()) {
-        respond(transaction, flush, http::StatusCode::Forbidden, {});
+        transaction.respond(flush, http::StatusCode::Forbidden, {});
         return;
     }
 
@@ -240,6 +213,6 @@ DeleteFile::DeleteFile(http::Server::Transaction& transaction, std::filesystem::
     std::filesystem::remove(filepath);
 
     // Respond Ok.
-    respond(transaction, flush, http::StatusCode::Ok, {});
+    transaction.respond(flush, http::StatusCode::Ok, {});
 }
 
