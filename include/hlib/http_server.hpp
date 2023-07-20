@@ -176,7 +176,7 @@ public:
         HLIB_NOT_MOVABLE(Transaction);
 
     public:
-        typedef uint64_t Id;
+        typedef std::uint64_t Id;
 
         Server& server;
         Transaction::Id const id;

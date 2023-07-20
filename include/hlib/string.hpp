@@ -35,15 +35,15 @@ namespace hlib
 
 std::optional<bool> try_stob(std::string const& value);
 
-std::optional<int8_t> try_stoi8(std::string const& value, int base = 10);
-std::optional<int16_t> try_stoi16(std::string const& value, int base = 10);
-std::optional<int32_t> try_stoi32(std::string const& value, int base = 10);
-std::optional<int64_t> try_stoi64(std::string const& value, int base = 10);
+std::optional<std::int8_t> try_stoi8(std::string const& value, int base = 10);
+std::optional<std::int16_t> try_stoi16(std::string const& value, int base = 10);
+std::optional<std::int32_t> try_stoi32(std::string const& value, int base = 10);
+std::optional<std::int64_t> try_stoi64(std::string const& value, int base = 10);
 
-std::optional<uint8_t> try_stoui8(std::string const& value, int base = 10);
-std::optional<uint16_t> try_stoui16(std::string const& value, int base = 10);
-std::optional<uint32_t> try_stoui32(std::string const& value, int base = 10);
-std::optional<uint64_t> try_stoui64(std::string const& value, int base = 10);
+std::optional<std::uint8_t> try_stoui8(std::string const& value, int base = 10);
+std::optional<std::uint16_t> try_stoui16(std::string const& value, int base = 10);
+std::optional<std::uint32_t> try_stoui32(std::string const& value, int base = 10);
+std::optional<std::uint64_t> try_stoui64(std::string const& value, int base = 10);
 
 std::optional<float> try_stof32(std::string const& value);
 std::optional<double> try_stof64(std::string const& value);
@@ -153,15 +153,15 @@ try_to(std::string const& value)
 
 bool stob(std::string const& value);
 
-int8_t stoi8(std::string const& value, int base = 10);
-int16_t stoi16(std::string const& value, int base = 10);
-int32_t stoi32(std::string const& value, int base = 10);
-int64_t stoi64(std::string const& value, int base = 10);
+std::int8_t stoi8(std::string const& value, int base = 10);
+std::int16_t stoi16(std::string const& value, int base = 10);
+std::int32_t stoi32(std::string const& value, int base = 10);
+std::int64_t stoi64(std::string const& value, int base = 10);
 
-uint8_t stoui8(std::string const& value, int base = 10);
-uint16_t stoui16(std::string const& value, int base = 10);
-uint32_t stoui32(std::string const& value, int base = 10);
-uint64_t stoui64(std::string const& value, int base = 10);
+std::uint8_t stoui8(std::string const& value, int base = 10);
+std::uint16_t stoui16(std::string const& value, int base = 10);
+std::uint32_t stoui32(std::string const& value, int base = 10);
+std::uint64_t stoui64(std::string const& value, int base = 10);
 
 float stof32(std::string const& value);
 double stof64(std::string const& value);

@@ -72,27 +72,7 @@ struct has_size_method : std::false_type {};
 template<typename T>
 struct has_size_method<T, std::void_t<decltype(std::declval<T>().size())>> : std::true_type {};
 
-#if 0
-template <typename T>
-struct is_pair_iterator
-{
-private:
-    template <typename U>
-    static auto check(U*) -> typename std::integral_constant<
-        bool,
-        std::is_same_v<typename U::value_type::first_type, typename U::value_type::first_type> &&
-        std::is_same_v<typename U::value_type::second_type, typename U::value_type::second_type>
-    >;
-
-    template <typename>
-    static std::false_type check(...);
-
-public:
-    static constexpr bool value = decltype(check<T>(nullptr))::value;
-};
-
-#else
-
+// is_pair_iterator
 template <typename T, typename = void>
 struct is_pair_iterator : std::false_type {};
 
@@ -104,7 +84,6 @@ struct is_pair_iterator<T, std::void_t<
             typename T::value_type,
             std::pair<typename T::value_type::first_type, typename T::value_type::second_type >
         > {};
-#endif
 
 
 //

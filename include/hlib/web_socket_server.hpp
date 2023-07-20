@@ -77,12 +77,12 @@ public:
         HLIB_NOT_MOVABLE(Socket);
 
     public:
-        typedef uint64_t Id;
+        typedef std::uint64_t Id;
 
         typedef std::function<void()> OnPong;
         typedef std::function<void(Message& message)> OnMessage;
         typedef std::function<void()> OnError;
-        typedef std::function<void(bool clean, uint16_t code, Buffer const& reason)> OnClose;
+        typedef std::function<void(bool clean, std::uint16_t code, Buffer const& reason)> OnClose;
 
     public:
         Server& server;
@@ -106,7 +106,7 @@ public:
 
         void ping();
         void send(Message message);
-        void close(uint16_t code = 1005, Buffer reason = Buffer());
+        void close(std::uint16_t code = 1005, Buffer reason = Buffer());
 
     private:
         struct hws_s* m_hws;
@@ -137,7 +137,7 @@ public:
         std::mutex m_send_queue_mutex;
         std::list<Frame> m_send_queue;
 
-        uint16_t m_close_code{ 1005 };
+        std::uint16_t m_close_code{ 1005 };
         Buffer m_close_reason;
 
         Socket(Server& server, Socket::Id a_id, struct hws_s* a_hws, http::Socket a_http_socket);
