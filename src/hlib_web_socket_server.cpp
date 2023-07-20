@@ -464,6 +464,7 @@ void Server::Socket::send(Message message)
 
     std::lock_guard<std::mutex> lock(m_send_queue_mutex);
 
+    Opcode opcode = std::holds_alternative<std::string>(message) ? Opcode::Text : Opcode::Binary;
     std::size_t size = std::visit(Overloaded{
         [](std::monostate&) noexcept { return std::size_t(0); },
         [](auto& msg) noexcept { return msg.size(); }
@@ -471,10 +472,9 @@ void Server::Socket::send(Message message)
 
     if (size < m_fragment_message_threshold) {
         // Forward message unfragmented.
-        m_send_queue.emplace_back(Opcode::Text, true, std::move(message));
+        m_send_queue.emplace_back(opcode, true, std::move(message));
     }
     else {
-        Opcode opcode = std::holds_alternative<std::string>(message) ? Opcode::Text : Opcode::Binary;
         size_t offset = 0;
 
         // Fragment message using continuation frames.
