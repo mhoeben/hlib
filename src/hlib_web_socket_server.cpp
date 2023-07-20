@@ -225,7 +225,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
             return -1;
         }
 
-        return hws_socket_receive(m_hws, m_socket, buffer->reserve(size), size);
+        return size > 0 ? hws_socket_receive(m_hws, m_socket, buffer->reserve(size), size) : 0;
     }
     catch (...) {
         HLOGE(server.m_logger, "{}: Exception in receive header callback", id);
