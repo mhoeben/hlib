@@ -67,6 +67,13 @@ TEST_CASE("Buffer", "[buffer]")
     REQUIRE(0 == memcmp("abgh", buffer.data(), 4));
 }
 
+TEST_CASE("Buffer Empty", "[buffer]")
+{
+    Buffer buffer;
+    REQUIRE_NOTHROW(nullptr == buffer.reserve(0));
+    REQUIRE_NOTHROW(nullptr == buffer.resize(0));
+}
+
 TEST_CASE("Buffer Iterator", "[buffer,format]")
 {
     Buffer buffer;

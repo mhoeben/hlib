@@ -129,7 +129,7 @@ void* Buffer::reserve(std::size_t capacity, std::nothrow_t) noexcept
 void* Buffer::reserve(std::size_t capacity)
 {
     void* data = hlib_buffer_reserve(&m_buffer, capacity);
-    if (nullptr == data) {
+    if (nullptr == data && capacity > 0) {
         throw std::bad_alloc();
     }
     return data;
@@ -143,7 +143,7 @@ void* Buffer::resize(std::size_t size, std::nothrow_t) noexcept
 void* Buffer::resize(std::size_t size)
 {
     void* data = hlib_buffer_resize(&m_buffer, size);
-    if (nullptr == data) {
+    if (nullptr == data && size > 0) {
         throw std::bad_alloc();
     }
     return data;

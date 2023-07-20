@@ -82,9 +82,19 @@ static void* hlib_buffer_realloc(hlib_buffer_t* buffer, size_t capacity, int shr
         return buffer->data;
     }
 
-    void* data = realloc(buffer->data, capacity);
-    if (NULL == data) {
-        return NULL;
+    void* data;
+
+    if (capacity > 0) {
+        data = realloc(buffer->data, capacity);
+        if (NULL == data) {
+            return NULL;
+        }
+    }
+    else {
+        if (NULL != buffer->data) {
+            free(buffer->data);
+        }
+        data = NULL;
     }
 
     buffer->data = data;

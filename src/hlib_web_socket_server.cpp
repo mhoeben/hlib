@@ -61,7 +61,7 @@ Overloaded(Ts...) -> Overloaded<Ts...>;
 //
 Server::Socket::Frame::Frame(Opcode a_opcode)
     : opcode{ a_opcode }
-    , fin{ false }
+    , fin{ true }
 {
 }
 
@@ -145,7 +145,7 @@ int Server::Socket::onInterrupt()
         return std::visit(Overloaded{
             [&](std::monostate const&) noexcept
             {
-                return hws_socket_send(m_hws, m_socket, static_cast<hws_opcode_t>(frame.opcode), nullptr, 0, false);
+                return hws_socket_send(m_hws, m_socket, static_cast<hws_opcode_t>(frame.opcode), nullptr, 0, frame.fin);
             },
             [&](auto const& message) noexcept
             {
@@ -245,11 +245,11 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
             switch (m_receive_control->opcode) {
             case Opcode::Close:
               {
-                std::uint8_t const* ptr = static_cast<std::uint8_t*>(buffer);
+                uint8_t const* ptr = static_cast<uint8_t*>(buffer);
                 if (size >= 2) {
                     // Decode close code.
-                    m_close_code = static_cast<std::uint16_t>(ptr[0]) << 8
-                                 | static_cast<std::uint16_t>(ptr[1]) << 0;
+                    m_close_code = static_cast<uint16_t>(ptr[0]) << 8
+                                 | static_cast<uint16_t>(ptr[1]) << 0;
                     if (size > 2) {
                         // Copy close reason.
                         m_close_reason.assign(ptr + 2, size - 2);
@@ -510,7 +510,7 @@ void Server::Socket::send(Message message)
     restart_locked();
 }
 
-void Server::Socket::close(std::uint16_t code, Buffer reason)
+void Server::Socket::close(uint16_t code, Buffer reason)
 {
     std::lock_guard<std::mutex> lock(m_send_queue_mutex);
 
@@ -518,12 +518,12 @@ void Server::Socket::close(std::uint16_t code, Buffer reason)
     // code before the reason. Else, make sure reason is empty.
     if (1005 != code) {
         // Reserve space for code bytes, obtaining a pointer to the buffer.
-        std::uint8_t* ptr = static_cast<std::uint8_t*>(reason.reserve(reason.size() + 2));
+        uint8_t* ptr = static_cast<uint8_t*>(reason.reserve(reason.size() + 2));
         // Insert space for code bytes.
         reason.insert(0, nullptr, 2);
         // Encode code.
-        ptr[0] = static_cast<std::uint8_t>(code >> 8);
-        ptr[1] = static_cast<std::uint8_t>(code >> 0);
+        ptr[0] = static_cast<uint8_t>(code >> 8);
+        ptr[1] = static_cast<uint8_t>(code >> 0);
     }
     else {
         assert(true == reason.empty());
