@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/format.hpp
     include/hlib/json.hpp
     include/hlib/log.hpp
+    include/hlib/math.hpp
     include/hlib/memory.hpp
     include/hlib/scope_guard.hpp
     include/hlib/sock_addr.hpp
