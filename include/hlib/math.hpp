@@ -28,7 +28,7 @@ namespace hlib
 namespace math
 {
 
-template<typename N, typename D>
+template<typename N = int, typename D = N>
 struct Fraction
 {
     N n{ 0 };
