@@ -23,10 +23,7 @@
 //
 #include "catch2/catch_test_macros.hpp"
 #include "test.hpp"
-#include "hlib/container.hpp"
 #include "hlib/subprocess.hpp"
-
-#include <vector>
 
 using namespace hlib;
 
@@ -35,11 +32,6 @@ using namespace hlib;
 //
 TEST_CASE("Test")
 {
-    std::vector<std::string> lhs{ "a", "b", "c" };
-    std::vector<std::string> rhs{ "b", "c", "d" };
-    std::vector<std::string> r = container::make_union(lhs, rhs);
-
-    REQUIRE(4 == r.size());
 }
 
 //

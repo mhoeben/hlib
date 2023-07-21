@@ -25,7 +25,7 @@
 
 namespace hlib
 {
-namespace mah
+namespace math
 {
 
 template<typename N, typename D>
@@ -34,9 +34,9 @@ struct Fraction
     N n{ 0 };
     D d{ 0 };
 
-    Fraction() = default;
+    constexpr Fraction() = default;
 
-    Fraction(N numerator, D denominator = 1)
+    constexpr Fraction(N numerator, D denominator = 1)
         : n{ numerator }
         , d{ denominator }
     {
