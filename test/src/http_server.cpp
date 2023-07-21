@@ -98,9 +98,10 @@ TEST_CASE("HTTP Server", "[http]")
 
         transaction.respond(http::StatusCode::Ok, {}, std::make_unique<Buffer>("Hello World"));
     };
-    config.on_transaction_end = [&](http::Server::Transaction const& /* transaction */, bool failed) noexcept
+    config.on_transaction_end = [&](http::Server::Transaction const& transaction, bool failed) noexcept
     {
         REQUIRE(false == failed);
+        REQUIRE(http::StatusCode::Ok == transaction.responseStatusCode());
         event_loop->interrupt();
     };
 

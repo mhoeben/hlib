@@ -330,6 +330,8 @@ void Server::Transaction::respond(StatusCode status_code, std::string reason, st
 
     assert(true == callback_from(server.m_event_loop));
 
+    m_response_status_code = status_code;
+
     // Respond with content callbacks.
     hverify(hserv_respond(
         m_hserv,
@@ -367,6 +369,7 @@ void Server::Transaction::respond(bool flush, StatusCode status_code, std::vecto
         return;
     }
 
+    m_response_status_code = status_code;
     m_response_content = std::move(content);
 
     // Respond with content.
