@@ -232,6 +232,11 @@ void Server::Transaction::finish(bool failed)
 //
 // Public (Transaction)
 //
+StatusCode Server::Transaction::responseStatusCode() const
+{ 
+    return m_response_status_code;
+}
+
 SockAddr Server::Transaction::getPeerAddress() const
 {
     sockaddr_storage storage{};
@@ -674,6 +679,8 @@ std::string hlib::to_string(StatusCode status_code)
 {
     static std::unordered_map<StatusCode, std::string> const table =
     {
+        { StatusCode::Undefined, "Undefined" },
+
         { StatusCode::Continue, "Continue" },
         { StatusCode::SwitchingProtocols, "SwitchingProtocols" },
         { StatusCode::EarlyHints, "EarlyHints" },

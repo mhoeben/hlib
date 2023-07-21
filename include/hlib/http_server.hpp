@@ -67,6 +67,8 @@ enum class Method
 
 enum class StatusCode
 {
+    Undefined = -1,
+
     Continue = 100,
     SwitchingProtocols = 101,
     EarlyHints = 103,
@@ -187,6 +189,8 @@ public:
 
         std::shared_ptr<void> user;
 
+        StatusCode responseStatusCode() const;
+
         SockAddr getPeerAddress() const;
 
         std::optional<std::string> getRequestValue(std::string const& name, std::size_t index = 0) const;
@@ -220,6 +224,7 @@ public:
         std::shared_ptr<Buffer> m_request_content;
         OnRequestContent m_on_request_content;
 
+        StatusCode m_response_status_code{ StatusCode::Undefined };
         std::shared_ptr<Buffer const> m_response_content;
         OnResponseContent m_on_response_content;
 
