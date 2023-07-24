@@ -124,6 +124,7 @@ EventLoop::EventLoop(log::Domain logger)
     assert(-1 != m_pipe[0] && -1 != m_pipe[1]);
 
     add(m_pipe[0], Read, [this](int fd, std::uint32_t events) {
+        (void)events;
         assert(0 != (EPOLLIN & events));
 
         std::uint8_t cmd;

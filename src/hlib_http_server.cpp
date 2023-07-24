@@ -40,6 +40,9 @@
 
 #pragma GCC diagnostic pop
 
+// TODO investigate.
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+
 using namespace hlib;
 using namespace hlib::http;
 
@@ -179,6 +182,8 @@ void Server::Transaction::onRequestContentFlushed(Transaction& transaction, std:
 
 int Server::Transaction::onRequestContent(void* buffer, std::size_t size, std::size_t more)
 {
+    (void)buffer;
+
     try {
         assert(static_cast<std::uint8_t const*>(m_request_content->data()) + m_request_content->size() == buffer);
         assert(m_request_content->size() + size <= m_request_content->capacity());
@@ -202,6 +207,9 @@ int Server::Transaction::onRequestContent(void* buffer, std::size_t size, std::s
 
 int Server::Transaction::onResponseContent(void const* buffer, std::size_t size, std::size_t more)
 {
+    (void)buffer;
+    (void)size;
+
     try {
         assert(m_response_content->data() == buffer);
         assert(m_response_content->size() == size);

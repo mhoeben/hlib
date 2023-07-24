@@ -219,6 +219,8 @@ void JSONDecoder::reset(void const* data, std::size_t size)
 
 void JSONDecoder::open(char const* name, Type& value)
 {
+    (void)value;
+
     Map map;
     open(name, map);
     assert(static_cast<std::size_t>(value) == map.size);
