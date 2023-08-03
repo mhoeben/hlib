@@ -251,8 +251,11 @@ int Subprocess::run(std::vector<char const*> argv)
             return Pending;
         }
 
-        m_event_loop_private->flush();
-        m_event_loop_private->dispatch();
+        if (m_capture) {
+            m_event_loop_private->flush();
+            m_event_loop_private->dispatch();
+        }
+
         return wait();
     }
 }
@@ -348,11 +351,13 @@ Buffer const& Subprocess::error() const
 
 void Subprocess::setCapture(std::uint8_t mask)
 {
+    assert(0 == (m_capture & (~(StdOut|StdErr))));
     m_capture = mask;
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
 {
+    m_capture &= ~StdIn;
     return run(to_argv(command, args));
 }
 
