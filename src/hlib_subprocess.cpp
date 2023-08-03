@@ -195,9 +195,9 @@ int Subprocess::run(std::vector<char const*> argv)
         throwf<std::logic_error>("External event loop not available");
     }
 
-    Pipe input_pipe(!!(m_capture & StdIn));
-    Pipe output_pipe(!!(m_capture & StdOut));
-    Pipe error_pipe(!!(m_capture & StdErr));
+    Pipe input_pipe(!!(m_redirect & StdIn));
+    Pipe output_pipe(!!(m_redirect & StdOut));
+    Pipe error_pipe(!!(m_redirect & StdErr));
 
     switch (m_pid = fork()) {
     case -1:
@@ -206,13 +206,13 @@ int Subprocess::run(std::vector<char const*> argv)
     case 0:
         event_loop.reset();
 
-        if (StdIn & m_capture) {
+        if (StdIn & m_redirect) {
             hverify(-1 != dup2(input_pipe.produce.value(), STDIN_FILENO));
         }
-        if (StdOut & m_capture) {
+        if (StdOut & m_redirect) {
             hverify(-1 != dup2(output_pipe.consume.value(), STDOUT_FILENO));
         }
-        if (StdErr & m_capture) {
+        if (StdErr & m_redirect) {
             hverify(-1 != dup2(error_pipe.consume.value(), STDERR_FILENO));
         }
 
@@ -231,13 +231,13 @@ int Subprocess::run(std::vector<char const*> argv)
         m_output_fd = std::move(output_pipe.produce);
         m_error_fd = std::move(error_pipe.produce);
 
-        if (StdIn & m_capture) {
+        if (StdIn & m_redirect) {
             event_loop->add(m_input_fd.value(), EventLoop::Write, m_on_input);
         }
-        if (StdOut & m_capture) {
+        if (StdOut & m_redirect) {
             event_loop->add(m_output_fd.value(), EventLoop::Read, m_on_output);
         }
-        if (StdErr & m_capture) {
+        if (StdErr & m_redirect) {
             event_loop->add(m_error_fd.value(), EventLoop::Read, m_on_error);
         }
 
@@ -251,7 +251,7 @@ int Subprocess::run(std::vector<char const*> argv)
             return Pending;
         }
 
-        if (m_capture) {
+        if (0 != m_redirect) {
             m_event_loop_private->flush();
             m_event_loop_private->dispatch();
         }
@@ -349,21 +349,21 @@ Buffer const& Subprocess::error() const
     return m_error;
 }
 
-void Subprocess::setCapture(std::uint8_t mask)
+void Subprocess::setCaptureMask(std::uint8_t mask)
 {
-    assert(0 == (m_capture & (~(StdOut|StdErr))));
-    m_capture = mask;
+    assert(0 == (m_redirect & (~(StdOut|StdErr))));
+    m_redirect = mask;
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
 {
-    m_capture &= ~StdIn;
+    m_redirect &= ~StdIn;
     return run(to_argv(command, args));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, Buffer input)
 {
-    m_capture |= StdIn;
+    m_redirect |= StdIn;
     m_input = std::move(input);
     return run(to_argv(command, args));
 }

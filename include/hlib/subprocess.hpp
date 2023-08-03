@@ -59,7 +59,7 @@ public:
     Buffer const& output() const;
     Buffer const& error() const;
 
-    void setCapture(std::uint8_t mask);
+    void setCaptureMask(std::uint8_t mask);
 
     int run(std::string const& command, std::vector<std::string> const& args);
     int run(std::string const& command, std::vector<std::string> const& args, Buffer input);
@@ -71,7 +71,7 @@ private:
     std::weak_ptr<EventLoop> m_event_loop_extern;
 
     static constexpr std::uint8_t StdIn{ 0x04 };
-    std::uint8_t m_capture{ StdOut|StdErr };
+    std::uint8_t m_redirect{ StdOut|StdErr };
 
     int m_pid{ -1 };
     int m_return_code{ Pending };
