@@ -28,6 +28,7 @@
 #include "hlib/scope_guard.hpp"
 #include "hlib/time.hpp"
 #include "hlib/utility.hpp"
+#include <fcntl.h>
 #include <stdexcept>
 #include <unistd.h>
 
@@ -123,9 +124,15 @@ EventLoop::EventLoop(log::Domain logger)
     }
     assert(-1 != m_pipe[0] && -1 != m_pipe[1]);
 
+    int flags = fcntl(m_pipe[0], F_GETFL, 0);
+    if (-1 == flags
+     || -1 == fcntl(m_pipe[0], F_SETFL, flags|O_NONBLOCK)) {
+        throwf<std::runtime_error>("fcntl failed ({})", get_error_string(errno));
+    }
+
     add(m_pipe[0], Read, [this](int fd, std::uint32_t events) {
-        (void)events;
         assert(0 != (EPOLLIN & events));
+        (void)events;
 
         std::uint8_t cmd;
         hverify(1 == read(fd, &cmd, 1));
@@ -234,6 +241,13 @@ void EventLoop::interrupt()
     hverify(1 == write(m_pipe[1], &cmd, 1));
 
     HLOGT(m_logger, "interrupted");
+}
+
+void EventLoop::flush()
+{
+    std::uint8_t cmd;
+    while (1 == read(m_pipe[0], &cmd, 1)) {
+    }
 }
 
 //

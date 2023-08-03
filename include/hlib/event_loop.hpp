@@ -64,6 +64,7 @@ public:
     void dispatch();
     void dispatch(Duration const& timeout);
     void interrupt();
+    void flush();
 
 private:
     log::Domain const m_logger;

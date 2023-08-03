@@ -24,13 +24,16 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include <algorithm>
+#include <functional>
 #include <memory>
+#include <type_traits>
 
 namespace hlib
 {
 
-template<typename T, typename LAMBDA>
-bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, LAMBDA lambda)
+template<typename T, typename Lambda>
+bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, Lambda lambda)
 {
     auto locked = weak_ptr.lock();
     if (nullptr == locked) {
@@ -40,6 +43,96 @@ bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, LAMBDA lambda)
     lambda(*locked);
     return true;
 }
+
+template<typename T, T invalid_value = 0, typename Destructor=void(T)>
+class UniqueOwner final
+{
+    static_assert(true == std::is_trivial<T>::value, "T must be a trivial type");
+
+    HLIB_NOT_COPYABLE(UniqueOwner);
+
+public:
+    typedef T Type;
+
+public:
+    UniqueOwner(Destructor destructor) noexcept
+        : m_destructor(std::move(destructor))
+    {
+    }
+
+    UniqueOwner(T value, Destructor destructor) noexcept
+        : m_value{ value }
+        , m_destructor(std::move(destructor))
+    {
+    }
+
+    UniqueOwner(UniqueOwner&& that) noexcept
+        : m_value{ that.m_value }
+        , m_destructor(std::move(that.m_destructor))
+    {
+        that.m_value = invalid_value;
+    }
+
+    ~UniqueOwner()
+    {
+        reset();
+    }
+
+    UniqueOwner& operator=(UniqueOwner&& that) noexcept
+    {
+        reset();
+
+        std::swap(m_value, that.m_value);
+        m_destructor = std::move(that.m_destructor);
+        return *this;
+    }
+
+    T operator ->() const noexcept
+    {
+        return m_value;
+    }
+
+    T value() const noexcept
+    {
+        return m_value;
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return invalid_value != m_value;
+    }
+
+    T* reset() noexcept
+    {
+        reset(invalid_value);
+        return &m_value;
+    }
+
+    void reset(T value) noexcept
+    {
+        if (nullptr != m_destructor) {
+            m_destructor(m_value);
+        }
+        m_value = value;
+    }
+
+    void swap(UniqueOwner& that) noexcept
+    {
+        std::swap(m_value, that.m_value);
+        std::swap(m_destructor, that.m_destructor);
+    }
+
+    T release() noexcept
+    {
+        T value = invalid_value;
+        std::swap(m_value, value);
+        return value;
+    }
+
+private:
+    T m_value{ invalid_value };
+    std::function<Destructor> m_destructor;
+};
 
 } // namespace hlib
 

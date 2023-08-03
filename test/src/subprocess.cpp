@@ -21,18 +21,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#include "test.hpp"
+#include "hlib/subprocess.hpp"
 
-#include <type_traits>
+using namespace hlib;
 
-namespace hlib
+TEST_CASE("Subprocess Echo", "[subprocess]")
 {
+    Subprocess process("echo", { "Hello World!" });
+    REQUIRE(0 == process.returnCode());
+    REQUIRE("Hello World!\n" == to_string(process.output()));
+    REQUIRE(true == process.error().empty());
 
-template <typename Container, typename = void>
-struct is_associative : std::false_type {};
+    process.run("echo", { "Good", "morning" });
+    REQUIRE(0 == process.returnCode());
+    REQUIRE("Good morning\n" == to_string(process.output()));
+    REQUIRE(true == process.error().empty());
+}
 
-template <typename Container>
-struct is_associative<Container, std::void_t<typename Container::key_type>> : std::true_type {};
+TEST_CASE("Subprocess StdIn to StdOut", "[subprocess]")
+{
+    Subprocess process("cat", { "-" }, Buffer("Hello World!"));
+    REQUIRE(0 == process.returnCode());
+    REQUIRE("Hello World!" == to_string(process.output()));
+    REQUIRE(true == process.error().empty());
 
-} // namespace hlib
+    process.run("cat", { "-" }, Buffer("Good morning"));
+    REQUIRE(0 == process.returnCode());
+    REQUIRE("Good morning" == to_string(process.output()));
+    REQUIRE(true == process.error().empty());
+}
 

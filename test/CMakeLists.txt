@@ -54,6 +54,7 @@ add_executable(${PROJECT_NAME}
     src/json.cpp
     src/sockaddr.cpp
     src/string.cpp
+    src/subprocess.cpp
     src/test.cpp
     src/test.hpp
     src/type_traits.cpp

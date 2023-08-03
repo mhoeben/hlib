@@ -24,6 +24,8 @@
 #pragma once
 
 #include "hlib/buffer.hpp"
+#include "hlib/event_loop.hpp"
+#include "hlib/memory.hpp"
 #include <string>
 #include <vector>
 
@@ -35,22 +37,64 @@ class Subprocess final
     HLIB_NOT_COPYABLE(Subprocess);
 
 public:
-    Subprocess() = default;
-    Subprocess(Subprocess&& that) noexcept;
+    static constexpr int Pending{ -2 };
+    static constexpr int Error{ -1 };
+    static constexpr int Ok{ 0 };
+
+    static constexpr std::uint8_t StdOut{ 0x01 };
+    static constexpr std::uint8_t StdErr{ 0x02 };
+
+public:
+    Subprocess();
     Subprocess(std::string const& command, std::vector<std::string> const& args);
+    Subprocess(std::string const& command, std::vector<std::string> const& args, Buffer input);
+    Subprocess(std::weak_ptr<EventLoop> event_loop, EventLoop::Callback on_input,
+        EventLoop::Callback on_output, EventLoop::Callback on_error) noexcept;
+    Subprocess(Subprocess&& that) noexcept;
 
     Subprocess& operator =(Subprocess&& that) noexcept;
 
+    int pid() const;
     int returnCode() const;
     Buffer const& output() const;
     Buffer const& error() const;
 
-    void run(std::string const& command, std::vector<std::string> const& args);
+    void setCapture(std::uint8_t mask);
+
+    int run(std::string const& command, std::vector<std::string> const& args);
+    int run(std::string const& command, std::vector<std::string> const& args, Buffer input);
+
+    int wait();
 
 private:
-    int m_return_code{ -1 };
+    std::shared_ptr<EventLoop> m_event_loop_private;
+    std::weak_ptr<EventLoop> m_event_loop_extern;
+
+    static constexpr std::uint8_t StdIn{ 0x04 };
+    std::uint8_t m_capture{ StdOut|StdErr };
+
+    int m_pid{ -1 };
+    int m_return_code{ Pending };
+
+    UniqueOwner<int, -1> m_input_fd;
+    UniqueOwner<int, -1> m_output_fd;
+    UniqueOwner<int, -1> m_error_fd;
+
+    std::size_t m_input_offset{ 0 };
+    Buffer m_input;
     Buffer m_output;
     Buffer m_error;
+
+    EventLoop::Callback m_on_input;
+    EventLoop::Callback m_on_output;
+    EventLoop::Callback m_on_error;
+
+    void onInput(int fd, std::uint32_t events);
+    void onOutput(int fd, std::uint32_t events);
+    void onError(int fd, std::uint32_t events);
+
+    int run(std::vector<char const*> argv);
 };
 
 } // namespace hlib
+
