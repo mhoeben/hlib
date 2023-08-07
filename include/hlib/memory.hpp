@@ -58,6 +58,7 @@ public:
     UniqueOwner(Destructor destructor) noexcept
         : m_destructor(std::move(destructor))
     {
+        assert(nullptr != m_destructor);
     }
 
     UniqueOwner(T value, Destructor destructor) noexcept
@@ -110,7 +111,7 @@ public:
 
     void reset(T value) noexcept
     {
-        if (nullptr != m_destructor) {
+        if (invalid_value != m_value) {
             m_destructor(m_value);
         }
         m_value = value;

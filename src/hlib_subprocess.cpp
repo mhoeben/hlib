@@ -24,6 +24,7 @@
 #include "hlib/subprocess.hpp"
 #include "hlib/config.hpp"
 #include "hlib/error.hpp"
+#include "hlib/file.hpp"
 #include "hlib/format.hpp"
 #include <array>
 #include <cstdio>
@@ -66,62 +67,6 @@ bool read_to_buffer(int fd, Buffer& buffer)
     buffer.resize(buffer.size() + size);
     return size > 0;
 }
-
-void close_fd(int fd)
-{
-    if (-1 == fd) {
-        return;
-    }
-
-    close(fd);
-}
-
-struct Pipe
-{
-    UniqueOwner<int, -1> produce;
-    UniqueOwner<int, -1> consume;
-
-    Pipe(bool enable)
-        : produce(&close_fd)
-        , consume(&close_fd)
-    {
-        if (false == enable) {
-            return;
-        }
-
-        std::array<int, 2> fds{ -1, -1 };
-
-        if (-1 == pipe(fds.data())) {
-            throwf<std::runtime_error>("Failed to create pipe for ({})", get_error_string(errno));
-        }
-
-        produce.reset(fds[0]);
-        consume.reset(fds[1]);
-    }
-
-    ~Pipe()
-    {
-        close();
-    }
-
-    template<std::size_t index>
-    void close() noexcept
-    {
-        static_assert(index >= 0 && index <= 1);
-        if constexpr(0 == index) {
-            produce.reset();
-        }
-        else {
-            consume.reset();
-        }
-    }
-
-    void close() noexcept
-    {
-        close<1>();
-        close<0>();
-    }
-};
 
 } // namespace
 
@@ -175,15 +120,8 @@ void Subprocess::onError(int fd, std::uint32_t events)
 int Subprocess::run(std::vector<char const*> argv)
 {
     assert(-1 == m_pid);
-    assert(-1 == m_input_fd.value());
-    assert(-1 == m_output_fd.value());
-    assert(-1 == m_error_fd.value());
 
     m_return_code = Pending;
-
-    m_input_fd.reset();
-    m_output_fd.reset();
-    m_error_fd.reset();
 
     m_output.clear();
     m_error.clear();
@@ -195,9 +133,29 @@ int Subprocess::run(std::vector<char const*> argv)
         throwf<std::logic_error>("External event loop not available");
     }
 
-    Pipe input_pipe(!!(m_redirect & StdIn));
-    Pipe output_pipe(!!(m_redirect & StdOut));
-    Pipe error_pipe(!!(m_redirect & StdErr));
+
+    file::Pipe input_pipe;
+    switch (m_input_fd.value()) {
+    case Buffered:  input_pipe.open(); break;
+    case StdIn:     break;
+    default:        input_pipe.set<0>(std::move(m_input_fd)); break;
+    }
+
+    file::Pipe output_pipe;
+    switch (m_output_fd.value()) {
+    case Buffered:  output_pipe.open(); break;
+    case StdOut:    break;
+    default:        output_pipe.set<1>(std::move(m_output_fd)); break;
+    }
+
+    file::Pipe error_pipe;
+    switch (m_error_fd.value()) {
+    case Buffered:  error_pipe.open(); break;
+    case StdErr:    break;
+    default:        error_pipe.set<1>(std::move(m_error_fd)); break;
+    }
+
+    bool redirect = false;
 
     switch (m_pid = fork()) {
     case -1:
@@ -206,14 +164,14 @@ int Subprocess::run(std::vector<char const*> argv)
     case 0:
         event_loop.reset();
 
-        if (StdIn & m_redirect) {
-            hverify(-1 != dup2(input_pipe.produce.value(), STDIN_FILENO));
+        if (input_pipe.get<0>().value() >= 0) {
+            hverify(-1 != dup2(input_pipe.get<0>().value(), STDIN_FILENO));
         }
-        if (StdOut & m_redirect) {
-            hverify(-1 != dup2(output_pipe.consume.value(), STDOUT_FILENO));
+        if (output_pipe.get<1>().value() >= 0) {
+            hverify(-1 != dup2(output_pipe.get<1>().value(), STDOUT_FILENO));
         }
-        if (StdErr & m_redirect) {
-            hverify(-1 != dup2(error_pipe.consume.value(), STDERR_FILENO));
+        if (error_pipe.get<1>().value() >= 0) {
+            hverify(-1 != dup2(error_pipe.get<1>().value(), STDERR_FILENO));
         }
 
         input_pipe.close();
@@ -227,18 +185,34 @@ int Subprocess::run(std::vector<char const*> argv)
         return Error;
 
     default:
-        m_input_fd = std::move(input_pipe.consume);
-        m_output_fd = std::move(output_pipe.produce);
-        m_error_fd = std::move(error_pipe.produce);
-
-        if (StdIn & m_redirect) {
+        if (Buffered == m_input_fd.value()) {
+            m_input_fd = std::move(input_pipe.get<1>());
             event_loop->add(m_input_fd.value(), EventLoop::Write, m_on_input);
+
+            redirect = true;
         }
-        if (StdOut & m_redirect) {
+        else {
+            m_input_fd.reset();
+        }
+
+        if (Buffered == m_output_fd.value()) {
+            m_output_fd = std::move(output_pipe.get<0>());
             event_loop->add(m_output_fd.value(), EventLoop::Read, m_on_output);
+
+            redirect = true;
         }
-        if (StdErr & m_redirect) {
+        else {
+            m_output_fd.reset();
+        }
+
+        if (Buffered == m_error_fd.value()) {
+            m_error_fd = std::move(error_pipe.get<0>());
             event_loop->add(m_error_fd.value(), EventLoop::Read, m_on_error);
+
+            redirect = true;
+        }
+        else {
+            m_error_fd.reset();
         }
 
         input_pipe.close();
@@ -251,7 +225,7 @@ int Subprocess::run(std::vector<char const*> argv)
             return Pending;
         }
 
-        if (0 != m_redirect) {
+        if (true == redirect) {
             m_event_loop_private->flush();
             m_event_loop_private->dispatch();
         }
@@ -265,9 +239,9 @@ int Subprocess::run(std::vector<char const*> argv)
 //
 Subprocess::Subprocess()
     : m_event_loop_private(std::make_shared<EventLoop>())
-    , m_input_fd(&close_fd)
-    , m_output_fd(&close_fd)
-    , m_error_fd(&close_fd)
+    , m_input_fd(Config::subprocessStdIn(), &file::close_fd)
+    , m_output_fd(Config::subprocessStdOut(), &file::close_fd)
+    , m_error_fd(Config::subprocessStdErr(), &file::close_fd)
     , m_on_input(std::bind(&Subprocess::onInput, this, std::placeholders::_1, std::placeholders::_2))
     , m_on_output(std::bind(&Subprocess::onOutput, this, std::placeholders::_1, std::placeholders::_2))
     , m_on_error(std::bind(&Subprocess::onError, this, std::placeholders::_1, std::placeholders::_2))
@@ -277,9 +251,9 @@ Subprocess::Subprocess()
 Subprocess::Subprocess(std::weak_ptr<EventLoop> event_loop, EventLoop::Callback on_input,
         EventLoop::Callback on_output, EventLoop::Callback on_error) noexcept
     : m_event_loop_extern(std::move(event_loop))
-    , m_input_fd(&close_fd)
-    , m_output_fd(&close_fd)
-    , m_error_fd(&close_fd)
+    , m_input_fd(Config::subprocessStdIn(), &file::close_fd)
+    , m_output_fd(Config::subprocessStdOut(), &file::close_fd)
+    , m_error_fd(Config::subprocessStdErr(), &file::close_fd)
     , m_on_input(std::move(on_input))
     , m_on_output(std::move(on_output))
     , m_on_error(std::move(on_error))
@@ -334,36 +308,85 @@ Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
     return *this;
 }
 
-int Subprocess::returnCode() const
+int Subprocess::pid() const noexcept
+{
+    return m_pid;
+}
+
+int Subprocess::returnCode() const noexcept
 {
     return m_return_code;
 }
 
-Buffer const& Subprocess::output() const
+Buffer const& Subprocess::output() const noexcept
 {
     return m_output;
 }
 
-Buffer const& Subprocess::error() const
+Buffer const& Subprocess::error() const noexcept
 {
     return m_error;
 }
 
-void Subprocess::setCaptureMask(std::uint8_t mask)
+void Subprocess::setInput(int fd) noexcept
 {
-    assert(0 == (m_redirect & (~(StdOut|StdErr))));
-    m_redirect = mask;
+    m_input_fd.reset(fd);
+}
+
+void Subprocess::setInput(std::string const& filename, int flags)
+{
+    assert(0 == ((O_CREAT|O_WRONLY) & flags));
+
+    int fd = open(filename.c_str(), flags);
+    if (-1 == fd) {
+        throwf<std::runtime_error>("Failed to open '{}' for subprocess input ({})", filename, get_error_string(errno));
+    }
+
+    setInput(fd);
+}
+
+void Subprocess::setOutput(int fd) noexcept
+{
+    m_output_fd.reset(fd);
+}
+
+void Subprocess::setOutput(std::string const& filename, int flags, mode_t mode)
+{
+    assert(0 == ((O_RDONLY) & flags));
+
+    int fd = open(filename.c_str(), flags, mode);
+    if (-1 == fd) {
+        throwf<std::runtime_error>("Failed to open '{}' for subprocess output ({})", filename, get_error_string(errno));
+    }
+
+    setOutput(fd);
+}
+
+void Subprocess::setError(int fd) noexcept
+{
+    m_error_fd.reset(fd);
+}
+
+void Subprocess::setError(std::string const& filename, int flags, mode_t mode)
+{
+    assert(0 == ((O_RDONLY) & flags));
+
+    int fd = open(filename.c_str(), flags, mode);
+    if (-1 == fd) {
+        throwf<std::runtime_error>("Failed to open '{}' for subprocess error ({})", filename, get_error_string(errno));
+    }
+
+    setError(fd);
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
 {
-    m_redirect &= ~StdIn;
     return run(to_argv(command, args));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, Buffer input)
 {
-    m_redirect |= StdIn;
+    m_input_fd.reset(Buffered);
     m_input = std::move(input);
     return run(to_argv(command, args));
 }
@@ -395,9 +418,9 @@ int Subprocess::wait()
         }
     }
 
-    m_error_fd.reset();
-    m_output_fd.reset();
-    m_input_fd.reset();
+    m_error_fd.reset(Config::subprocessStdErr());
+    m_output_fd.reset(Config::subprocessStdOut());
+    m_input_fd.reset(Config::subprocessStdIn());
 
     m_pid = -1;
     return m_return_code;

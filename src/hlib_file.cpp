@@ -26,13 +26,13 @@
 #include "hlib/format.hpp"
 #include "hlib/scope_guard.hpp"
 #include "hlib/string.hpp"
-#include <array>
-#include <filesystem>
 #include <fstream>
 #include <system_error>
+#include <unistd.h>
 #include <unordered_map>
 
 using namespace hlib;
+using namespace hlib::file;
 
 //
 // Public
@@ -406,5 +406,45 @@ std::string file::get_mime_type_from_file(std::string const& pathname, std::stri
     }
 
     return get_mime_type_from_extension(path.extension(), default_mime_type);
+}
+
+void file::close_fd(int fd) noexcept
+{
+    if (fd < 0) {
+        return;
+    }
+
+    close(fd);
+}
+
+//
+// Public (Pipe)
+//
+Pipe::Pipe()
+    : m_file_descriptors { &close_fd, &close_fd }
+{
+}
+
+Pipe::~Pipe()
+{
+    close();
+}
+
+void Pipe::open()
+{
+    std::array<int, 2> fds{ -1, -1 };
+
+    if (-1 == ::pipe(fds.data())) {
+        throwf<std::runtime_error>("Failed to create pipe for ({})", get_error_string(errno));
+    }
+
+    m_file_descriptors[0].reset(fds[0]);
+    m_file_descriptors[1].reset(fds[1]);
+}
+
+void Pipe::close() noexcept
+{
+    m_file_descriptors[1].reset();
+    m_file_descriptors[0].reset();
 }
 

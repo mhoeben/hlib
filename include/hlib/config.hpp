@@ -32,6 +32,9 @@ struct Config
 {
     static constexpr int         defaultLogLevel()              { return 3; }
     static constexpr std::size_t maxErrorString()               { return 256; }
+    static constexpr int         subprocessStdIn()              { return -1; } // StdIn.
+    static constexpr int         subprocessStdOut()             { return -2; } // Buffered.
+    static constexpr int         subprocessStdErr()             { return -2; } // Buffered.
     static constexpr std::size_t subprocessOutputBatchSize()    { return 1024; }
     static constexpr char const* httpServerBinding()            { return "0.0.0.0:8443"; }
     static constexpr bool        httpServerSecure()             { return true; }

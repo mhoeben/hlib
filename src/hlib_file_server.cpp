@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/file_server.hpp"
+#include "hlib/config.hpp"
 #include "hlib/file.hpp"
 #include <filesystem>
 

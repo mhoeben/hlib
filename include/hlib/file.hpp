@@ -24,7 +24,8 @@
 #pragma once
 
 #include "hlib/buffer.hpp"
-#include "hlib/config.hpp"
+#include "hlib/memory.hpp"
+#include <array>
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
@@ -71,6 +72,52 @@ void write(std::string const& filepath, Buffer const& buffer);
 
 std::string get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type);
 std::string get_mime_type_from_file(std::string const& pathname, std::string const& default_mime_type);
+
+void close_fd(int fd) noexcept;
+
+class Pipe final
+{
+    HLIB_NOT_COPYABLE(Pipe);
+    HLIB_NOT_MOVABLE(Pipe);
+
+public:
+    Pipe();
+    ~Pipe();
+
+    template<std::size_t index>
+    UniqueOwner<int, -1> const& get() const noexcept
+    {
+        static_assert(index <= 1);
+        return m_file_descriptors[index];
+    }
+
+    template<std::size_t index>
+    UniqueOwner<int, -1>& get() noexcept
+    {
+        static_assert(index <= 1);
+        return m_file_descriptors[index];
+    }
+
+    template<std::size_t index>
+    void set(UniqueOwner<int, -1>&& fd) noexcept
+    {
+        static_assert(index <= -1);
+        m_file_descriptors[index] = std::move(fd);
+    }
+
+    void open();
+
+    template<std::size_t index>
+    void close() noexcept
+    {
+        m_file_descriptors[index].reset();
+    }
+
+    void close() noexcept;
+
+private:
+    std::array<UniqueOwner<int, -1>, 2> m_file_descriptors;
+};
 
 } // namespace file
 } // namespace hlib

@@ -26,6 +26,7 @@
 #include "hlib/buffer.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/memory.hpp"
+#include <fcntl.h>
 #include <string>
 #include <vector>
 
@@ -41,8 +42,10 @@ public:
     static constexpr int Error{ -1 };
     static constexpr int Ok{ 0 };
 
-    static constexpr std::uint8_t StdOut{ 0x01 };
-    static constexpr std::uint8_t StdErr{ 0x02 };
+    static constexpr int StdIn{ -1 };
+    static constexpr int StdOut{ -1 };
+    static constexpr int StdErr{ -1 };
+    static constexpr int Buffered{ -2 };
 
 public:
     Subprocess();
@@ -54,12 +57,19 @@ public:
 
     Subprocess& operator =(Subprocess&& that) noexcept;
 
-    int pid() const;
-    int returnCode() const;
-    Buffer const& output() const;
-    Buffer const& error() const;
+    int pid() const noexcept;
+    int returnCode() const noexcept;
+    Buffer const& output() const noexcept;
+    Buffer const& error() const noexcept;
 
-    void setCaptureMask(std::uint8_t mask);
+    void setInput(int fd) noexcept;
+    void setInput(std::string const& filename, int flags = O_RDONLY);
+
+    void setOutput(int fd) noexcept;
+    void setOutput(std::string const& filename, int flags = O_CREAT|O_TRUNC|O_WRONLY, mode_t mode = S_IRUSR|S_IWUSR);
+
+    void setError(int fd) noexcept;
+    void setError(std::string const& filename, int flags = O_CREAT|O_TRUNC|O_WRONLY, mode_t mode = S_IRUSR|S_IWUSR);
 
     int run(std::string const& command, std::vector<std::string> const& args);
     int run(std::string const& command, std::vector<std::string> const& args, Buffer input);
@@ -69,9 +79,6 @@ public:
 private:
     std::shared_ptr<EventLoop> m_event_loop_private;
     std::weak_ptr<EventLoop> m_event_loop_extern;
-
-    static constexpr std::uint8_t StdIn{ 0x04 };
-    std::uint8_t m_redirect{ StdOut|StdErr };
 
     int m_pid{ -1 };
     int m_return_code{ Pending };
