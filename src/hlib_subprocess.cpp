@@ -100,7 +100,7 @@ Subprocess::Stream::Stream(std::string const& filename)
 Subprocess::Stream::Stream(std::string const& filename, int flags, mode_t mode)
     : m_fd(file::close_fd)
 {
-    assert(0 != ((O_WRONLY|O_CREAT|O_TRUNC) & flags));
+    assert(0 != (O_WRONLY & flags));
 
     m_fd.reset(open(filename.c_str(), flags, mode));
     if (-1 == m_fd.value()) {
