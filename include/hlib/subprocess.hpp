@@ -42,17 +42,37 @@ public:
     static constexpr int Error{ -1 };
     static constexpr int Ok{ 0 };
 
-    static constexpr int StdIn{ -1 };
-    static constexpr int StdOut{ -1 };
-    static constexpr int StdErr{ -1 };
-    static constexpr int Buffered{ -2 };
+    class Stream
+    {
+        friend class Subprocess;
+
+        HLIB_NOT_COPYABLE(Stream);
+
+    public:
+        Stream() noexcept;
+        Stream(int fd) noexcept;
+        Stream(UniqueOwner<int, -1>&& fd) noexcept;
+        Stream(std::string const& filename);
+        Stream(std::string const& filename, int flags, mode_t mode = S_IRUSR|S_IWUSR);
+        Stream(std::shared_ptr<Buffer> buffer) noexcept;
+        Stream(Stream&& that) noexcept;
+
+        Stream& operator =(Stream&& that) noexcept;
+
+    private:
+        UniqueOwner<int, -1> m_fd;
+        std::shared_ptr<Buffer> m_buffer;
+    };
 
 public:
     Subprocess();
-    Subprocess(std::string const& command, std::vector<std::string> const& args);
-    Subprocess(std::string const& command, std::vector<std::string> const& args, Buffer input);
     Subprocess(std::weak_ptr<EventLoop> event_loop, EventLoop::Callback on_input,
         EventLoop::Callback on_output, EventLoop::Callback on_error) noexcept;
+    Subprocess(std::string const& command, std::vector<std::string> const& args);
+    Subprocess(std::string const& command, std::vector<std::string> const& args, Stream input);
+    Subprocess(std::string const& command, std::vector<std::string> const& args, std::string const& input);
+    Subprocess(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error);
+    Subprocess(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error);
     Subprocess(Subprocess&& that) noexcept;
 
     Subprocess& operator =(Subprocess&& that) noexcept;
@@ -62,17 +82,15 @@ public:
     Buffer const& output() const noexcept;
     Buffer const& error() const noexcept;
 
-    void setInput(int fd) noexcept;
-    void setInput(std::string const& filename, int flags = O_RDONLY);
-
-    void setOutput(int fd) noexcept;
-    void setOutput(std::string const& filename, int flags = O_CREAT|O_TRUNC|O_WRONLY, mode_t mode = S_IRUSR|S_IWUSR);
-
-    void setError(int fd) noexcept;
-    void setError(std::string const& filename, int flags = O_CREAT|O_TRUNC|O_WRONLY, mode_t mode = S_IRUSR|S_IWUSR);
+    void setInput(Stream input) noexcept;
+    void setOutput(Stream output) noexcept;
+    void setError(Stream error) noexcept;
 
     int run(std::string const& command, std::vector<std::string> const& args);
-    int run(std::string const& command, std::vector<std::string> const& args, Buffer input);
+    int run(std::string const& command, std::vector<std::string> const& args, Stream input);
+    int run(std::string const& command, std::vector<std::string> const& args, std::string const& input);
+    int run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error);
+    int run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error);
 
     int wait();
 
@@ -83,14 +101,13 @@ private:
     int m_pid{ -1 };
     int m_return_code{ Pending };
 
-    UniqueOwner<int, -1> m_input_fd;
-    UniqueOwner<int, -1> m_output_fd;
-    UniqueOwner<int, -1> m_error_fd;
-
     std::size_t m_input_offset{ 0 };
-    Buffer m_input;
-    Buffer m_output;
-    Buffer m_error;
+    Stream m_input;
+    Stream m_output;
+    Stream m_error;
+
+    std::shared_ptr<Buffer> m_output_buffer;
+    std::shared_ptr<Buffer> m_error_buffer;
 
     EventLoop::Callback m_on_input;
     EventLoop::Callback m_on_output;

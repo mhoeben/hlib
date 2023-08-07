@@ -41,14 +41,23 @@ TEST_CASE("Subprocess Echo", "[subprocess]")
 
 TEST_CASE("Subprocess StdIn to StdOut", "[subprocess]")
 {
-    Subprocess process("cat", { "-" }, Buffer("Hello World!"));
+    Subprocess process("cat", { "-" }, "Hello World!");
     REQUIRE(0 == process.returnCode());
     REQUIRE("Hello World!" == to_string(process.output()));
     REQUIRE(true == process.error().empty());
 
-    process.run("cat", { "-" }, Buffer("Good morning"));
+    process.run("cat", { "-" }, "Good morning");
     REQUIRE(0 == process.returnCode());
     REQUIRE("Good morning" == to_string(process.output()));
+    REQUIRE(true == process.error().empty());
+
+}
+
+TEST_CASE("Subprocess Stdin to Null", "[subprocess]")
+{
+    Subprocess process("cat", { "-" }, "Touching the void", { "/dev/null", O_WRONLY }, {});
+    REQUIRE(0 == process.returnCode());
+    REQUIRE(true == process.output().empty());
     REQUIRE(true == process.error().empty());
 }
 
