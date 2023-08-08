@@ -24,6 +24,7 @@
 #include "test.hpp"
 #include "hlib/string.hpp"
 #include "hlib/format.hpp"
+#include <map>
 
 using namespace hlib;
 
@@ -306,6 +307,15 @@ TEST_CASE("String Split", "[string]")
 TEST_CASE("String Join", "[string]")
 {
     REQUIRE("foo bar" == join({ "foo", "bar" }, " "));
-    REQUIRE("13, 11, 1971" == join<int>({ 13, 11, 1971 }, ", "));
+    REQUIRE("13, 11, 1971" == join<std::vector<int>>({ 13, 11, 1971 }, ", "));
+
+    static std::map<int, std::string> const map =
+    {
+        { 1, "one" },
+        { 2, "two" },
+        { 3, "three" }
+    };
+
+    REQUIRE("(1 == one), (2 == two), (3 == three)" == join(map, ", ", [](auto pair) { return fmt::format("({} == {})", pair.first, pair.second); }));
 }
 

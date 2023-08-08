@@ -161,6 +161,16 @@ void Buffer::assign(void const* data, std::size_t size)
     }
 }
 
+bool Buffer::assign(std::string const& string, std::nothrow_t) noexcept
+{
+    return assign(string.data(), string.size(), std::nothrow);
+}
+
+void Buffer::assign(std::string const& string)
+{
+    assign(string.data(), string.size());
+}
+
 bool Buffer::append(void const* data, std::size_t size, std::nothrow_t) noexcept
 {
     return -1 != hlib_buffer_append(&m_buffer, data, size);
@@ -173,6 +183,16 @@ void Buffer::append(void const* data, std::size_t size)
     }
 }
 
+bool Buffer::append(std::string const& string, std::nothrow_t) noexcept
+{
+    return append(string.data(), string.size(), std::nothrow);
+}
+
+void Buffer::append(std::string const& string)
+{
+    append(string.data(), string.size());
+}
+
 bool Buffer::insert(std::size_t offset, void const* data, std::size_t size, std::nothrow_t) noexcept
 {
     return -1 != hlib_buffer_insert(&m_buffer, offset, data, size);
@@ -183,6 +203,16 @@ void Buffer::insert(std::size_t offset, void const* data, std::size_t size)
     if (-1 == hlib_buffer_insert(&m_buffer, offset, data, size)) {
         throw std::bad_alloc();
     }
+}
+
+bool Buffer::insert(std::size_t offset, std::string const& string, std::nothrow_t) noexcept
+{
+    return insert(offset, string.data(), string.size(), std::nothrow);
+}
+
+void Buffer::insert(std::size_t offset, std::string const& string)
+{
+    insert(offset, string.data(), string.size());
 }
 
 void Buffer::erase(std::size_t offset, std::size_t size) noexcept

@@ -37,7 +37,7 @@ class Buffer final
 
 public:
     Buffer() = default;
-    Buffer(std::size_t reservation);
+    explicit Buffer(std::size_t reservation);
     Buffer(void const* data, size_t size);
     Buffer(std::string const& string);
     Buffer(Buffer&& that) noexcept;
@@ -68,12 +68,18 @@ public:
 
     bool assign(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void assign(void const* data, std::size_t size);
+    bool assign(std::string const& string, std::nothrow_t) noexcept;
+    void assign(std::string const& string);
 
     bool append(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void append(void const* data, std::size_t size);
+    bool append(std::string const& string, std::nothrow_t) noexcept;
+    void append(std::string const& string);
 
     bool insert(std::size_t offset, void const* data, std::size_t size, std::nothrow_t) noexcept;
     void insert(std::size_t offset, void const* data, std::size_t size);
+    bool insert(std::size_t offset, std::string const& string, std::nothrow_t) noexcept;
+    void insert(std::size_t offset, std::string const& string);
 
     void erase(std::size_t offset, std::size_t size) noexcept;
 

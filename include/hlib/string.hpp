@@ -23,7 +23,7 @@
 //
 #pragma once
 
-#include "hlib/base.hpp"
+#include "hlib/buffer.hpp"
 #include <functional>
 #include <optional>
 #include <string>
@@ -287,19 +287,22 @@ std::vector<std::string> split(std::string const& string, char delimiter, bool f
 
 std::string join(std::vector<std::string> const& vector, std::string const& separator);
 
-template<typename T>
-std::string join(std::vector<T> const& vector, std::string const& separator)
+template<typename Container>
+std::string join(Container const& container, std::string const& separator,
+    std::function<std::string(typename Container::value_type const&)> formatter = [](typename Container::value_type const& value) noexcept { return std::to_string(value); })
 {
-    using namespace std;
+    Buffer buffer(4096);
+    bool separate = false;
 
-    std::vector<std::string> strings;
-    strings.reserve(vector.size());
-
-    for (auto const& value : vector) {
-        strings.emplace_back(to_string(value));
+    for (auto const& element : container) {
+        if (true == separate) {
+            buffer.append(separator);
+        }
+        buffer.append(formatter(element));
+        separate = true;
     }
 
-    return join(strings, separator);
+    return to_string(buffer);
 }
 
 } // namespace hlib
