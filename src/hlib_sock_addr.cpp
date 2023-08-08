@@ -24,7 +24,7 @@
 #include "hlib/sock_addr.hpp"
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
-#include "tao/pegtl.hpp"
+#include "hlib/pegtl.hpp"
 #include <arpa/inet.h>
 
 using namespace hlib;
@@ -42,7 +42,7 @@ struct Result
     int port{ 0 };
 };
 
-using namespace tao::pegtl;
+using namespace hlib::pegtl;
 
 struct address_ipv4         : plus<sor<digit, one<'.'>>> {};
 struct address_ipv6         : plus<sor<xdigit, one<':'>, one<'.'>>> {};
@@ -95,8 +95,6 @@ struct action<port>
 
 void SockAddr::parse(std::string const& string)
 {
-    using namespace tao;
-
     auto to_unix = [&]()
     {
         if (string.length() + 1 > sizeof(sockaddr_un::sun_path)) {

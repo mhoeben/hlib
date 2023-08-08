@@ -24,8 +24,8 @@
 #include "hlib/uri.hpp"
 #include "hlib/base.hpp"
 #include "hlib/format.hpp"
+#include "hlib/pegtl.hpp"
 #include "hlib/string.hpp"
-#include "tao/pegtl.hpp"
 #include "tao/pegtl/contrib/uri.hpp"
 #include <unordered_map>
 
@@ -36,8 +36,6 @@ using namespace hlib;
 //
 namespace
 {
-
-namespace pegtl = tao::pegtl;
 
 template<std::string URI::*Field>
 struct bind
@@ -94,8 +92,6 @@ URI::URI(std::string const& that, Syntax syntax)
 URI hlib::uri_parse(std::string const& string, URI::Syntax syntax)
 {
     URI uri;
-
-    namespace pegtl = tao::pegtl;
 
     switch (syntax) {
     case URI::Syntax::URI:
