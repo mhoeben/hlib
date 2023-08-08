@@ -434,6 +434,30 @@ bool hlib::iequals(std::string const &lhs, std::string const& rhs)
     return true;
 }
 
+bool hlib::starts_with(std::string const& string, std::string const& substring)
+{
+    if (string.length() < substring.length()) {
+        return false;
+    }
+
+    return 0 == memcmp(string.data(), substring.data(), substring.length());
+}
+
+bool hlib::ends_with(std::string const& string, std::string const& substring)
+{
+    if (string.length() < substring.length()) {
+        return false;
+    }
+
+    std::size_t offset = string.length() - substring.length();
+    return 0 == memcmp(string.data() + offset, substring.data(), substring.length());
+}
+
+bool hlib::contains(std::string const& string, std::string const& substring)
+{
+    return std::string::npos != string.find(substring);
+}
+
 std::string hlib::to_upper(std::string string)
 {
     std::locale locale;
