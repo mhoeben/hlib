@@ -285,7 +285,7 @@ std::string strip(std::string, std::string const& chars = " \t\v\f\r\n");
 std::vector<std::string> split(std::string const& string, std::function<bool(char)> const& is_delimiter, bool filter_empty = false);
 std::vector<std::string> split(std::string const& string, char delimiter, bool filter_empty = false);
 
-std::string join(std::vector<std::string> const& vector, std::string const& separator);
+std::string join(std::vector<std::string> const& vector, std::string const& separator = " ");
 
 template<typename Container>
 std::string join(Container const& container, std::string const& separator,
