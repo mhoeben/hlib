@@ -37,12 +37,12 @@ using namespace hlib;
 namespace
 {
 
-bool set_option(int fd, int option, int value = 1)
+bool set_option(int fd, int option, int value = 1) noexcept
 {
     return 0 == setsockopt(fd, SOL_SOCKET, option, &value, sizeof(value));
 }
 
-bool set_reuse(int fd, std::uint32_t options)
+bool set_reuse(int fd, std::uint32_t options) noexcept
 {
     if (0 != (Socket::ReuseAddr & options)
      && false == set_option(fd, SO_REUSEADDR, 1)) {
@@ -59,7 +59,7 @@ bool set_reuse(int fd, std::uint32_t options)
 
 } // namespace
 
-void Socket::updateEventsLocked(std::uint32_t events)
+void Socket::updateEventsLocked(std::uint32_t events) noexcept
 {
     if (true == m_connected) {
         // Lock event loop and modify events.

@@ -98,7 +98,7 @@ private:
     std::size_t m_send_buffer_offset{ 0 };
     std::list<Buffer> m_send_queue;
 
-    void updateEventsLocked(std::uint32_t events);
+    void updateEventsLocked(std::uint32_t events) noexcept;
 
     void onAccept(int fd, std::uint32_t events);
     void onConnect(int fd, std::uint32_t events);

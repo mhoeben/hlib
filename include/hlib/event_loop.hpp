@@ -60,6 +60,7 @@ public:
     std::thread::id threadId() const noexcept;
 
     void add(int fd, std::uint32_t events, Callback callback);
+    bool modify(int fd, std::uint32_t events, std::nothrow_t) noexcept;
     void modify(int fd, std::uint32_t events);
     void change(int fd, Callback callback);
     void remove(int fd);

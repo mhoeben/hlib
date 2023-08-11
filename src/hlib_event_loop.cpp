@@ -191,7 +191,7 @@ void EventLoop::add(int fd, std::uint32_t events, Callback callback)
     }
 }
 
-void EventLoop::modify(int fd, std::uint32_t events)
+bool EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcept
 {
     assert(-1 != fd);
 
@@ -201,6 +201,15 @@ void EventLoop::modify(int fd, std::uint32_t events)
     event.events = events;
     event.data.fd = fd;
     if (-1 == epoll_ctl(m_fd.value(), EPOLL_CTL_MOD, fd, &event)) {
+        return false;
+    }
+
+    return true;
+}
+
+void EventLoop::modify(int fd, std::uint32_t events)
+{
+    if (false == modify(fd, events, std::nothrow)) {
         throwf<std::runtime_error>("epoll_ctl() failed ({})", get_error_string());
     }
 }
