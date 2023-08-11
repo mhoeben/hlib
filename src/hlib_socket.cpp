@@ -326,7 +326,7 @@ bool Socket::open(UniqueOwner<int, -1> fd, std::nothrow_t) noexcept
 
     // Store socket's file descriptor and signal it is connected.
     m_fd = std::move(fd);
-    m_connected = true;
+    m_connected = 0 == get_socket_error(m_fd.value());
     return true;
 }
 
