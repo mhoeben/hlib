@@ -239,6 +239,11 @@ std::string SockAddr::address() const
     }
 }
 
+bool SockAddr::empty() const noexcept
+{
+    return AF_UNSPEC == m_family;
+}
+
 SockAddr::operator sockaddr const* () const noexcept
 {
     return reinterpret_cast<sockaddr const*>(&m_storage);

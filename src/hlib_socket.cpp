@@ -234,7 +234,7 @@ void Socket::callbackAndClose(int error)
 //
 // Public
 //
-Socket::Socket(std::weak_ptr<EventLoop> event_loop)
+Socket::Socket(std::weak_ptr<EventLoop> event_loop) noexcept
     : m_event_loop(std::move(event_loop))
     , m_fd(file::fd_close)
     , m_receive_buffer_size(Config::socketReceiveBufferSize())
@@ -242,7 +242,7 @@ Socket::Socket(std::weak_ptr<EventLoop> event_loop)
 {
 }
 
-Socket::Socket(std::weak_ptr<EventLoop> event_loop, UniqueOwner<int, -1> fd)
+Socket::Socket(std::weak_ptr<EventLoop> event_loop, UniqueOwner<int, -1> fd) noexcept
     : m_event_loop(std::move(event_loop))
     , m_fd(std::move(fd))
     , m_receive_buffer_size(Config::socketReceiveBufferSize())
@@ -255,46 +255,51 @@ Socket::~Socket()
     close();
 }
 
-int Socket::fd() const
+int Socket::fd() const noexcept
 {
     return m_fd.value();
 }
 
-SockAddr Socket::getPeerAddress() const
+bool Socket::connected() const noexcept
+{
+    return m_connected;
+}
+
+SockAddr Socket::getPeerAddress() const noexcept
 {
     sockaddr_storage storage{};
     socklen_t length = sizeof(storage);
 
     if (-1 == getpeername(m_fd.value(), reinterpret_cast<sockaddr*>(&storage), &length)) {
-        throwf<std::runtime_error>("getpeername() failed ({})", get_error_string());
+        return SockAddr();
     }
 
     return SockAddr(storage);
 }
 
-void Socket::setAcceptCallback(OnAccept callback)
+void Socket::setAcceptCallback(OnAccept callback) noexcept
 {
     m_on_accept = std::move(callback);
 }
 
-void Socket::setConnectedCallback(OnConnected callback)
+void Socket::setConnectedCallback(OnConnected callback) noexcept
 {
     m_on_connected = std::move(callback);
 }
 
-void Socket::setReceiveCallback(OnReceive callback)
+void Socket::setReceiveCallback(OnReceive callback) noexcept
 {
     assert(nullptr != callback);
 
     m_on_receive = std::move(callback);
 }
 
-void Socket::setCloseCallback(OnClose callback)
+void Socket::setCloseCallback(OnClose callback) noexcept
 {
     m_on_close = std::move(callback);
 }
 
-void Socket::setReceiveBufferSize(std::size_t size, bool gather)
+void Socket::setReceiveBufferSize(std::size_t size, bool gather) noexcept
 {
     assert(size > 0);
 

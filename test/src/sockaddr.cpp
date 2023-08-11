@@ -28,7 +28,7 @@ using namespace hlib;
 
 TEST_CASE("SockAddr", "[sockaddr]")
 {
-    SockAddr sa;
+    REQUIRE(true == SockAddr().empty());
 
     REQUIRE("127.0.0.1"     == to_string(SockAddr("127.0.0.1")));
     REQUIRE("127.0.0.1:80"  == to_string(SockAddr("127.0.0.1:80")));

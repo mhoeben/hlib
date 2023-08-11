@@ -50,19 +50,20 @@ public:
 public:
     std::shared_ptr<void> user;
 
-    Socket(std::weak_ptr<EventLoop> event_loop);
-    Socket(std::weak_ptr<EventLoop> event_loop, UniqueOwner<int, -1> fd);
+    Socket(std::weak_ptr<EventLoop> event_loop) noexcept;
+    Socket(std::weak_ptr<EventLoop> event_loop, UniqueOwner<int, -1> fd) noexcept;
     ~Socket();
 
-    int fd() const;
+    int fd() const noexcept;
+    bool connected() const noexcept;
 
-    SockAddr getPeerAddress() const;
+    SockAddr getPeerAddress() const noexcept;
 
-    void setAcceptCallback(OnAccept callback);
-    void setConnectedCallback(OnConnected callback);
-    void setReceiveCallback(OnReceive callback);
-    void setCloseCallback(OnClose callback);
-    void setReceiveBufferSize(std::size_t size, bool gather = false);
+    void setAcceptCallback(OnAccept callback) noexcept;
+    void setConnectedCallback(OnConnected callback) noexcept;
+    void setReceiveCallback(OnReceive callback) noexcept;
+    void setCloseCallback(OnClose callback) noexcept;
+    void setReceiveBufferSize(std::size_t size, bool gather = false) noexcept;
 
     bool open(UniqueOwner<int, -1> fd, std::nothrow_t) noexcept;
     void open(UniqueOwner<int, -1> fd);

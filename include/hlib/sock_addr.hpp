@@ -60,6 +60,7 @@ public:
     std::size_t length() const noexcept;
     std::uint16_t port() const noexcept;
     std::string address() const;
+    bool empty() const noexcept;
 
     explicit operator sockaddr const* () const noexcept;
     explicit operator sockaddr* () noexcept;
