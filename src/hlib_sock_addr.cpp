@@ -93,6 +93,198 @@ struct action<port>
 
 } // namespace
 
+//
+// Public
+//
+SockAddr::SockAddr()
+{
+    m_family = AF_UNSPEC;
+}
+
+SockAddr::SockAddr(SockAddr const& that)
+{
+    m_storage = that.m_storage;
+}
+
+SockAddr::SockAddr(SockAddr&& that)
+{
+    memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
+    that.m_family = AF_UNSPEC;
+}
+
+SockAddr::SockAddr(sockaddr_in const& that)
+{
+    assert(AF_INET == that.sin_family);
+    m_inet = that;
+} 
+
+SockAddr::SockAddr(sockaddr_in6 const& that)
+{
+    assert(AF_INET6 == that.sin6_family);
+    m_inet6 = that;
+}
+
+SockAddr::SockAddr(sockaddr_un const& that)
+{
+    assert(AF_UNIX == that.sun_family);
+    m_unix = that;
+} 
+
+SockAddr::SockAddr(sockaddr_storage const& that)
+{
+    m_storage = that;
+}
+
+SockAddr::SockAddr(std::string const& that)
+{
+    parse(that);
+}
+
+SockAddr& SockAddr::operator = (SockAddr&& that)
+{
+    memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
+    that.m_family = AF_UNSPEC;
+    return *this;
+}
+
+SockAddr& SockAddr::operator = (SockAddr const& that)
+{
+    m_storage = that.m_storage;
+    return *this;
+}
+
+SockAddr& SockAddr::operator = (sockaddr_in const& that)
+{
+    assert(AF_INET == that.sin_family);
+    m_inet = that;
+    return *this;
+}
+
+SockAddr& SockAddr::operator = (sockaddr_in6 const& that)
+{
+    assert(AF_INET6 == that.sin6_family);
+    m_inet6 = that;
+    return *this;
+}
+
+SockAddr& SockAddr::operator = (sockaddr_un const& that)
+{
+    assert(AF_UNIX == that.sun_family);
+    m_unix = that;
+    return *this;
+}
+
+SockAddr& SockAddr::operator = (sockaddr_storage const& that)
+{
+    m_storage = that;
+    return *this;
+}
+
+SockAddr& SockAddr::operator = (std::string const& that)
+{
+    parse(that);
+    return *this;
+}
+
+sa_family_t SockAddr::family() const
+{
+    return m_family;
+}
+
+std::size_t SockAddr::length() const
+{
+    switch (m_family) {
+    case AF_INET:   return sizeof(sockaddr_in);
+    case AF_INET6:  return sizeof(sockaddr_in6);
+    case AF_UNIX:   return sizeof(sockaddr_un);
+    default:
+        return sizeof(sockaddr_storage);
+    }
+}
+
+int SockAddr::port() const
+{
+    switch (m_family) {
+    case AF_INET: return ntohs(m_inet.sin_port);
+    case AF_INET6: return ntohs(m_inet6.sin6_port);
+    default:
+        return 0;
+    }
+}
+
+std::string SockAddr::address() const
+{
+    static_assert(INET6_ADDRSTRLEN >= INET_ADDRSTRLEN, "INET6_ADDRSTRLEN < INET_ADDRSTRLEN");
+    char address[INET6_ADDRSTRLEN];
+
+    switch (m_family) {
+    case AF_INET:
+        if (nullptr == inet_ntop(AF_INET, &m_inet.sin_addr, address, INET_ADDRSTRLEN)) {
+            throwf<std::runtime_error>("inet_ntop() failed ({})", get_error_string());
+        }
+        return address;
+
+    case AF_INET6:
+        if (nullptr == inet_ntop(AF_INET6, &m_inet6.sin6_addr, address, INET6_ADDRSTRLEN)) {
+            throwf<std::runtime_error>("inet_ntop() failed ({})", get_error_string());
+        }
+        return address;
+
+    case AF_UNIX:
+        // TODO verify that it is always zero terminated!
+        return m_unix.sun_path;
+
+    default:
+        return std::string();
+    }
+}
+
+SockAddr::operator sockaddr const* () const
+{
+    return reinterpret_cast<sockaddr const*>(&m_storage);
+}
+
+SockAddr::operator sockaddr* ()
+{
+    return reinterpret_cast<sockaddr*>(&m_storage);
+}
+
+SockAddr::operator sockaddr_in const*() const
+{
+    assert(AF_INET == m_family);
+    return &m_inet;
+}
+
+SockAddr::operator sockaddr_in*()
+{
+    assert(AF_INET == m_family);
+    return &m_inet;
+}
+
+SockAddr::operator sockaddr_in6 const*() const
+{
+    assert(AF_INET6 == m_family);
+    return &m_inet6;
+}
+
+SockAddr::operator sockaddr_in6*()
+{
+    assert(AF_INET6 == m_family);
+    return &m_inet6;
+}
+
+SockAddr::operator sockaddr_un const*() const
+{
+    assert(AF_UNIX == m_family);
+    return &m_unix;
+}
+
+SockAddr::operator sockaddr_un*()
+{
+    assert(AF_UNIX == m_family);
+    return &m_unix;
+}
+
 void SockAddr::parse(std::string const& string)
 {
     auto to_unix = [&]()
@@ -152,187 +344,6 @@ void SockAddr::parse(std::string const& string)
     catch (pegtl::parse_error const& e) {
         return to_unix();
     }
-}
-
-//
-// Public
-//
-SockAddr::SockAddr()
-{
-    m_family = AF_UNSPEC;
-}
-
-SockAddr::SockAddr(sockaddr_storage const& that)
-{
-    m_storage = that;
-}
-
-SockAddr::SockAddr(SockAddr&& that)
-{
-    memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
-    that.m_family = AF_UNSPEC;
-}
-
-SockAddr::SockAddr(SockAddr const& that)
-{
-    m_storage = that.m_storage;
-}
-
-SockAddr::SockAddr(sockaddr_in const& that)
-{
-    assert(AF_INET == that.sin_family);
-    m_inet = that;
-} 
-
-SockAddr::SockAddr(sockaddr_in6 const& that)
-{
-    assert(AF_INET6 == that.sin6_family);
-    m_inet6 = that;
-}
-
-SockAddr::SockAddr(sockaddr_un const& that)
-{
-    assert(AF_UNIX == that.sun_family);
-    m_unix = that;
-} 
-
-SockAddr::SockAddr(std::string const& that)
-{
-    parse(that);
-}
-
-SockAddr& SockAddr::operator = (SockAddr&& that)
-{
-    memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
-    that.m_family = AF_UNSPEC;
-    return *this;
-}
-
-SockAddr& SockAddr::operator = (SockAddr const& that)
-{
-    m_storage = that.m_storage;
-    return *this;
-}
-
-SockAddr& SockAddr::operator = (sockaddr_in const& that)
-{
-    assert(AF_INET == that.sin_family);
-    m_inet = that;
-    return *this;
-}
-
-SockAddr& SockAddr::operator = (sockaddr_in6 const& that)
-{
-    assert(AF_INET6 == that.sin6_family);
-    m_inet6 = that;
-    return *this;
-}
-
-SockAddr& SockAddr::operator = (sockaddr_un const& that)
-{
-    assert(AF_UNIX == that.sun_family);
-    m_unix = that;
-    return *this;
-}
-
-SockAddr& SockAddr::operator = (sockaddr_storage const& that)
-{
-    m_storage = that;
-    return *this;
-}
-
-SockAddr& SockAddr::operator = (std::string const& that)
-{
-    parse(that);
-    return *this;
-}
-
-sa_family_t SockAddr::family() const
-{
-    return m_family;
-}
-
-int SockAddr::port() const
-{
-    switch (m_family) {
-    case AF_INET: return ntohs(m_inet.sin_port);
-    case AF_INET6: return ntohs(m_inet6.sin6_port);
-    default:
-        return 0;
-    }
-}
-
-std::string SockAddr::address() const
-{
-    static_assert(INET6_ADDRSTRLEN >= INET_ADDRSTRLEN, "INET6_ADDRSTRLEN < INET_ADDRSTRLEN");
-    char address[INET6_ADDRSTRLEN];
-
-    switch (m_family) {
-    case AF_INET:
-        if (nullptr == inet_ntop(AF_INET, &m_inet.sin_addr, address, INET_ADDRSTRLEN)) {
-            throwf<std::runtime_error>("SockAddr::toString: inet_ntop failed ({})", get_error_string(errno));
-        }
-        return address;
-
-    case AF_INET6:
-        if (nullptr == inet_ntop(AF_INET6, &m_inet6.sin6_addr, address, INET6_ADDRSTRLEN)) {
-            throwf<std::runtime_error>("SockAddr::toString: inet_ntop failed ({})", get_error_string(errno));
-        }
-        return address;
-
-    case AF_UNIX:
-        // TODO verify that it is always zero terminated!
-        return m_unix.sun_path;
-
-    default:
-        return std::string();
-    }
-}
-
-SockAddr::operator sockaddr const* () const
-{
-    return reinterpret_cast<sockaddr const*>(&m_storage);
-}
-
-SockAddr::operator sockaddr* ()
-{
-    return reinterpret_cast<sockaddr*>(&m_storage);
-}
-
-SockAddr::operator sockaddr_in const*() const
-{
-    assert(AF_INET == m_family);
-    return &m_inet;
-}
-
-SockAddr::operator sockaddr_in*()
-{
-    assert(AF_INET == m_family);
-    return &m_inet;
-}
-
-SockAddr::operator sockaddr_in6 const*() const
-{
-    assert(AF_INET6 == m_family);
-    return &m_inet6;
-}
-
-SockAddr::operator sockaddr_in6*()
-{
-    assert(AF_INET6 == m_family);
-    return &m_inet6;
-}
-
-SockAddr::operator sockaddr_un const*() const
-{
-    assert(AF_UNIX == m_family);
-    return &m_unix;
-}
-
-SockAddr::operator sockaddr_un*()
-{
-    assert(AF_UNIX == m_family);
-    return &m_unix;
 }
 
 std::string hlib::to_string(SockAddr const& sa)

@@ -40,7 +40,7 @@ void Timer::onExpire(int fd, std::uint32_t /* events */)
     std::uint64_t data;
     ssize_t r = read(fd, &data, sizeof(data));
     if (-1 == r) {
-        throwf<std::runtime_error>("read failed ({})", get_error_string(errno));
+        throwf<std::runtime_error>("read() failed ({})", get_error_string());
     }
     assert(sizeof(data) == r);
 
@@ -99,7 +99,7 @@ void Timer::set(Duration const& expire, Duration const& interval)
     ts.it_interval = interval.timespec;
 
     if (-1 == timerfd_settime(m_fd, 0, &ts, nullptr)) {
-        throwf<std::runtime_error>("timerfd_settime failed ({})", get_error_string(errno));
+        throwf<std::runtime_error>("timerfd_settime() failed ({})", get_error_string());
     }
 }
 

@@ -105,6 +105,7 @@ public:
         void setFragmentMessageThreshold(std::size_t size);
 
         void ping();
+        void receive(bool enable);
         void send(Message message);
         void close(std::uint16_t code = 1005, Buffer reason = Buffer());
 

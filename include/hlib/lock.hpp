@@ -23,16 +23,22 @@
 //
 #pragma once
 
-#include <errno.h>
-#include <string>
+#include <mutex>
 
-namespace hlib
-{
+//
+// Some useful macros to prevent locking errors like:
+//
+// std::lock_guard<std::mutex> (m_mutex);
+//
+// The macros also reduce verbosity:
+//
+// HLIB_LOCK_GUARD(lock, m_mutex);
+//
+#define HLIB_LOCK_GUARD(variable_name, mutex) \
+    std::lock_guard<decltype(mutex)> variable_name(mutex)
 
-int get_socket_error(int fd) noexcept;
+#define HLIB_UNIQUE_LOCK(variable_name, mutex) \
+    std::unique_lock<decltype(mutex)> variable_name(mutex)
 
-std::string get_error_string(int error_no);
-std::string get_error_string();
-
-} // namespace hlib
-
+#define HLIB_UNIQUE_LOCK_DEFERRED(variable_name, mutex) \
+    std::unique_lock<decltype(mutex)> variable_name(mutex, std::defer_lock)

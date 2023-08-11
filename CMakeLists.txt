@@ -53,11 +53,13 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/http_server.hpp
     include/hlib/format.hpp
     include/hlib/json.hpp
+    include/hlib/lock.hpp
     include/hlib/log.hpp
     include/hlib/math.hpp
     include/hlib/memory.hpp
     include/hlib/scope_guard.hpp
     include/hlib/sock_addr.hpp
+    include/hlib/socket.hpp
     include/hlib/string.hpp
     include/hlib/subprocess.hpp
     include/hlib/time.hpp
@@ -94,6 +96,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_log.cpp
     src/hlib_scope_guard.cpp
     src/hlib_sock_addr.cpp
+    src/hlib_socket.cpp
     src/hlib_string.cpp
     src/hlib_subprocess.cpp
     src/hlib_time.cpp

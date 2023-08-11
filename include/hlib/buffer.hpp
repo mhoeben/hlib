@@ -53,8 +53,12 @@ public:
     std::size_t size() const noexcept;
     bool empty() const noexcept;
 
-    void const* operator[](std::size_t index) noexcept;
-    void const* at(std::size_t index);
+    void const* get(std::size_t index, std::nothrow_t) const noexcept;
+    void const* get(std::size_t index) const;
+
+    std::byte operator[](std::size_t index) const noexcept;
+    std::byte at(std::size_t index, std::nothrow_t) const noexcept;
+    std::byte at(std::size_t index) const;
 
     void reset() noexcept;
     void clear() noexcept;
@@ -86,6 +90,84 @@ public:
 private:
     hlib_buffer_t m_buffer{};
 };
+
+template<typename T>
+T const* as(Buffer const& buffer, std::size_t index, std::nothrow_t) noexcept
+{
+    return static_cast<T const*>(buffer.get(index * sizeof(T), std::nothrow));
+}
+
+template<typename T>
+T const* as(Buffer const& buffer, std::size_t index = 0)
+{
+    return static_cast<T const*>(buffer.get(index * sizeof(T)));
+}
+
+template<typename T>
+T* reserve_as(Buffer& buffer, std::size_t capacity, std::nothrow_t) noexcept
+{
+    return static_cast<T*>(buffer.reserve(capacity * sizeof(T), std::nothrow));
+}
+
+template<typename T>
+T* reserve_as(Buffer& buffer, std::size_t capacity)
+{
+    return static_cast<T*>(buffer.reserve(capacity * sizeof(T)));
+}
+
+template<typename T>
+T* resize_as(Buffer& buffer, std::size_t capacity, std::nothrow_t) noexcept
+{
+    return static_cast<T*>(buffer.resize(capacity * sizeof(T), std::nothrow));
+}
+
+template<typename T>
+T* resize_as(Buffer& buffer, std::size_t capacity)
+{
+    return static_cast<T*>(buffer.resize(capacity * sizeof(T)));
+}
+
+template<typename T>
+bool assign_as(Buffer& buffer, T const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    return buffer.assign(data, size * sizeof(T), std::nothrow);
+}
+
+template<typename T>
+void assign_as(Buffer& buffer, T const* data, std::size_t size)
+{
+    buffer.assign(data, size * sizeof(T));
+}
+
+template<typename T>
+bool append_as(Buffer& buffer, T const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    return buffer.append(data, size * sizeof(T), std::nothrow);
+}
+
+template<typename T>
+void append_as(Buffer& buffer, T const* data, std::size_t size)
+{
+    buffer.append(data, size * sizeof(T));
+}
+
+template<typename T>
+bool insert_as(Buffer& buffer, std::size_t offset, T const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    return buffer.insert(offset * sizeof(T), data, size * sizeof(T), std::nothrow);
+}
+
+template<typename T>
+void append_as(Buffer& buffer, std::size_t offset, T const* data, std::size_t size)
+{
+    buffer.insert(offset * sizeof(T), data, size * sizeof(T));
+}
+
+template<typename T>
+void erase_as(Buffer& buffer, std::size_t offset, std::size_t size) noexcept
+{
+    buffer.erase(offset * sizeof(T), size * sizeof(T));
+}
 
 template <typename T>
 class BufferAllocator

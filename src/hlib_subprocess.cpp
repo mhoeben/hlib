@@ -57,7 +57,7 @@ std::vector<char const*> to_argv(std::string const& command, std::vector<std::st
 
 bool read_to_buffer(int fd, Buffer& buffer)
 {
-    std::uint8_t* ptr = static_cast<std::uint8_t*>(buffer.reserve(buffer.size() + Config::subprocessOutputBatchSize()));
+    std::uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + Config::subprocessOutputBatchSize());
 
     ssize_t size = ::read(fd, ptr, Config::subprocessOutputBatchSize());
     if (-1 == size) {
@@ -74,12 +74,12 @@ bool read_to_buffer(int fd, Buffer& buffer)
 // Public (Subprocess::Stream)
 //
 Subprocess::Stream::Stream() noexcept
-    : m_fd(file::close_fd)
+    : m_fd(file::fd_close)
 {
 }
 
 Subprocess::Stream::Stream(int fd) noexcept
-    : m_fd(fd, file::close_fd)
+    : m_fd(fd, file::fd_close)
 {
 }
 
@@ -89,27 +89,27 @@ Subprocess::Stream::Stream(UniqueOwner<int, -1>&& fd) noexcept
 }
 
 Subprocess::Stream::Stream(std::string const& filename)
-    : m_fd(file::close_fd)
+    : m_fd(file::fd_close)
 {
     m_fd.reset(open(filename.c_str(), O_RDONLY));
     if (-1 == m_fd.value()) {
-        throwf<std::runtime_error>("Failed to open subprocess stdin stream '{}' ({})", filename, get_error_string(errno));
+        throwf<std::runtime_error>("open() failed ({})", get_error_string());
     }
 }
 
 Subprocess::Stream::Stream(std::string const& filename, int flags, mode_t mode)
-    : m_fd(file::close_fd)
+    : m_fd(file::fd_close)
 {
     assert(0 != (O_WRONLY & flags));
 
     m_fd.reset(open(filename.c_str(), flags, mode));
     if (-1 == m_fd.value()) {
-        throwf<std::runtime_error>("Failed to open subprocess stdout/stderr stream '{}' ({})", filename, get_error_string(errno));
+        throwf<std::runtime_error>("open() failed ({})", filename, get_error_string());
     }
 }
 
 Subprocess::Stream::Stream(std::shared_ptr<Buffer> buffer) noexcept
-    : m_fd(file::close_fd)
+    : m_fd(file::fd_close)
     , m_buffer(std::move(buffer))
 {
 }
@@ -233,7 +233,7 @@ int Subprocess::run(std::vector<char const*> argv)
 
     switch (m_pid = fork()) {
     case -1:
-        throwf<std::runtime_error>("Failed to fork for '{}' ({})", argv[0], get_error_string(errno));
+        throwf<std::runtime_error>("fork() failed ({})", get_error_string());
 
     case 0:
         event_loop.reset();
@@ -254,7 +254,7 @@ int Subprocess::run(std::vector<char const*> argv)
 
         hverify(-1 == execvp(argv[0], const_cast<char * const *>(argv.data())));
 
-        fmt::print(stderr, "execvp failed for '{}' ({})", argv[0], get_error_string(errno));
+        fmt::print(stderr, "execvp() failed ({})", get_error_string());
         abort();
         return Error;
 
@@ -471,7 +471,7 @@ int Subprocess::wait()
     int status;
 
     if (m_pid != waitpid(m_pid, &status, 0)) {
-        throwf<std::runtime_error>("Failed to wait for pid {} to exit ({})", m_pid, get_error_string(errno));
+        throwf<std::runtime_error>("Failed to wait for pid {} to exit ({})", m_pid, get_error_string());
     }
 
     if (WIFEXITED(status)) {

@@ -53,6 +53,7 @@ add_executable(${PROJECT_NAME}
     src/http_server.cpp
     src/json.cpp
     src/sockaddr.cpp
+    src/socket.cpp
     src/string.cpp
     src/subprocess.cpp
     src/test.cpp

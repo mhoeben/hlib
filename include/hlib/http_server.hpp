@@ -162,6 +162,9 @@ class Server final
 public:
     class Transaction;
 
+    static constexpr std::uint32_t ReuseAddr{ 0x01 };
+    static constexpr std::uint32_t ReusePort{ 0x02 };
+
     typedef std::function<void(Transaction& transaction)> OnTransactionStart;
     typedef std::function<void(Transaction& transaction, bool failed)> OnTransactionEnd;
 
@@ -245,6 +248,8 @@ public:
     struct Config
     {
         SockAddr binding;
+
+        std::uint32_t socket_options;
 
         bool secure;
         std::string certificate_file;

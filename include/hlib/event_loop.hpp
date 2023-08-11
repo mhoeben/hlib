@@ -24,12 +24,13 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include "hlib/file.hpp"
 #include "hlib/log.hpp"
 #include "hlib/time.hpp"
-#include <array>
+#include <condition_variable>
 #include <functional>
-#include <memory>
 #include <mutex>
+#include <new>
 #include <sys/epoll.h>
 #include <thread>
 #include <unordered_map>
@@ -47,6 +48,7 @@ public:
     static constexpr std::uint32_t Write{ EPOLLOUT };
     static constexpr std::uint32_t Error{ EPOLLERR };
     static constexpr std::uint32_t Hup{ EPOLLHUP };
+    static constexpr std::uint32_t RdHup{ EPOLLRDHUP };
 
     typedef std::function<void(int fd, std::uint32_t events)> Callback;
 
@@ -59,22 +61,29 @@ public:
 
     void add(int fd, std::uint32_t events, Callback callback);
     void modify(int fd, std::uint32_t events);
+    void change(int fd, Callback callback);
     void remove(int fd);
 
     void dispatch();
     void dispatch(Duration const& timeout);
+
+    bool interrupt(std::nothrow_t) noexcept;
     void interrupt();
-    void flush();
+    void flush() noexcept;
 
 private:
     log::Domain const m_logger;
-    int m_fd{ -1 };
-    std::array<int, 2> m_pipe{ -1, -1 };
+    UniqueOwner<int, -1> m_fd;
+    file::Pipe m_pipe;
     bool m_interrupt{ false };
 
     std::mutex m_mutex;
+    std::condition_variable m_condition_variable;
+
     std::thread::id m_thread_id;
     std::unordered_map<int, Callback> m_callbacks;
+
+    int m_callback_fd{ -1 };
 
     void dispatch(Duration const* timeout);
 };

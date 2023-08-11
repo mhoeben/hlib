@@ -21,18 +21,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#include "hlib/scope_guard.hpp"
 
-#include <errno.h>
-#include <string>
+using namespace hlib;
 
-namespace hlib
+//
+// Public
+//
+ScopeGuard::ScopeGuard(std::function<void()> on_exit)
+    : m_on_exit(std::move(on_exit))
 {
+    assert(nullptr != m_on_exit);
+}
 
-int get_socket_error(int fd) noexcept;
+ScopeGuard::ScopeGuard(std::function<void()> on_enter, std::function<void()> on_exit)
+    : ScopeGuard(std::move(on_exit))
+{
+    assert(nullptr != on_enter);
+    on_enter();
+}
 
-std::string get_error_string(int error_no);
-std::string get_error_string();
+ScopeGuard::~ScopeGuard()
+{
+    if (nullptr == m_on_exit) {
+        return;
+    }
 
-} // namespace hlib
+    m_on_exit();
+}
+
+void ScopeGuard::clear()
+{
+    m_on_exit = nullptr;
+}
 

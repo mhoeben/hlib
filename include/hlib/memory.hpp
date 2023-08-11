@@ -88,12 +88,17 @@ public:
         return *this;
     }
 
-    T operator ->() const noexcept
+    T const& operator *() const noexcept
     {
         return m_value;
     }
 
-    T value() const noexcept
+    T const& operator ->() const noexcept
+    {
+        return m_value;
+    }
+
+    T const& value() const noexcept
     {
         return m_value;
     }

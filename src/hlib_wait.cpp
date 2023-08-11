@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/wait.hpp"
+#include "hlib/lock.hpp"
 #include <condition_variable>
 #include <mutex>
 #include <signal.h>
@@ -35,7 +36,7 @@ volatile sig_atomic_t wait_signal{ 0 };
 
 void wait_on_signal(int /* signal */)
 {
-    std::lock_guard<std::mutex> lock(wait_mutex);
+    HLIB_LOCK_GUARD(lock, wait_mutex);
     wait_signal = 1;
     wait_cv.notify_one();
 }
@@ -50,7 +51,7 @@ void hlib::wait_for_signal(int signal)
     sigemptyset(&new_action.sa_mask);
     hverify(0 == sigaction(signal, &new_action, &old_action));
 
-    std::unique_lock<std::mutex> lock(wait_mutex);
+    HLIB_UNIQUE_LOCK(lock, wait_mutex);
     wait_cv.wait(lock, [] { return 0 != wait_signal; });
 
     hverify(0 == sigaction(signal, &old_action, nullptr));

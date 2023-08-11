@@ -21,18 +21,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#include "test.hpp"
+#include "hlib/socket.hpp"
 
-#include <errno.h>
-#include <string>
+using namespace hlib;
 
-namespace hlib
+TEST_CASE("Sockets", "[socket]")
 {
+    auto event_loop = std::make_shared<EventLoop>();
 
-int get_socket_error(int fd) noexcept;
+    Socket accepted(event_loop);
+    accepted.setReceiveCallback([&](Buffer& buffer) {
+        REQUIRE("So Long, and Thanks for All the Fish" == to_string(buffer));
+        event_loop->interrupt();
+    });
 
-std::string get_error_string(int error_no);
-std::string get_error_string();
+    Socket server(event_loop);
+    server.listen(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 1, Socket::ReusePort);
+    server.setAcceptCallback([&](UniqueOwner<int, -1> fd, SockAddr const& /*address*/) {
+        accepted.open(std::move(fd));
+        accepted.send(Buffer("Hello World!"));
+    });
 
-} // namespace hlib
+    Socket client(event_loop);
+    client.connect(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 0);
+    client.setReceiveCallback([&](Buffer& buffer) {
+        REQUIRE("Hello World!" == to_string(buffer));
+        client.send(Buffer("So Long, and Thanks for All the Fish"));
+    });
 
+    event_loop->dispatch();
+}

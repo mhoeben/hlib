@@ -26,6 +26,7 @@
 #include "hlib/format.hpp"
 #include "hlib/scope_guard.hpp"
 #include "hlib/string.hpp"
+#include <fcntl.h>
 #include <fstream>
 #include <system_error>
 #include <unistd.h>
@@ -88,12 +89,12 @@ bool file::is_writable(std::filesystem::path const& filepath) noexcept
 
 std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
 {
-    void* ptr = buffer.reserve(buffer.size() + size, std::nothrow);
+    char* ptr = reserve_as<char>(buffer, buffer.size() + size, std::nothrow);
     if (ptr == nullptr) {
         error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
     }
 
-    stream.read(static_cast<char*>(ptr), size);
+    stream.read(ptr, size);
     if (true == stream.fail()) {
         error_code = std::make_error_code(static_cast<std::errc>(errno));
         return stream;
@@ -408,7 +409,28 @@ std::string file::get_mime_type_from_file(std::string const& pathname, std::stri
     return get_mime_type_from_extension(path.extension(), default_mime_type);
 }
 
-void file::close_fd(int fd) noexcept
+bool file::fd_set_nonblocking(int fd, bool enable) noexcept
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (-1 == flags) {
+        return false;
+    }
+
+    if (true == enable) {
+        flags |= O_NONBLOCK;    
+    }
+    else {
+        flags &= ~O_NONBLOCK;
+    }
+
+    if (-1 == fcntl(fd, F_SETFL, flags)) {
+        return false;
+    }
+
+    return true;
+}
+
+void file::fd_close(int fd) noexcept
 {
     if (fd < 0) {
         return;
@@ -420,8 +442,8 @@ void file::close_fd(int fd) noexcept
 //
 // Public (Pipe)
 //
-Pipe::Pipe()
-    : m_file_descriptors { &close_fd, &close_fd }
+Pipe::Pipe() noexcept
+    : m_fds { &fd_close, &fd_close }
 {
 }
 
@@ -430,21 +452,27 @@ Pipe::~Pipe()
     close();
 }
 
+int Pipe::operator[](std::size_t index) const noexcept
+{
+    assert(index <= 1);
+    return m_fds[index].value();
+}
+
 void Pipe::open()
 {
     std::array<int, 2> fds{ -1, -1 };
 
     if (-1 == ::pipe(fds.data())) {
-        throwf<std::runtime_error>("Failed to create pipe for ({})", get_error_string(errno));
+        throwf<std::runtime_error>("pipe() failed ({})", get_error_string());
     }
 
-    m_file_descriptors[0].reset(fds[0]);
-    m_file_descriptors[1].reset(fds[1]);
+    m_fds[0].reset(fds[0]);
+    m_fds[1].reset(fds[1]);
 }
 
 void Pipe::close() noexcept
 {
-    m_file_descriptors[1].reset();
-    m_file_descriptors[0].reset();
+    m_fds[1].reset();
+    m_fds[0].reset();
 }
 

@@ -24,8 +24,21 @@
 #include "hlib/error.hpp"
 #include "hlib/config.hpp"
 #include "hlib/format.hpp"
+#include <sys/socket.h>
 
 using namespace hlib;
+
+int hlib::get_socket_error(int fd) noexcept
+{
+    int error;
+    socklen_t length = sizeof(error);
+
+    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &length)) {
+        return errno;
+    }
+
+    return error;
+}
 
 std::string hlib::get_error_string(int error_no)
 {
@@ -33,5 +46,10 @@ std::string hlib::get_error_string(int error_no)
 
     char* string = strerror_r(error_no, buffer, sizeof(buffer));
     return nullptr != string ? std::string(string) : fmt::format("errno {}", error_no);
+}
+
+std::string hlib::get_error_string()
+{
+    return get_error_string(errno);
 }
 

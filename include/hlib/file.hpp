@@ -73,7 +73,9 @@ void write(std::string const& filepath, Buffer const& buffer);
 std::string get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type);
 std::string get_mime_type_from_file(std::string const& pathname, std::string const& default_mime_type);
 
-void close_fd(int fd) noexcept;
+bool fd_set_nonblocking(int fd, bool enable) noexcept;
+
+void fd_close(int fd) noexcept;
 
 class Pipe final
 {
@@ -81,28 +83,30 @@ class Pipe final
     HLIB_NOT_MOVABLE(Pipe);
 
 public:
-    Pipe();
+    Pipe() noexcept;
     ~Pipe();
+
+    int operator[](std::size_t index) const noexcept;
 
     template<std::size_t index>
     UniqueOwner<int, -1> const& get() const noexcept
     {
         static_assert(index <= 1);
-        return m_file_descriptors[index];
+        return m_fds[index];
     }
 
     template<std::size_t index>
     UniqueOwner<int, -1>& get() noexcept
     {
         static_assert(index <= 1);
-        return m_file_descriptors[index];
+        return m_fds[index];
     }
 
     template<std::size_t index>
     void set(UniqueOwner<int, -1>&& fd) noexcept
     {
         static_assert(index <= -1);
-        m_file_descriptors[index] = std::move(fd);
+        m_fds[index] = std::move(fd);
     }
 
     void open();
@@ -110,13 +114,13 @@ public:
     template<std::size_t index>
     void close() noexcept
     {
-        m_file_descriptors[index].reset();
+        m_fds[index].reset();
     }
 
     void close() noexcept;
 
 private:
-    std::array<UniqueOwner<int, -1>, 2> m_file_descriptors;
+    std::array<UniqueOwner<int, -1>, 2> m_fds;
 };
 
 } // namespace file

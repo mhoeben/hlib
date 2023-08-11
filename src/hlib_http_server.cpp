@@ -139,7 +139,7 @@ Server::Transaction::Transaction(Server& a_server, hserv_s* a_hserv, hserv_sessi
 {
     int size = hserv_header_fields_copy(
         hserv_request_get_header_fields(a_session),
-        static_cast<char*>(m_request_fields.reserve(HSERV_MAX_HEADERS_LENGTH)),
+        reserve_as<char>(m_request_fields, HSERV_MAX_HEADERS_LENGTH),
         HSERV_MAX_HEADERS_LENGTH
     );
     assert(size >= 0);
@@ -312,7 +312,7 @@ void Server::Transaction::receive(std::shared_ptr<Buffer> content, OnRequestCont
     hverify(hserv_request_receive(
         m_hserv,
         m_session, 
-        static_cast<std::uint8_t*>(m_request_content->reserve(m_request_content->capacity())) + m_request_content->size(),
+        reserve_as<char>(*m_request_content, m_request_content->capacity()) + m_request_content->size(),
         m_request_content->capacity() - m_request_content->size(),
         [](hserv_t* /* hserv */, hserv_session_t* session, void* buffer, std::size_t size, std::size_t more) -> int
         {
@@ -440,7 +440,7 @@ void Server::onPoll(int fd, std::uint32_t events)
     assert(EventLoop::Read == events);   (void)events;
 
     if (hserv_poll(m_hserv) < 0) {
-        throwf<std::runtime_error>("HTTP server poll failed ({})", get_error_string(errno));
+        throwf<std::runtime_error>("HTTP server poll failed ({})", get_error_string());
     }
 }
 
@@ -488,6 +488,7 @@ void Server::onRequestEnd(hserv_session_t* session, int failed)
 //
 Server::Config::Config()
     : binding{ hlib::Config::httpServerBinding() }
+    , socket_options{ hlib::Config::httpServerSocketOptions() }
     , secure{ hlib::Config::httpServerSecure() }
 {
 }
@@ -543,6 +544,14 @@ void Server::start(Config const& config)
             static_cast<Server*>(hserv_get_user_data(hserv))->onRequestEnd(session, failed);
         }
     );
+
+    // Set socket options.
+    if (0 != (ReuseAddr & config.socket_options)) {
+        hserv_config.sockopts |= HSERV_SOCKOPT_REUSEADDR;
+    }
+    if (0 != (ReusePort & config.socket_options)) {
+        hserv_config.sockopts |= HSERV_SOCKOPT_REUSEPORT;
+    }
 
     // Set binding.
     memcpy(&hserv_config.binding, static_cast<sockaddr const*>(config.binding), sizeof(sockaddr));

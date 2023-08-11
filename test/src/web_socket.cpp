@@ -40,6 +40,7 @@ TEST_CASE("WebSocket", "[websocket]")
 
     http::Server http_server("HTTP_SERVER", event_loop);
     http::Server::Config config;
+    config.socket_options = http::Server::ReusePort;
     config.binding = SockAddr("127.0.0.1:6502");
     config.secure = false;
     config.on_transaction_start = [&](http::Server::Transaction& transaction) noexcept

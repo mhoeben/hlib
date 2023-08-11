@@ -91,19 +91,34 @@ bool Buffer::empty() const noexcept
     return 0 == m_buffer.size;
 }
 
-void const* Buffer::operator[](std::size_t index) noexcept
+void const* Buffer::get(std::size_t index, std::nothrow_t) const noexcept
 {
-    assert(index < m_buffer.size);
-    return static_cast<uint8_t const*>(m_buffer.data) + index;
+    assert(index < m_buffer.capacity);
+    return static_cast<uint8_t*>(m_buffer.data) + index;
 }
 
-void const* Buffer::at(std::size_t index)
+void const* Buffer::get(std::size_t index) const
 {
-    if (index >= m_buffer.size) {
-        throw std::out_of_range("Buffer::at index argument exceeds buffer size");
+    if (index >= m_buffer.capacity) {
+        throw std::out_of_range("Buffer::get() failed");
     }
 
-    return (*this)[index];
+    return static_cast<uint8_t*>(m_buffer.data) + index;
+}
+
+std::byte Buffer::operator[](std::size_t index) const noexcept
+{
+    return *static_cast<std::byte const*>(get(index, std::nothrow));
+}
+
+std::byte Buffer::at(std::size_t index, std::nothrow_t) const noexcept
+{
+    return *static_cast<std::byte const*>(get(index, std::nothrow));
+}
+
+std::byte Buffer::at(std::size_t index) const
+{
+    return *static_cast<std::byte const*>(get(index));
 }
 
 void Buffer::reset() noexcept

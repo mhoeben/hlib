@@ -40,6 +40,7 @@ TEST_CASE("File Server", "[file,http]")
 
     http::Server::Config config;
     config.binding = SockAddr("127.0.0.1:6502");
+    config.socket_options = http::Server::ReusePort;
     config.secure = false;
     config.on_transaction_start = [&](http::Server::Transaction& transaction) noexcept
     {

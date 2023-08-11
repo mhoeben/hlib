@@ -24,6 +24,7 @@
 #include "hlib/web_socket_server.hpp"
 #include "hlib/config.hpp"
 #include "hlib/container.hpp"
+#include "hlib/lock.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
@@ -109,7 +110,7 @@ Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, h
 
     m_socket = hws_socket_create(a_hws, a_http_socket.fd, a_http_socket.ssl, &callbacks);
     if (nullptr == m_socket) {
-        throwf<std::runtime_error>("Failed to create websocket");
+        throwf<std::runtime_error>("hws_socket_create() failed");
     }
     hws_socket_set_user_data(m_socket, this);
 
@@ -135,7 +136,7 @@ void Server::Socket::onPingTimer()
 int Server::Socket::onInterrupt()
 {
     try {
-        std::lock_guard<std::mutex> lock(m_send_queue_mutex);
+        HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
         if (true == m_send_queue.empty()) {
             return 0;
         }
@@ -259,7 +260,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
               }
             case Opcode::Ping:
               {
-                std::lock_guard<std::mutex> lock(m_send_queue_mutex);
+                HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
                 m_send_queue.emplace_back(Opcode::Pong);
 
                 restart_locked();
@@ -339,7 +340,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
 int Server::Socket::onSent(void const* /* buffer */, std::size_t /* size */)
 {
     try {
-        std::lock_guard<std::mutex> lock(m_send_queue_mutex);
+        HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
         // Remove head of send queue.
         if (false == m_send_queue.empty()) {
@@ -449,7 +450,7 @@ void Server::Socket::setFragmentMessageThreshold(std::size_t size)
 
 void Server::Socket::ping()
 {
-    std::lock_guard<std::mutex> lock(m_send_queue_mutex);
+    HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
     // Place a Ping control frame at the end of the queue.
     m_send_queue.emplace_back(Opcode::Ping);
@@ -458,11 +459,21 @@ void Server::Socket::ping()
     restart_locked();
 }
 
+void Server::Socket::receive(bool enable)
+{
+    if (true == enable) {
+        hws_socket_receive_enable(m_socket);
+    }
+    else {
+        hws_socket_receive_disable(m_socket);
+    }
+}
+
 void Server::Socket::send(Message message)
 {
     assert(false == std::holds_alternative<std::monostate>(message));
 
-    std::lock_guard<std::mutex> lock(m_send_queue_mutex);
+    HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
     Opcode opcode = std::holds_alternative<std::string>(message) ? Opcode::Text : Opcode::Binary;
     std::size_t size = std::visit(Overloaded{
@@ -495,7 +506,7 @@ void Server::Socket::send(Message message)
                     },
                     [&](Buffer& binary)
                     {
-                        return Message(Buffer(binary[offset], fragment_size));
+                        return Message(Buffer(binary.get(offset), fragment_size));
                     }
                 }, message)
             );
@@ -512,13 +523,13 @@ void Server::Socket::send(Message message)
 
 void Server::Socket::close(uint16_t code, Buffer reason)
 {
-    std::lock_guard<std::mutex> lock(m_send_queue_mutex);
+    HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
     // If code is not the reserved 'no present" value of 1005, insert
     // code before the reason. Else, make sure reason is empty.
     if (1005 != code) {
         // Reserve space for code bytes, obtaining a pointer to the buffer.
-        uint8_t* ptr = static_cast<uint8_t*>(reason.reserve(reason.size() + 2));
+        uint8_t* ptr = reserve_as<uint8_t>(reason, reason.size() + 2);
         // Insert space for code bytes.
         reason.insert(0, nullptr, 2);
         // Encode code.
@@ -546,13 +557,13 @@ void Server::onPoll(int fd, std::uint32_t events)
     assert(EventLoop::Read == events); (void)events;
 
     if (hws_poll(m_hws) < 0) {
-        throwf<std::runtime_error>("WebSocket server poll failed ({})", get_error_string(errno));
+        throwf<std::runtime_error>("hws_poll() failed ({})", get_error_string());
     }
 }
 
 void Server::onSocketsTimer()
 {
-    std::lock_guard<std::mutex> lock(m_sockets_mutex);
+    HLIB_LOCK_GUARD(lock, m_sockets_mutex);
 
     // Remove closed sockets.
     for (auto it = m_sockets.begin(); m_sockets.end() != it;) {
@@ -590,7 +601,7 @@ std::shared_ptr<EventLoop> Server::getEventLoop() const
 
 std::optional<std::reference_wrapper<Server::Socket>> Server::getSocket(Socket::Id id) const
 {
-    std::lock_guard<std::mutex> lock(m_sockets_mutex);
+    HLIB_LOCK_GUARD(lock, m_sockets_mutex);
     auto it = m_sockets.find(id);
     return m_sockets.end() != it
         ? *it->second
@@ -640,7 +651,7 @@ Server::Socket& Server::add(http::Socket http_socket)
     Socket::Id const socket_id = ++m_socket_id;
     std::unique_ptr<Socket> socket(new Socket(*this, socket_id, m_hws, std::move(http_socket)));
 
-    std::lock_guard<std::mutex> lock(m_sockets_mutex);
+    HLIB_LOCK_GUARD(lock, m_sockets_mutex);
     m_sockets.emplace(socket_id, std::move(socket));
 
     return *m_sockets[socket_id];
@@ -648,7 +659,7 @@ Server::Socket& Server::add(http::Socket http_socket)
 
 void Server::remove(Socket::Id socket_id)
 {
-    std::lock_guard<std::mutex> lock(m_sockets_mutex);
+    HLIB_LOCK_GUARD(lock, m_sockets_mutex);
     m_sockets.erase(socket_id);
 }
 

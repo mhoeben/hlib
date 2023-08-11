@@ -36,15 +36,15 @@ class SockAddr final
 public:
     SockAddr();
 
-    SockAddr(std::string const& that);
-
+    explicit SockAddr(SockAddr const& that);
     explicit SockAddr(SockAddr&& that);
 
-    explicit SockAddr(SockAddr const& that);
     explicit SockAddr(sockaddr_in const& that);
     explicit SockAddr(sockaddr_in6 const& that);
     explicit SockAddr(sockaddr_un const& that);
     explicit SockAddr(sockaddr_storage const& that);
+
+    SockAddr(std::string const& that);
 
     SockAddr& operator = (SockAddr&& that);
 
@@ -56,6 +56,7 @@ public:
     SockAddr& operator = (std::string const& that);
 
     sa_family_t family() const;
+    std::size_t length() const;
     int port() const;
     std::string address() const;
 
@@ -71,6 +72,8 @@ public:
     explicit operator sockaddr_un const*() const;
     explicit operator sockaddr_un*();
 
+    void parse(std::string const& string);
+
 private:
     union
     {
@@ -80,11 +83,21 @@ private:
         sockaddr_un     m_unix;
         sockaddr_storage m_storage;
     };
-
-    void parse(std::string const& string);
 };
 
 std::string to_string(SockAddr const& sa);
+
+template<typename T>
+T const* as(SockAddr const& sa)
+{
+    return static_cast<T const*>(sa);
+}
+
+template<typename T>
+T* as(SockAddr& sa)
+{
+    return static_cast<T*>(sa);
+}
 
 } // namespace hlib
 
