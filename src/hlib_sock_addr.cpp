@@ -96,41 +96,41 @@ struct action<port>
 //
 // Public
 //
-SockAddr::SockAddr()
+SockAddr::SockAddr() noexcept
 {
     m_family = AF_UNSPEC;
 }
 
-SockAddr::SockAddr(SockAddr const& that)
+SockAddr::SockAddr(SockAddr const& that) noexcept
 {
     m_storage = that.m_storage;
 }
 
-SockAddr::SockAddr(SockAddr&& that)
+SockAddr::SockAddr(SockAddr&& that) noexcept
 {
     memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
     that.m_family = AF_UNSPEC;
 }
 
-SockAddr::SockAddr(sockaddr_in const& that)
+SockAddr::SockAddr(sockaddr_in const& that) noexcept
 {
     assert(AF_INET == that.sin_family);
     m_inet = that;
 } 
 
-SockAddr::SockAddr(sockaddr_in6 const& that)
+SockAddr::SockAddr(sockaddr_in6 const& that) noexcept
 {
     assert(AF_INET6 == that.sin6_family);
     m_inet6 = that;
 }
 
-SockAddr::SockAddr(sockaddr_un const& that)
+SockAddr::SockAddr(sockaddr_un const& that) noexcept
 {
     assert(AF_UNIX == that.sun_family);
     m_unix = that;
 } 
 
-SockAddr::SockAddr(sockaddr_storage const& that)
+SockAddr::SockAddr(sockaddr_storage const& that) noexcept
 {
     m_storage = that;
 }
@@ -140,58 +140,58 @@ SockAddr::SockAddr(std::string const& that)
     parse(that);
 }
 
-SockAddr& SockAddr::operator = (SockAddr&& that)
+SockAddr& SockAddr::operator = (SockAddr&& that) noexcept
 {
     memcpy(&m_storage, &that.m_storage, sizeof(sockaddr_storage));
     that.m_family = AF_UNSPEC;
     return *this;
 }
 
-SockAddr& SockAddr::operator = (SockAddr const& that)
+SockAddr& SockAddr::operator = (SockAddr const& that) noexcept
 {
     m_storage = that.m_storage;
     return *this;
 }
 
-SockAddr& SockAddr::operator = (sockaddr_in const& that)
+SockAddr& SockAddr::operator = (sockaddr_in const& that) noexcept
 {
     assert(AF_INET == that.sin_family);
     m_inet = that;
     return *this;
 }
 
-SockAddr& SockAddr::operator = (sockaddr_in6 const& that)
+SockAddr& SockAddr::operator = (sockaddr_in6 const& that) noexcept
 {
     assert(AF_INET6 == that.sin6_family);
     m_inet6 = that;
     return *this;
 }
 
-SockAddr& SockAddr::operator = (sockaddr_un const& that)
+SockAddr& SockAddr::operator = (sockaddr_un const& that) noexcept
 {
     assert(AF_UNIX == that.sun_family);
     m_unix = that;
     return *this;
 }
 
-SockAddr& SockAddr::operator = (sockaddr_storage const& that)
+SockAddr& SockAddr::operator = (sockaddr_storage const& that) noexcept
 {
     m_storage = that;
     return *this;
 }
 
-SockAddr& SockAddr::operator = (std::string const& that)
+SockAddr& SockAddr::operator = (std::string const& that) noexcept
 {
     parse(that);
     return *this;
 }
 
-sa_family_t SockAddr::family() const
+sa_family_t SockAddr::family() const noexcept
 {
     return m_family;
 }
 
-std::size_t SockAddr::length() const
+std::size_t SockAddr::length() const noexcept
 {
     switch (m_family) {
     case AF_INET:   return sizeof(sockaddr_in);
@@ -202,7 +202,7 @@ std::size_t SockAddr::length() const
     }
 }
 
-int SockAddr::port() const
+uint16_t SockAddr::port() const noexcept
 {
     switch (m_family) {
     case AF_INET: return ntohs(m_inet.sin_port);
@@ -239,58 +239,83 @@ std::string SockAddr::address() const
     }
 }
 
-SockAddr::operator sockaddr const* () const
+SockAddr::operator sockaddr const* () const noexcept
 {
     return reinterpret_cast<sockaddr const*>(&m_storage);
 }
 
-SockAddr::operator sockaddr* ()
+SockAddr::operator sockaddr* () noexcept
 {
     return reinterpret_cast<sockaddr*>(&m_storage);
 }
 
-SockAddr::operator sockaddr_in const*() const
+SockAddr::operator sockaddr_in const*() const noexcept
 {
     assert(AF_INET == m_family);
     return &m_inet;
 }
 
-SockAddr::operator sockaddr_in*()
+SockAddr::operator sockaddr_in*() noexcept
 {
     assert(AF_INET == m_family);
     return &m_inet;
 }
 
-SockAddr::operator sockaddr_in6 const*() const
+SockAddr::operator sockaddr_in6 const*() const noexcept
 {
     assert(AF_INET6 == m_family);
     return &m_inet6;
 }
 
-SockAddr::operator sockaddr_in6*()
+SockAddr::operator sockaddr_in6*() noexcept
 {
     assert(AF_INET6 == m_family);
     return &m_inet6;
 }
 
-SockAddr::operator sockaddr_un const*() const
+SockAddr::operator sockaddr_un const*() const noexcept
 {
     assert(AF_UNIX == m_family);
     return &m_unix;
 }
 
-SockAddr::operator sockaddr_un*()
+SockAddr::operator sockaddr_un*() noexcept
 {
     assert(AF_UNIX == m_family);
     return &m_unix;
 }
 
-void SockAddr::parse(std::string const& string)
+bool SockAddr::setPort(uint16_t port, std::nothrow_t) noexcept
+{
+    switch (m_family) {
+    case AF_INET:
+        m_inet.sin_port = htons(port);
+        break;
+
+    case AF_INET6:
+        m_inet6.sin6_port = htons(port);
+        break;
+
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+void SockAddr::setPort(uint16_t port)
+{
+    if (false == setPort(port, std::nothrow)) {
+        throw std::runtime_error("Not a network address");
+    }
+}
+
+bool SockAddr::parse(std::string const& string, std::nothrow_t) noexcept
 {
     auto to_unix = [&]()
     {
         if (string.length() + 1 > sizeof(sockaddr_un::sun_path)) {
-            throwf<std::runtime_error>("String length exceeds sockaddr_un path space");
+            return false;
         }
 
         m_unix.sun_family = AF_UNIX;
@@ -299,6 +324,7 @@ void SockAddr::parse(std::string const& string)
         // abstract socket namespace.
         memcpy(m_unix.sun_path, string.data(), string.length());
         m_unix.sun_path[string.length()] = 0;
+        return true;
     };
 
     m_family = AF_UNSPEC;
@@ -343,6 +369,15 @@ void SockAddr::parse(std::string const& string)
     }
     catch (pegtl::parse_error const& e) {
         return to_unix();
+    }
+
+    return true;
+}
+
+void SockAddr::parse(std::string const& string)
+{
+    if (false == parse(string, std::nothrow)) {
+        throw std::runtime_error("String too long");
     }
 }
 

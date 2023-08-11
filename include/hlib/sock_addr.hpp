@@ -25,6 +25,7 @@
 
 #include "hlib/base.hpp"
 #include <netinet/in.h>
+#include <new>
 #include <sys/un.h>
 #include <string>
 
@@ -34,44 +35,48 @@ namespace hlib
 class SockAddr final
 {
 public:
-    SockAddr();
+    SockAddr() noexcept;
 
-    explicit SockAddr(SockAddr const& that);
-    explicit SockAddr(SockAddr&& that);
+    explicit SockAddr(SockAddr const& that) noexcept;
+    explicit SockAddr(SockAddr&& that) noexcept;
 
-    explicit SockAddr(sockaddr_in const& that);
-    explicit SockAddr(sockaddr_in6 const& that);
-    explicit SockAddr(sockaddr_un const& that);
-    explicit SockAddr(sockaddr_storage const& that);
+    explicit SockAddr(sockaddr_in const& that) noexcept;
+    explicit SockAddr(sockaddr_in6 const& that) noexcept;
+    explicit SockAddr(sockaddr_un const& that) noexcept;
+    explicit SockAddr(sockaddr_storage const& that) noexcept;
 
-    SockAddr(std::string const& that);
+     SockAddr(std::string const& that);
 
-    SockAddr& operator = (SockAddr&& that);
+    SockAddr& operator = (SockAddr&& that) noexcept;
 
-    SockAddr& operator = (SockAddr const& that);
-    SockAddr& operator = (sockaddr_in const& that);
-    SockAddr& operator = (sockaddr_in6 const& that);
-    SockAddr& operator = (sockaddr_un const& that);
-    SockAddr& operator = (sockaddr_storage const& that);
-    SockAddr& operator = (std::string const& that);
+    SockAddr& operator = (SockAddr const& that) noexcept;
+    SockAddr& operator = (sockaddr_in const& that) noexcept;
+    SockAddr& operator = (sockaddr_in6 const& that) noexcept;
+    SockAddr& operator = (sockaddr_un const& that) noexcept;
+    SockAddr& operator = (sockaddr_storage const& that) noexcept;
+    SockAddr& operator = (std::string const& that) noexcept;
 
-    sa_family_t family() const;
-    std::size_t length() const;
-    int port() const;
+    sa_family_t family() const noexcept;
+    std::size_t length() const noexcept;
+    std::uint16_t port() const noexcept;
     std::string address() const;
 
-    explicit operator sockaddr const* () const;
-    explicit operator sockaddr* ();
+    explicit operator sockaddr const* () const noexcept;
+    explicit operator sockaddr* () noexcept;
 
-    explicit operator sockaddr_in const*() const;
-    explicit operator sockaddr_in*();
+    explicit operator sockaddr_in const*() const noexcept;
+    explicit operator sockaddr_in*() noexcept;
 
-    explicit operator sockaddr_in6 const*() const;
-    explicit operator sockaddr_in6*();
+    explicit operator sockaddr_in6 const*() const noexcept;
+    explicit operator sockaddr_in6*() noexcept;
 
-    explicit operator sockaddr_un const*() const;
-    explicit operator sockaddr_un*();
+    explicit operator sockaddr_un const*() const noexcept;
+    explicit operator sockaddr_un*() noexcept;
 
+    bool setPort(uint16_t port, std::nothrow_t) noexcept;
+    void setPort(uint16_t port);
+
+    bool parse(std::string const& string, std::nothrow_t) noexcept;
     void parse(std::string const& string);
 
 private:
@@ -88,13 +93,13 @@ private:
 std::string to_string(SockAddr const& sa);
 
 template<typename T>
-T const* as(SockAddr const& sa)
+T const* as(SockAddr const& sa) noexcept
 {
     return static_cast<T const*>(sa);
 }
 
 template<typename T>
-T* as(SockAddr& sa)
+T* as(SockAddr& sa) noexcept
 {
     return static_cast<T*>(sa);
 }
