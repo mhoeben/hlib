@@ -48,9 +48,8 @@ struct Domain
     std::string name;
     Level level;
 
-    Domain(char const* a_name, Level a_level = Level::Notice);
-    Domain(std::string a_name, Level a_level = Level::Notice);
-    Domain(std::string a_name, std::string const& a_env_name);
+    Domain(std::string a_name, Level a_level = Level::Notice) noexcept;
+    Domain(std::string a_name, std::string const& a_env_name) noexcept;
 };
 
 void log(Domain const& domain, Level level, std::string const& message);
@@ -83,7 +82,7 @@ void log(Domain const& domain, Level level, std::string const& message);
 
 } // namespace log
 
-std::string const& to_string(log::Level level);
+std::string const& to_string(log::Level level) noexcept;
 
 } // namespace hlib
 

@@ -53,19 +53,13 @@ std::array<std::string, kLevels> const kLevelStrings =
 //
 // Public
 //
-log::Domain::Domain(char const* a_name, Level a_level)
-    : name(a_name)
-    , level(a_level)
-{
-}
-
-log::Domain::Domain(std::string a_name, Level a_level)
+log::Domain::Domain(std::string a_name, Level a_level) noexcept
     : name(std::move(a_name))
     , level(a_level)
 {
 }
 
-log::Domain::Domain(std::string a_name, std::string const& a_env_name)
+log::Domain::Domain(std::string a_name, std::string const& a_env_name) noexcept
     : name(std::move(a_name))
 {
     level = static_cast<Level>(get_env<std::int32_t>(
@@ -82,7 +76,7 @@ void log::log(Domain const& domain, Level level, std::string const& message)
 //
 // Public (Stringify)
 //
-std::string const& hlib::to_string(log::Level level)
+std::string const& hlib::to_string(log::Level level) noexcept
 {
     assert(level >= log::Fatal && level <= log::Trace);
     return kLevelStrings[level];
