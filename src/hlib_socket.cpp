@@ -138,8 +138,9 @@ void Socket::onEvent(int fd, std::uint32_t events)
     auto callback_receive = [this]
     {
         // Callback with received buffer.
-        assert (nullptr != m_on_receive);
-        m_on_receive(m_receive_buffer);
+        if (nullptr == m_on_receive) {
+            m_on_receive(m_receive_buffer);
+        }
 
         // Clear receive buffer.
         m_receive_buffer.clear();
@@ -289,8 +290,6 @@ void Socket::setConnectedCallback(OnConnected callback) noexcept
 
 void Socket::setReceiveCallback(OnReceive callback) noexcept
 {
-    assert(nullptr != callback);
-
     m_on_receive = std::move(callback);
 }
 
