@@ -94,6 +94,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_http_server.cpp
     src/hlib_json.cpp
     src/hlib_log.cpp
+    src/hlib_math.cpp
     src/hlib_scope_guard.cpp
     src/hlib_sock_addr.cpp
     src/hlib_socket.cpp

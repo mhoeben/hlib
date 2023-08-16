@@ -33,6 +33,8 @@
 namespace hlib
 {
 
+class EventLoop;
+
 class Subprocess final
 {
     HLIB_NOT_COPYABLE(Subprocess);

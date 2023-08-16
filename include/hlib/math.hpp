@@ -23,6 +23,10 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
+#include <cmath>
+#include <numeric>
+
 namespace hlib
 {
 namespace math
@@ -31,17 +35,88 @@ namespace math
 template<typename N = int, typename D = N>
 struct Fraction
 {
+    typedef N Numerator;
+    typedef D Denominator;
+
     N n{ 0 };
     D d{ 0 };
 
     constexpr Fraction() = default;
 
-    constexpr Fraction(N numerator, D denominator = 1)
+    constexpr Fraction(N numerator, D denominator = 1) noexcept
         : n{ numerator }
         , d{ denominator }
     {
     }
+
+    bool operator !() const noexcept
+    {
+        return 0 == n;
+    }
+
+    bool operator == (Fraction const& that) const noexcept
+    {
+        return n * that.d == that.n * d;
+    }
+
+    bool operator != (Fraction const& that) const noexcept
+    {
+        return n * that.d != that.n * d;
+    }
+
+    bool operator<(Fraction const& that) const noexcept
+    {
+        return n * that.d < that.n * d;
+    }
+
+    bool operator<=(Fraction const& that) const noexcept
+    {
+        return n * that.d <= that.n * d;
+    }
+
+    bool operator>(Fraction const& that) const noexcept
+    {
+        return n * that.d > that.n * d;
+    }
+
+    bool operator>=(Fraction const& that) const noexcept
+    {
+        return n * that.d >= that.n * d;
+    }
 };
+
+namespace detail
+{
+
+Fraction<int64_t> to_fraction(double value, double tolerance) noexcept;
+
+} // namespace detail
+
+template<typename F, typename T = double>
+F to(T value, T tolerance = 1.0E-6) noexcept
+{
+    Fraction<int64_t> const f = detail::to_fraction(value, tolerance);
+    return F(
+        static_cast<typename F::Numerator>(f.n),
+        static_cast<typename F::Denominator>(f.d)
+    );
+}
+
+template<typename T, typename N = int, typename D = N>
+typename std::enable_if<std::is_floating_point<T>::value, T>::type
+to(Fraction<N, D> const& fraction) noexcept
+{
+    return static_cast<T>(fraction.n) / static_cast<T>(fraction.d);
+}
+
+template<typename T, typename N = int, typename D = N>
+typename std::enable_if<!std::is_same<bool, T>::value
+                     && std::is_integral<T>::value, T>::type
+to(Fraction<N, D> const& fraction) noexcept
+{
+    return static_cast<T>(std::round<>(to<double>(fraction)));
+}
 
 } // namespace math
 } // namespace hlib
+

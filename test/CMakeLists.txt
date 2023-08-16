@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME}
     src/hash_map.cpp
     src/http_server.cpp
     src/json.cpp
+    src/math.cpp
     src/sockaddr.cpp
     src/socket.cpp
     src/string.cpp
