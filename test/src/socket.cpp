@@ -52,3 +52,4 @@ TEST_CASE("Sockets", "[socket]")
 
     event_loop->dispatch();
 }
+

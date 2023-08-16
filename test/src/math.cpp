@@ -36,6 +36,15 @@ TEST_CASE("Fraction", "[math]")
     // TODO
 }
 
+TEST_CASE("Fraction to Double", "[math]")
+{
+}
+
+TEST_CASE("Fraction to Integer", "[math]")
+{
+    // REQUIRE(1 == to<int>(Fraction<>(1, 1)));
+}
+
 TEST_CASE("Double to Fraction", "[math]")
 {
     REQUIRE(Fraction<>(1, 1) == to<Fraction<>>(1.0));

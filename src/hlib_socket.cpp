@@ -138,7 +138,7 @@ void Socket::onEvent(int fd, std::uint32_t events)
     auto callback_receive = [this]
     {
         // Callback with received buffer.
-        if (nullptr == m_on_receive) {
+        if (nullptr != m_on_receive) {
             m_on_receive(m_receive_buffer);
         }
 

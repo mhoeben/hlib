@@ -36,7 +36,7 @@ TEST_CASE("File Server", "[file,http]")
     REQUIRE(true == test::is_curl_installed());
 
     auto event_loop = std::make_shared<EventLoop>();
-    http::Server server("SERVER", event_loop);
+    http::Server server({ "SERVER" }, event_loop);
 
     http::Server::Config config;
     config.binding = SockAddr("127.0.0.1:6502");

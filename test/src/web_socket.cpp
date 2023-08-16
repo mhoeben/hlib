@@ -35,10 +35,10 @@ TEST_CASE("WebSocket", "[websocket]")
 
     auto event_loop = std::make_shared<EventLoop>();
 
-    ws::Server ws_server("WS_SERVER", event_loop);
+    ws::Server ws_server({ "WS_SERVER" }, event_loop);
     ws_server.start();
 
-    http::Server http_server("HTTP_SERVER", event_loop);
+    http::Server http_server({ "HTTP_SERVER" }, event_loop);
     http::Server::Config config;
     config.socket_options = http::Server::ReusePort;
     config.binding = SockAddr("127.0.0.1:6502");
