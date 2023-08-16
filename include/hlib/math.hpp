@@ -32,6 +32,35 @@ namespace hlib
 namespace math
 {
 
+// Knuth: approximately_equal gives whether the difference between a and b is
+// smaller than the acceptable error (epsilon), determined by the larger of a or b.
+template<typename T>
+bool approximately_equal(T a, T b, T epsilon = std::numeric_limits<T>::epsilon())
+{
+    return std::abs(a - b) <= ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
+}
+
+// Knuth: essentially_equal gives whether the difference between a and b is
+// smaller than the acceptable error (epsilon), determined by the smaller of a or b. 
+template<typename T>
+bool essentially_equal(T a, T b, T epsilon = std::numeric_limits<T>::epsilon())
+{
+    return std::abs(a - b) <= ( (std::abs(a) > std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
+}
+
+template<typename T>
+bool definitely_greate_than(T a, T b, T epsilon = std::numeric_limits<T>::epsilon())
+{
+    return (a - b) > ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
+}
+
+template<typename T>
+bool definitely_less_than(T a, T b, T epsilon = std::numeric_limits<T>::epsilon())
+{
+    return (b - a) > ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
+}
+
+
 template<typename N = int, typename D = N>
 struct Fraction
 {
@@ -114,7 +143,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value, T>::type
 to(Fraction<N, D> const& fraction) noexcept
 {
-    return static_cast<T>(std::round<>(to<double>(fraction)));
+    return static_cast<T>(std::round(to<double>(fraction)));
 }
 
 } // namespace math
