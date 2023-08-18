@@ -33,7 +33,7 @@ TEST_CASE("Error", "[error]")
     REQUIRE(true == !error);
     REQUIRE(false == error);
     REQUIRE(true == error.success());
-    REQUIRE(false == error.failed());
+    REQUIRE(false == error.failure());
     REQUIRE_THROWS(as<std::error_code&>(error));
     REQUIRE_THROWS(as<std::string&>(error));
 
@@ -42,7 +42,7 @@ TEST_CASE("Error", "[error]")
     error = Error(error_code);
     REQUIRE(Error::Code == error.index());
     REQUIRE(false == error.success());
-    REQUIRE(true == error.failed());
+    REQUIRE(true == error.failure());
     REQUIRE(error_code == as<std::error_code>(error));
     REQUIRE_THROWS(as<std::string const&>(error));
 
@@ -51,7 +51,7 @@ TEST_CASE("Error", "[error]")
     error = Error(error_string);
     REQUIRE(Error::String == error.index());
     REQUIRE(false == error.success());
-    REQUIRE(true == error.failed());
+    REQUIRE(true == error.failure());
     REQUIRE_THROWS(as<std::error_code const&>(error));
     REQUIRE(error_string == as<std::string>(error));
 

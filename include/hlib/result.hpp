@@ -165,7 +165,7 @@ public:
 
     bool operator !() const noexcept
     {
-        return failed();
+        return failure();
     }
 
     operator T const&() const
@@ -212,7 +212,7 @@ public:
         return Success == index();
     }
 
-    bool failed() const noexcept
+    bool failure() const noexcept
     {
         return Success != index();
     }
