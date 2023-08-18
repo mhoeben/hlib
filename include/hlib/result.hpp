@@ -227,6 +227,17 @@ public:
         return m_value;
     }
 
+    Error getError() const
+    {
+        switch (index()) {
+        case Success: return Error();
+        case FailCode: return Error(std::get<FailCode>(m_value));
+        case FailString: return Error(std::get<FailString>(m_value));
+        default:
+            throw std::logic_error("getError()");
+        }
+    }
+
 private:
     std::variant<T, std::error_code, std::string> m_value;
 };
@@ -247,15 +258,7 @@ template<typename T, typename U>
 typename std::enable_if<std::is_same<Error, T>::value, T>::type
 to(Result<U> const& result)
 {
-    typedef Result<U> R;
-
-    switch (result.index()) {
-    case R::Success: return Error();
-    case R::FailCode: return Error(std::get<R::FailCode>(result.value()));
-    case R::FailString: return Error(std::get<R::FailString>(result.value()));
-    default:
-        throw std::logic_error("to<Error>()");
-    }
+    return result.getError();
 }
 
 } // namespace hlib
