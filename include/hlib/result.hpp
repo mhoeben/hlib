@@ -78,7 +78,7 @@ public:
 
     Result(Error&& error)
     {
-        Error::Value&& value = error.value();
+        Error::Value& value = error.value();
 
         switch (value.index()) {
         case Error::None:
