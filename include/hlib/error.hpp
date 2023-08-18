@@ -25,9 +25,69 @@
 
 #include <errno.h>
 #include <string>
+#include <system_error>
+#include <variant>
 
 namespace hlib
 {
+
+class Error final
+{
+public:
+    enum Index
+    {
+        None,
+        Code,
+        String
+    };
+
+    typedef std::variant<std::monostate, std::error_code, std::string> Value;
+
+public:
+    Error() = default;
+    Error(std::error_code code);
+    Error(std::string string);
+
+    Error& operator =(std::error_code const& code);
+    Error& operator =(std::error_code&& code);
+    Error& operator =(std::string const& string);
+    Error& operator =(std::string&& string);
+
+    bool operator == (Error const& that) const noexcept;
+    bool operator != (Error const& that) const noexcept;
+
+    bool operator !() const noexcept;
+    operator bool() const noexcept;
+
+    explicit operator std::error_code const&() const;
+    explicit operator std::error_code&();
+    explicit operator std::string const&() const;
+    explicit operator std::string&();
+
+    Index index() const noexcept;
+    bool success() const noexcept;
+    bool fail() const noexcept;
+
+    Value const& value() const noexcept;
+    Value& value() noexcept;
+
+    void clear() noexcept;
+
+private:
+    Value m_value;
+};
+
+template<typename T>
+T const& as(Error const& error)
+{
+    return static_cast<T const&>(error);
+}
+
+template<typename T>
+T& as(Error& error)
+{
+    return static_cast<T&>(error);
+}
 
 int get_socket_error(int fd) noexcept;
 

@@ -28,6 +28,116 @@
 
 using namespace hlib;
 
+//
+// Public (Error)
+//
+Error::Error(std::error_code code)
+    : m_value(std::move(code))
+{
+}
+
+Error::Error(std::string string)
+    : m_value(std::move(string))
+{
+}
+
+Error& Error::operator =(std::error_code const& code)
+{
+    m_value = code;
+    return *this;
+}
+
+Error& Error::operator =(std::error_code&& code)
+{
+    m_value = std::move(code);
+    return *this;
+}
+
+Error& Error::operator =(std::string const& string)
+{
+    m_value = string;
+    return *this;
+}
+
+Error& Error::operator =(std::string&& string)
+{
+    m_value = std::move(string);
+    return *this;
+}
+
+bool Error::operator == (Error const& that) const noexcept
+{
+    return that.m_value == m_value;
+}
+
+bool Error::operator != (Error const& that) const noexcept
+{
+    return that.m_value != m_value;
+}
+
+bool Error::operator !() const noexcept
+{
+    return success();
+}
+
+Error::operator std::error_code const&() const
+{
+    return std::get<Code>(m_value);
+}
+
+Error::operator std::error_code&()
+{
+    return std::get<Code>(m_value);
+}
+
+Error::operator std::string const&() const
+{
+    return std::get<String>(m_value);
+}
+
+Error::operator std::string&()
+{
+    return std::get<String>(m_value);
+}
+
+Error::operator bool() const noexcept
+{
+    return fail();
+}
+
+Error::Index Error::index() const noexcept
+{
+    return static_cast<Index>(m_value.index());
+}
+
+bool Error::success() const noexcept
+{
+    return None == index();
+}
+
+bool Error::fail() const noexcept
+{
+    return None != index();
+}
+
+Error::Value const& Error::value() const noexcept
+{
+    return m_value;
+}
+
+Error::Value& Error::value() noexcept
+{
+    return m_value;
+}
+
+void Error::clear() noexcept
+{
+    m_value = Value();
+}
+
+//
+// Public
+//
 int hlib::get_socket_error(int fd) noexcept
 {
     int error;

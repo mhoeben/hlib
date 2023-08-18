@@ -48,11 +48,13 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.h
     src/codegen.cpp
     src/container.cpp
+    src/error.cpp
     src/file_server.cpp
     src/hash_map.cpp
     src/http_server.cpp
     src/json.cpp
     src/math.cpp
+    src/result.cpp
     src/sockaddr.cpp
     src/socket.cpp
     src/string.cpp

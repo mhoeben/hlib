@@ -57,6 +57,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/log.hpp
     include/hlib/math.hpp
     include/hlib/memory.hpp
+    include/hlib/result.hpp
     include/hlib/scope_guard.hpp
     include/hlib/sock_addr.hpp
     include/hlib/socket.hpp
