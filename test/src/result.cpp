@@ -26,6 +26,14 @@
 
 using namespace hlib;
 
+TEST_CASE("Result Monostate", "[result]")
+{
+    Result<> result;
+    REQUIRE(true == result.success());
+    REQUIRE(false == result.fail());
+    REQUIRE(std::monostate() == as<decltype(result)::Type>(result));
+}
+
 TEST_CASE("Result String", "[result]")
 {
     Result<std::string> result;

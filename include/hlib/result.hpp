@@ -28,7 +28,7 @@
 namespace hlib
 {
 
-template<typename T>
+template<typename T = std::monostate>
 class Result final
 {
 public:
