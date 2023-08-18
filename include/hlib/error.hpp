@@ -66,7 +66,7 @@ public:
 
     Index index() const noexcept;
     bool success() const noexcept;
-    bool fail() const noexcept;
+    bool failed() const noexcept;
 
     Value const& value() const noexcept;
     Value& value() noexcept;

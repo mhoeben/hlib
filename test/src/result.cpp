@@ -30,7 +30,7 @@ TEST_CASE("Result Monostate", "[result]")
 {
     Result<> result;
     REQUIRE(true == result.success());
-    REQUIRE(false == result.fail());
+    REQUIRE(false == result.failed());
     REQUIRE(std::monostate() == as<decltype(result)::Type>(result));
 }
 
@@ -40,7 +40,7 @@ TEST_CASE("Result String", "[result]")
     REQUIRE(true == result);
     REQUIRE(false == !result);
     REQUIRE(true == result.success());
-    REQUIRE(false == result.fail());
+    REQUIRE(false == result.failed());
     REQUIRE("" == as<std::string>(result));
     REQUIRE_THROWS(as<std::error_code>(result));
 
@@ -48,7 +48,7 @@ TEST_CASE("Result String", "[result]")
 
     result = Result(string);
     REQUIRE(true == result.success());
-    REQUIRE(false == result.fail());
+    REQUIRE(false == result.failed());
     REQUIRE(string == as<std::string>(result));
     REQUIRE_THROWS(as<std::error_code>(result));
 
@@ -59,7 +59,7 @@ TEST_CASE("Result String", "[result]")
 
     result = Error(error_code);
     REQUIRE(false == result.success());
-    REQUIRE(true == result.fail());
+    REQUIRE(true == result.failed());
     REQUIRE_THROWS(as<std::string>(result));
     REQUIRE(error_code == as<std::error_code>(result));
 
@@ -67,13 +67,13 @@ TEST_CASE("Result String", "[result]")
 
     result = Error(error_string);
     REQUIRE(false == result.success());
-    REQUIRE(true == result.fail());
+    REQUIRE(true == result.failed());
     REQUIRE_THROWS(as<std::string>(result));
     REQUIRE_THROWS(as<std::error_code>(result));
 
     Error error = to<Error>(result);
     REQUIRE(false == error.success());
-    REQUIRE(true == error.fail());
+    REQUIRE(true == error.failed());
     REQUIRE(error_string == as<std::string>(error));
 }
 
@@ -81,14 +81,14 @@ TEST_CASE("Result Integer", "[result]")
 {
     Result<int> result;
     REQUIRE(true == result.success());
-    REQUIRE(false == result.fail());
+    REQUIRE(false == result.failed());
     REQUIRE(0 == as<int>(result));
     REQUIRE_THROWS(as<std::error_code>(result));
     REQUIRE_THROWS(as<std::string>(result));
 
     result = 1311;
     REQUIRE(true == result.success());
-    REQUIRE(false == result.fail());
+    REQUIRE(false == result.failed());
     REQUIRE(1311 == as<int>(result));
     REQUIRE_THROWS(as<std::error_code>(result));
     REQUIRE_THROWS(as<std::string>(result));

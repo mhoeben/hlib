@@ -35,8 +35,8 @@ public:
     enum Index
     {
         Success,
-        FailCode,
-        FailString
+        ErrorCode,
+        ErrorString
     };
     typedef T Type;
     typedef std::variant<T, std::error_code, std::string> Value;
@@ -63,11 +63,11 @@ public:
             break;
 
         case Error::Code:
-            m_value = Value(std::in_place_index<FailCode>, std::get<Error::Code>(value));
+            m_value = Value(std::in_place_index<ErrorCode>, std::get<Error::Code>(value));
             break;
 
         case Error::String:
-            m_value = Value(std::in_place_index<FailString>, std::get<Error::String>(value));
+            m_value = Value(std::in_place_index<ErrorString>, std::get<Error::String>(value));
             break;
 
         default:
@@ -85,11 +85,11 @@ public:
             break;
 
         case Error::Code:
-            m_value = Value(std::in_place_index<FailCode>, std::move(std::get<Error::Code>(value)));
+            m_value = Value(std::in_place_index<ErrorCode>, std::move(std::get<Error::Code>(value)));
             break;
 
         case Error::String:
-            m_value = Value(std::in_place_index<FailString>, std::move(std::get<Error::String>(value)));
+            m_value = Value(std::in_place_index<ErrorString>, std::move(std::get<Error::String>(value)));
             break;
 
         default:
@@ -119,11 +119,11 @@ public:
             break;
 
         case Error::Code:
-            m_value = Value(std::in_place_index<FailCode>, std::get<Error::Code>(value));
+            m_value = Value(std::in_place_index<ErrorCode>, std::get<Error::Code>(value));
             break;
 
         case Error::String:
-            m_value = Value(std::in_place_index<FailString>, std::get<Error::String>(value));
+            m_value = Value(std::in_place_index<ErrorString>, std::get<Error::String>(value));
             break;
 
         default:
@@ -143,11 +143,11 @@ public:
             break;
 
         case Error::Code:
-            m_value = Value(std::in_place_index<FailCode>, std::move(std::get<Error::Code>(value)));
+            m_value = Value(std::in_place_index<ErrorCode>, std::move(std::get<Error::Code>(value)));
             break;
 
         case Error::String:
-            m_value = Value(std::in_place_index<FailString>, std::move(std::get<Error::String>(value)));
+            m_value = Value(std::in_place_index<ErrorString>, std::move(std::get<Error::String>(value)));
             break;
 
         default:
@@ -165,7 +165,7 @@ public:
 
     bool operator !() const noexcept
     {
-        return fail();
+        return failed();
     }
 
     operator T const&() const
@@ -180,26 +180,26 @@ public:
 
     operator std::error_code const&() const
     {
-        return std::get<FailCode>(m_value);
+        return std::get<ErrorCode>(m_value);
     }
 
     operator std::error_code&()
     {
-        return std::get<FailCode>(m_value);
+        return std::get<ErrorCode>(m_value);
     }
 
     template<typename U, typename = std::enable_if_t<std::is_same<std::string, U>::value
                                                   && !std::is_same<T, U>::value>>
     operator U const&() const
     {
-        return std::get<FailString>(m_value);
+        return std::get<ErrorString>(m_value);
     }
 
     template<typename U, typename = std::enable_if_t<std::is_same<std::string, U>::value
                                                   && !std::is_same<T, U>::value>>
     operator U&()
     {
-        return std::get<FailString>(m_value);
+        return std::get<ErrorString>(m_value);
     }
 
     Index index() const noexcept
@@ -212,7 +212,7 @@ public:
         return Success == index();
     }
 
-    bool fail() const noexcept
+    bool failed() const noexcept
     {
         return Success != index();
     }
@@ -227,14 +227,24 @@ public:
         return std::get<Success>(m_value);
     }
 
-    Error getError() const
+    std::error_code const& errorCode() const
+    {
+        return std::get<ErrorCode>(m_value);
+    }
+
+    std::string const& errorString() const
+    {
+        return std::get<ErrorString>(m_value);
+    }
+
+    Error error() const
     {
         switch (index()) {
         case Success: return Error();
-        case FailCode: return Error(std::get<FailCode>(m_value));
-        case FailString: return Error(std::get<FailString>(m_value));
+        case ErrorCode: return errorCode();
+        case ErrorString: return errorString();
         default:
-            throw std::logic_error("getError()");
+            throw std::logic_error("error()");
         }
     }
 
@@ -258,7 +268,7 @@ template<typename T, typename U>
 typename std::enable_if<std::is_same<Error, T>::value, T>::type
 to(Result<U> const& result)
 {
-    return result.getError();
+    return result.error();
 }
 
 } // namespace hlib

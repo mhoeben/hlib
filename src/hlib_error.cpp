@@ -102,7 +102,7 @@ Error::operator std::string&()
 
 Error::operator bool() const noexcept
 {
-    return fail();
+    return failed();
 }
 
 Error::Index Error::index() const noexcept
@@ -115,7 +115,7 @@ bool Error::success() const noexcept
     return None == index();
 }
 
-bool Error::fail() const noexcept
+bool Error::failed() const noexcept
 {
     return None != index();
 }
