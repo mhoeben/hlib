@@ -217,14 +217,14 @@ public:
         return Success != index();
     }
 
-    Value const& value() const noexcept
+    T const& value() const noexcept
     {
-        return m_value;
+        return std::get<Success>(m_value);
     }
 
-    Value& value() noexcept
+    T& value() noexcept
     {
-        return m_value;
+        return std::get<Success>(m_value);
     }
 
     Error getError() const
