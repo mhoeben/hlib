@@ -130,6 +130,26 @@ Error::Value& Error::value() noexcept
     return m_value;
 }
 
+std::error_code const& Error::code() const
+{
+    return std::get<Code>(m_value);
+}
+
+std::error_code& Error::code()
+{
+    return std::get<Code>(m_value);
+}
+
+std::string const& Error::string() const
+{
+    return std::get<String>(m_value);
+}
+
+std::string& Error::string()
+{
+    return std::get<String>(m_value);
+}
+
 void Error::clear() noexcept
 {
     m_value = Value();

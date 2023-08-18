@@ -71,6 +71,12 @@ public:
     Value const& value() const noexcept;
     Value& value() noexcept;
 
+    std::error_code const& code() const;
+    std::error_code& code();
+
+    std::string const& string() const;
+    std::string& string();
+
     void clear() noexcept;
 
 private:
