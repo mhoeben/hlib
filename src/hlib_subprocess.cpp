@@ -59,7 +59,7 @@ bool read_to_buffer(int fd, Buffer& buffer)
 {
     std::uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + Config::subprocessOutputBatchSize());
 
-    ssize_t size = ::read(fd, ptr, Config::subprocessOutputBatchSize());
+    ssize_t size = ::read(fd, ptr + buffer.size(), Config::subprocessOutputBatchSize());
     if (-1 == size) {
         return false;
     }
