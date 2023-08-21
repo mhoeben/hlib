@@ -22,7 +22,9 @@
 // SOFTWARE.
 //
 #include "test.hpp"
+#include "hlib/file.hpp"
 #include "hlib/subprocess.hpp"
+#include <unistd.h>
 
 using namespace hlib;
 
@@ -59,5 +61,37 @@ TEST_CASE("Subprocess Stdin to Null", "[subprocess]")
     REQUIRE(0 == process.returnCode());
     REQUIRE(true == process.output().empty());
     REQUIRE(true == process.error().empty());
+}
+
+TEST_CASE("Subprocess EventLoop", "[subprocess]")
+{
+    auto event_loop = std::make_shared<EventLoop>();
+
+    auto on_output = [&event_loop](int fd, std::uint32_t events)
+    {
+        if (0 == (EventLoop::Read & events)) {
+            return;
+        }
+
+        char buffer[20];
+        REQUIRE(13 == ::read(fd, buffer, sizeof(buffer)));
+
+        event_loop->interrupt();
+    };
+
+    file::Pipe output_pipe;
+    output_pipe.open();
+
+    event_loop->add(
+        *output_pipe.get<0>(),
+        EventLoop::Read,
+        std::bind(on_output, std::placeholders::_1, std::placeholders::_2)
+    );
+
+    Subprocess process(event_loop);
+    process.setOutput(std::move(output_pipe.get<1>()));
+    process.run("echo", { "Hello World!" });
+
+    event_loop->dispatch();
 }
 

@@ -68,8 +68,7 @@ public:
 
 public:
     Subprocess();
-    Subprocess(std::weak_ptr<EventLoop> event_loop, EventLoop::Callback on_input,
-        EventLoop::Callback on_output, EventLoop::Callback on_error) noexcept;
+    Subprocess(std::weak_ptr<EventLoop> event_loop);
     Subprocess(std::string const& command, std::vector<std::string> const& args);
     Subprocess(std::string const& command, std::vector<std::string> const& args, Stream input);
     Subprocess(std::string const& command, std::vector<std::string> const& args, std::string const& input);
@@ -110,10 +109,6 @@ private:
 
     std::shared_ptr<Buffer> m_output_buffer;
     std::shared_ptr<Buffer> m_error_buffer;
-
-    EventLoop::Callback m_on_input;
-    EventLoop::Callback m_on_output;
-    EventLoop::Callback m_on_error;
 
     void onInput(int fd, std::uint32_t events);
     void onOutput(int fd, std::uint32_t events);

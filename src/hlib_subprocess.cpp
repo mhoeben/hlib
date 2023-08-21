@@ -190,6 +190,8 @@ void Subprocess::onError(int fd, std::uint32_t events)
 
 int Subprocess::run(std::vector<char const*> argv)
 {
+    using namespace std::placeholders;
+
     assert(-1 == m_pid);
 
     m_return_code = Pending;
@@ -261,7 +263,11 @@ int Subprocess::run(std::vector<char const*> argv)
     default:
         if (nullptr != m_input.m_buffer) {
             m_input.m_fd = std::move(input_pipe.get<1>());
-            event_loop->add(m_input.m_fd.value(), EventLoop::Write, m_on_input);
+            event_loop->add(
+                m_input.m_fd.value(),
+                EventLoop::Write,
+                std::bind(&Subprocess::onInput, this, _1, _2)
+            );
 
             redirect = true;
         }
@@ -271,7 +277,11 @@ int Subprocess::run(std::vector<char const*> argv)
 
         if (nullptr != m_output.m_buffer) {
             m_output.m_fd = std::move(output_pipe.get<0>());
-            event_loop->add(m_output.m_fd.value(), EventLoop::Read, m_on_output);
+            event_loop->add(
+                m_output.m_fd.value(),
+                EventLoop::Read,
+                std::bind(&Subprocess::onOutput, this, _1, _2)
+            );
 
             redirect = true;
         }
@@ -281,7 +291,11 @@ int Subprocess::run(std::vector<char const*> argv)
 
         if (nullptr != m_error.m_buffer) {
             m_error.m_fd = std::move(error_pipe.get<0>());
-            event_loop->add(m_error.m_fd.value(), EventLoop::Read, m_on_error);
+            event_loop->add(
+                m_error.m_fd.value(),
+                EventLoop::Read,
+                std::bind(&Subprocess::onError, this, _1, _2)
+            );
 
             redirect = true;
         }
@@ -317,20 +331,13 @@ Subprocess::Subprocess()
     , m_error(std::make_shared<Buffer>())
     , m_output_buffer(m_output.m_buffer)
     , m_error_buffer(m_error.m_buffer)
-    , m_on_input(std::bind(&Subprocess::onInput, this, std::placeholders::_1, std::placeholders::_2))
-    , m_on_output(std::bind(&Subprocess::onOutput, this, std::placeholders::_1, std::placeholders::_2))
-    , m_on_error(std::bind(&Subprocess::onError, this, std::placeholders::_1, std::placeholders::_2))
 {
 }
 
-Subprocess::Subprocess(std::weak_ptr<EventLoop> event_loop, EventLoop::Callback on_input,
-        EventLoop::Callback on_output, EventLoop::Callback on_error) noexcept
+Subprocess::Subprocess(std::weak_ptr<EventLoop> event_loop)
     : m_event_loop_extern(std::move(event_loop))
     , m_output_buffer(std::make_shared<Buffer>())
     , m_error_buffer(std::make_shared<Buffer>())
-    , m_on_input(std::move(on_input))
-    , m_on_output(std::move(on_output))
-    , m_on_error(std::move(on_error))
 {
 }
 
@@ -373,9 +380,6 @@ Subprocess::Subprocess(Subprocess&& that) noexcept
     , m_error(std::move(that.m_error))
     , m_output_buffer(std::move(that.m_output_buffer))
     , m_error_buffer(std::move(that.m_error_buffer))
-    , m_on_input(std::move(that.m_on_input))
-    , m_on_output(std::move(that.m_on_output))
-    , m_on_error(std::move(that.m_on_error))
 {
     that.m_return_code = Pending;
 }
@@ -390,9 +394,6 @@ Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
     m_error = std::move(that.m_error);
     m_output_buffer = std::move(that.m_output_buffer);
     m_error_buffer = std::move(that.m_error_buffer);
-    m_on_input = std::move(that.m_on_input);
-    m_on_output = std::move(that.m_on_output);
-    m_on_error = std::move(that.m_on_error);
 
     that.m_return_code = Pending;
     return *this;

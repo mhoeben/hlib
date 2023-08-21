@@ -458,16 +458,26 @@ int Pipe::operator[](std::size_t index) const noexcept
     return m_fds[index].value();
 }
 
-void Pipe::open()
+bool Pipe::open(std::nothrow_t) noexcept
 {
     std::array<int, 2> fds{ -1, -1 };
 
+    close();
+
     if (-1 == ::pipe(fds.data())) {
-        throwf<std::runtime_error>("pipe() failed ({})", get_error_string());
+        return false;
     }
 
     m_fds[0].reset(fds[0]);
     m_fds[1].reset(fds[1]);
+    return true;
+}
+
+void Pipe::open()
+{
+    if (false == open(std::nothrow)) {
+        throwf<std::runtime_error>("pipe() failed ({})", get_error_string());
+    }
 }
 
 void Pipe::close() noexcept

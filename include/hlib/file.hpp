@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
+#include <new>
 #include <string>
 
 namespace hlib
@@ -109,6 +110,7 @@ public:
         m_fds[index] = std::move(fd);
     }
 
+    bool open(std::nothrow_t) noexcept;
     void open();
 
     template<std::size_t index>
