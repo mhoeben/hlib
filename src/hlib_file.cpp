@@ -447,6 +447,22 @@ Pipe::Pipe() noexcept
 {
 }
 
+Pipe::Pipe(bool open, std::nothrow_t) noexcept
+    : Pipe()
+{
+    if (true == open) {
+        Pipe::open(std::nothrow);
+    }
+}
+
+Pipe::Pipe(bool open)
+    : Pipe()
+{
+    if (true == open) {
+        Pipe::open();
+    }
+}
+
 Pipe::~Pipe()
 {
     close();

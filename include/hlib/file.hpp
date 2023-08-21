@@ -85,6 +85,8 @@ class Pipe final
 
 public:
     Pipe() noexcept;
+    Pipe(bool open, std::nothrow_t) noexcept;
+    Pipe(bool open);
     ~Pipe();
 
     int operator[](std::size_t index) const noexcept;
