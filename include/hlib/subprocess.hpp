@@ -80,8 +80,8 @@ public:
 
     int pid() const noexcept;
     int returnCode() const noexcept;
-    Buffer const& output() const noexcept;
-    Buffer const& error() const noexcept;
+    Buffer& output() const noexcept;
+    Buffer& error() const noexcept;
 
     void setInput(Stream input) noexcept;
     void setOutput(Stream output) noexcept;
@@ -96,8 +96,8 @@ public:
     int wait();
 
 private:
-    std::shared_ptr<EventLoop> m_event_loop_private;
     std::weak_ptr<EventLoop> m_event_loop_extern;
+    std::shared_ptr<EventLoop> m_event_loop_private;
 
     int m_pid{ -1 };
     int m_return_code{ Pending };

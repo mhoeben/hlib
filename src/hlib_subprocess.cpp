@@ -372,8 +372,8 @@ Subprocess::Subprocess(std::string const& command, std::vector<std::string> cons
 }
 
 Subprocess::Subprocess(Subprocess&& that) noexcept
-    : m_event_loop_private(std::move(that.m_event_loop_private))
-    , m_event_loop_extern(std::move(that.m_event_loop_extern))
+    : m_event_loop_extern(std::move(that.m_event_loop_extern))
+    , m_event_loop_private(std::move(that.m_event_loop_private))
     , m_return_code{ that.m_return_code }
     , m_input(std::move(that.m_input))
     , m_output(std::move(that.m_output))
@@ -386,8 +386,8 @@ Subprocess::Subprocess(Subprocess&& that) noexcept
 
 Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
 {
-    m_event_loop_private = std::move(that.m_event_loop_private);
     m_event_loop_extern = std::move(that.m_event_loop_extern);
+    m_event_loop_private = std::move(that.m_event_loop_private);
     m_return_code = that.m_return_code;
     m_input = std::move(that.m_input);
     m_output = std::move(that.m_output);
@@ -409,12 +409,12 @@ int Subprocess::returnCode() const noexcept
     return m_return_code;
 }
 
-Buffer const& Subprocess::output() const noexcept
+Buffer& Subprocess::output() const noexcept
 {
     return *m_output_buffer;
 }
 
-Buffer const& Subprocess::error() const noexcept
+Buffer& Subprocess::error() const noexcept
 {
     return *m_error_buffer;
 }
