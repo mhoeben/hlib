@@ -31,7 +31,7 @@
 //
 // Public
 //
-std::optional<bool> hlib::try_stob(std::string const& value)
+std::optional<bool> hlib::stob(std::string const& value, std::nothrow_t)
 {
     if ("true" == value) {
         return true;
@@ -43,7 +43,7 @@ std::optional<bool> hlib::try_stob(std::string const& value)
     return std::optional<bool>();
 }
 
-std::optional<std::int8_t> hlib::try_stoi8(std::string const& value, int base)
+std::optional<std::int8_t> hlib::stoi8(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<std::int8_t>();
@@ -60,7 +60,7 @@ std::optional<std::int8_t> hlib::try_stoi8(std::string const& value, int base)
     return r;
 }
 
-std::optional<int16_t> hlib::try_stoi16(std::string const& value, int base)
+std::optional<int16_t> hlib::stoi16(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<int16_t>();
@@ -77,7 +77,7 @@ std::optional<int16_t> hlib::try_stoi16(std::string const& value, int base)
     return r;
 }
 
-std::optional<int32_t> hlib::try_stoi32(std::string const& value, int base)
+std::optional<int32_t> hlib::stoi32(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<int32_t>();
@@ -97,7 +97,7 @@ std::optional<int32_t> hlib::try_stoi32(std::string const& value, int base)
     return r;
 }
 
-std::optional<int64_t> hlib::try_stoi64(std::string const& value, int base)
+std::optional<int64_t> hlib::stoi64(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<int64_t>();
@@ -115,7 +115,7 @@ std::optional<int64_t> hlib::try_stoi64(std::string const& value, int base)
     return r;
 }
 
-std::optional<std::uint8_t> hlib::try_stoui8(std::string const& value, int base)
+std::optional<std::uint8_t> hlib::stoui8(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<std::uint8_t>();
@@ -132,7 +132,7 @@ std::optional<std::uint8_t> hlib::try_stoui8(std::string const& value, int base)
     return r;
 }
 
-std::optional<std::uint16_t> hlib::try_stoui16(std::string const& value, int base)
+std::optional<std::uint16_t> hlib::stoui16(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<std::uint16_t>();
@@ -149,7 +149,7 @@ std::optional<std::uint16_t> hlib::try_stoui16(std::string const& value, int bas
     return r;
 }
 
-std::optional<std::uint32_t> hlib::try_stoui32(std::string const& value, int base)
+std::optional<std::uint32_t> hlib::stoui32(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<std::uint32_t>();
@@ -169,7 +169,7 @@ std::optional<std::uint32_t> hlib::try_stoui32(std::string const& value, int bas
     return r;
 }
 
-std::optional<std::uint64_t> hlib::try_stoui64(std::string const& value, int base)
+std::optional<std::uint64_t> hlib::stoui64(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<std::uint64_t>();
@@ -187,7 +187,7 @@ std::optional<std::uint64_t> hlib::try_stoui64(std::string const& value, int bas
     return r;
 }
 
-std::optional<float> hlib::try_stof32(std::string const& value)
+std::optional<float> hlib::stof32(std::string const& value, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<float>();
@@ -203,7 +203,7 @@ std::optional<float> hlib::try_stof32(std::string const& value)
     return r;
 }
 
-std::optional<double> hlib::try_stof64(std::string const& value)
+std::optional<double> hlib::stof64(std::string const& value, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::optional<double>();

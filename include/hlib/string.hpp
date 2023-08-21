@@ -25,6 +25,7 @@
 
 #include "hlib/buffer.hpp"
 #include <functional>
+#include <new>
 #include <optional>
 #include <string>
 #include <vector>
@@ -33,26 +34,26 @@
 namespace hlib
 {
 
-std::optional<bool> try_stob(std::string const& value);
+std::optional<bool> stob(std::string const& value, std::nothrow_t);
 
-std::optional<std::int8_t> try_stoi8(std::string const& value, int base = 10);
-std::optional<std::int16_t> try_stoi16(std::string const& value, int base = 10);
-std::optional<std::int32_t> try_stoi32(std::string const& value, int base = 10);
-std::optional<std::int64_t> try_stoi64(std::string const& value, int base = 10);
+std::optional<std::int8_t> stoi8(std::string const& value, int base, std::nothrow_t);
+std::optional<std::int16_t> stoi16(std::string const& value, int base, std::nothrow_t);
+std::optional<std::int32_t> stoi32(std::string const& value, int base, std::nothrow_t);
+std::optional<std::int64_t> stoi64(std::string const& value, int base, std::nothrow_t);
 
-std::optional<std::uint8_t> try_stoui8(std::string const& value, int base = 10);
-std::optional<std::uint16_t> try_stoui16(std::string const& value, int base = 10);
-std::optional<std::uint32_t> try_stoui32(std::string const& value, int base = 10);
-std::optional<std::uint64_t> try_stoui64(std::string const& value, int base = 10);
+std::optional<std::uint8_t> stoui8(std::string const& value, int base, std::nothrow_t);
+std::optional<std::uint16_t> stoui16(std::string const& value, int base, std::nothrow_t);
+std::optional<std::uint32_t> stoui32(std::string const& value, int base, std::nothrow_t);
+std::optional<std::uint64_t> stoui64(std::string const& value, int base, std::nothrow_t);
 
-std::optional<float> try_stof32(std::string const& value);
-std::optional<double> try_stof64(std::string const& value);
+std::optional<float> stof32(std::string const& value, std::nothrow_t);
+std::optional<double> stof64(std::string const& value, std::nothrow_t);
 
 template<typename T>
 typename std::enable_if<std::is_same<bool, T>::value, std::optional<bool>>::type
-try_to(std::string const& value)
+to(std::string const& value, std::nothrow_t)
 {
-    return try_stob(value);
+    return stob(value, std::nothrow);
 }
 
 template<typename T>
@@ -60,9 +61,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 1 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoi8(value, base);
+    return stoi8(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -70,9 +71,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 2 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoi16(value, base);
+    return stoi16(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -80,9 +81,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 4 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoi32(value, base);
+    return stoi32(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -90,9 +91,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 8 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoi64(value, base);
+    return stoi64(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -100,9 +101,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 1 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoui8(value, base);
+    return stoui8(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -110,9 +111,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 2 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoui16(value, base);
+    return stoui16(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -120,9 +121,9 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 4 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoui32(value, base);
+    return stoui32(value, base, std::nothrow);
 }
 
 template<typename T>
@@ -130,25 +131,25 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 8 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value, int base = 10)
+to(std::string const& value, int base, std::nothrow_t)
 {
-    return try_stoui64(value, base);
+    return stoui64(value, base, std::nothrow);
 }
 
 template<typename T>
 typename std::enable_if<std::is_floating_point<T>::value
                      && 4 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value)
+to(std::string const& value, std::nothrow_t)
 {
-    return try_stof32(value);
+    return stof32(value, std::nothrow);
 }
 
 template<typename T>
 typename std::enable_if<std::is_floating_point<T>::value
                      && 8 == sizeof(T), std::optional<T>>::type
-try_to(std::string const& value)
+to(std::string const& value, std::nothrow_t)
 {
-    return try_stof64(value);
+    return stof64(value, std::nothrow);
 }
 
 bool stob(std::string const& value);

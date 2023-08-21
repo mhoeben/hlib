@@ -757,7 +757,7 @@ void JSONPointer::parse(std::string const& pointer)
     assert(tokens.size() >= 2);
 
     for (size_t i = 1; i < tokens.size(); ++i) {
-        auto index = try_to<std::size_t>(tokens[i]);
+        auto index = to<std::size_t>(tokens[i], 10, std::nothrow);
         if (true == index.has_value()) {
             m_tokens.emplace_back(index.value());
         }

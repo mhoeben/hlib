@@ -28,103 +28,103 @@
 
 using namespace hlib;
 
-TEST_CASE("String Try To", "[string]")
+TEST_CASE("String To NoThrow", "[string]")
 {
-    REQUIRE( true == try_to<bool>("true").value());
-    REQUIRE(false == try_to<bool>("false").value());
-    REQUIRE(false == try_to<bool>("1").has_value());
-    REQUIRE(false == try_to<bool>("0").has_value());
-    REQUIRE(false == try_to<bool>("foo").has_value());
+    REQUIRE( true == to<bool>("true", std::nothrow).value());
+    REQUIRE(false == to<bool>("false", std::nothrow).value());
+    REQUIRE(false == to<bool>("1", std::nothrow).has_value());
+    REQUIRE(false == to<bool>("0", std::nothrow).has_value());
+    REQUIRE(false == to<bool>("foo", std::nothrow).has_value());
 
-    REQUIRE(   0 == try_to<int8_t>("0").value());
-    REQUIRE( 127 == try_to<int8_t>("127").value());
-    REQUIRE(-128 == try_to<int8_t>("-128").value());
-    REQUIRE( 127 == try_to<int8_t>("0x7f", 16).value());
-    REQUIRE(-128 == try_to<int8_t>("-0x80", 16).value());
-    REQUIRE(false == try_to<int8_t>("128").has_value());
-    REQUIRE(false == try_to<int8_t>("-129").has_value());
-    REQUIRE(false == try_to<int8_t>("foo").has_value());
-    REQUIRE(false == try_to<int8_t>(" 0").has_value());
-    REQUIRE(false == try_to<int8_t>("0 ").has_value());
+    REQUIRE(   0 == to<int8_t>("0", 10, std::nothrow).value());
+    REQUIRE( 127 == to<int8_t>("127", 10, std::nothrow).value());
+    REQUIRE(-128 == to<int8_t>("-128", 10, std::nothrow).value());
+    REQUIRE( 127 == to<int8_t>("0x7f", 16, std::nothrow).value());
+    REQUIRE(-128 == to<int8_t>("-0x80", 16, std::nothrow).value());
+    REQUIRE(false == to<int8_t>("128", 10, std::nothrow).has_value());
+    REQUIRE(false == to<int8_t>("-129", 10, std::nothrow).has_value());
+    REQUIRE(false == to<int8_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE(false == to<int8_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE(false == to<int8_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(     0 == try_to<int16_t>("0").value());
-    REQUIRE( 32767 == try_to<int16_t>("32767").value());
-    REQUIRE(-32768 == try_to<int16_t>("-32768").value());
-    REQUIRE( 32767 == try_to<int16_t>("0x7fff", 16).value());
-    REQUIRE(-32768 == try_to<int16_t>("-0x8000", 16).value());
-    REQUIRE( false == try_to<int16_t>("32768").has_value());
-    REQUIRE( false == try_to<int16_t>("-32769").has_value());
-    REQUIRE( false == try_to<int16_t>("foo").has_value());
-    REQUIRE( false == try_to<int16_t>(" 0").has_value());
-    REQUIRE( false == try_to<int16_t>("0 ").has_value());
+    REQUIRE(     0 == to<int16_t>("0", 10, std::nothrow).value());
+    REQUIRE( 32767 == to<int16_t>("32767", 10, std::nothrow).value());
+    REQUIRE(-32768 == to<int16_t>("-32768", 10, std::nothrow).value());
+    REQUIRE( 32767 == to<int16_t>("0x7fff", 16, std::nothrow).value());
+    REQUIRE(-32768 == to<int16_t>("-0x8000", 16, std::nothrow).value());
+    REQUIRE( false == to<int16_t>("32768", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int16_t>("-32769", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int16_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int16_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int16_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(          0 == try_to<int32_t>("0").value());
-    REQUIRE( 2147483647 == try_to<int32_t>("2147483647").value());
-    REQUIRE(-2147483648 == try_to<int32_t>("-2147483648").value());
-    REQUIRE( 2147483647 == try_to<int32_t>("0x7fffffff", 16).value());
-    REQUIRE(-2147483648 == try_to<int32_t>("-0x80000000", 16).value());
-    REQUIRE( false == try_to<int32_t>("2147483648").has_value());
-    REQUIRE( false == try_to<int32_t>("-2147483649").has_value());
-    REQUIRE( false == try_to<int32_t>("foo").has_value());
-    REQUIRE( false == try_to<int32_t>(" 0").has_value());
-    REQUIRE( false == try_to<int32_t>("0 ").has_value());
+    REQUIRE(          0 == to<int32_t>("0", 10, std::nothrow).value());
+    REQUIRE( 2147483647 == to<int32_t>("2147483647", 10, std::nothrow).value());
+    REQUIRE(-2147483648 == to<int32_t>("-2147483648", 10, std::nothrow).value());
+    REQUIRE( 2147483647 == to<int32_t>("0x7fffffff", 16, std::nothrow).value());
+    REQUIRE(-2147483648 == to<int32_t>("-0x80000000", 16, std::nothrow).value());
+    REQUIRE( false == to<int32_t>("2147483648", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int32_t>("-2147483649", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int32_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int32_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int32_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(                                   0 == try_to<int64_t>("0").value());
-    REQUIRE( std::numeric_limits<int64_t>::max() == try_to<int64_t>("9223372036854775807").value());
-    REQUIRE( std::numeric_limits<int64_t>::min() == try_to<int64_t>("-9223372036854775808").value());
-    REQUIRE( std::numeric_limits<int64_t>::max() == try_to<int64_t>("0x7fffffffffffffff", 16).value());
-    REQUIRE( std::numeric_limits<int64_t>::min() == try_to<int64_t>("-0x8000000000000000", 16).value());
-    REQUIRE( false == try_to<int64_t>("9223372036854775808").has_value());
-    REQUIRE( false == try_to<int64_t>("-9223372036854775809").has_value());
-    REQUIRE( false == try_to<int64_t>("foo").has_value());
-    REQUIRE( false == try_to<int64_t>(" 0").has_value());
-    REQUIRE( false == try_to<int64_t>("0 ").has_value());
+    REQUIRE(                                   0 == to<int64_t>("0", 10, std::nothrow).value());
+    REQUIRE( std::numeric_limits<int64_t>::max() == to<int64_t>("9223372036854775807", 10, std::nothrow).value());
+    REQUIRE( std::numeric_limits<int64_t>::min() == to<int64_t>("-9223372036854775808", 10, std::nothrow).value());
+    REQUIRE( std::numeric_limits<int64_t>::max() == to<int64_t>("0x7fffffffffffffff", 16, std::nothrow).value());
+    REQUIRE( std::numeric_limits<int64_t>::min() == to<int64_t>("-0x8000000000000000", 16, std::nothrow).value());
+    REQUIRE( false == to<int64_t>("9223372036854775808", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int64_t>("-9223372036854775809", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int64_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int64_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE( false == to<int64_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(   0 == try_to<uint8_t>("0").value());
-    REQUIRE( 255 == try_to<uint8_t>("255").value());
-    REQUIRE( 255 == try_to<uint8_t>("0xff", 16).value());
-    REQUIRE(false == try_to<uint8_t>("256").has_value());
-    REQUIRE(false == try_to<uint8_t>("foo").has_value());
-    REQUIRE(false == try_to<uint8_t>(" 0").has_value());
-    REQUIRE(false == try_to<uint8_t>("0 ").has_value());
+    REQUIRE(    0 == to<uint8_t>("0", 10, std::nothrow).value());
+    REQUIRE(  255 == to<uint8_t>("255", 10, std::nothrow).value());
+    REQUIRE(  255 == to<uint8_t>("0xff", 16, std::nothrow).value());
+    REQUIRE(false == to<uint8_t>("256", 10, std::nothrow).has_value());
+    REQUIRE(false == to<uint8_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE(false == to<uint8_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE(false == to<uint8_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(    0 == try_to<uint16_t>("0").value());
-    REQUIRE(65535 == try_to<uint16_t>("65535").value());
-    REQUIRE(65535 == try_to<uint16_t>("0xffff", 16).value());
-    REQUIRE(false == try_to<uint16_t>("65536").has_value());
-    REQUIRE(false == try_to<uint16_t>("foo").has_value());
-    REQUIRE(false == try_to<uint16_t>(" 0").has_value());
-    REQUIRE(false == try_to<uint16_t>("0 ").has_value());
+    REQUIRE(    0 == to<uint16_t>("0", 10, std::nothrow).value());
+    REQUIRE(65535 == to<uint16_t>("65535", 10, std::nothrow).value());
+    REQUIRE(65535 == to<uint16_t>("0xffff", 16, std::nothrow).value());
+    REQUIRE(false == to<uint16_t>("65536", 10, std::nothrow).has_value());
+    REQUIRE(false == to<uint16_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE(false == to<uint16_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE(false == to<uint16_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(         0 == try_to<uint32_t>("0").value());
-    REQUIRE(4294967295 == try_to<uint32_t>("4294967295").value());
-    REQUIRE(4294967295 == try_to<uint32_t>("0xffffffff", 16).value());
-    REQUIRE(false == try_to<uint32_t>("4294967296").has_value());
-    REQUIRE(false == try_to<uint32_t>("foo").has_value());
-    REQUIRE(false == try_to<uint32_t>(" 0").has_value());
-    REQUIRE(false == try_to<uint32_t>("0 ").has_value());
+    REQUIRE(         0 == to<uint32_t>("0", 10, std::nothrow).value());
+    REQUIRE(4294967295 == to<uint32_t>("4294967295", 10, std::nothrow).value());
+    REQUIRE(4294967295 == to<uint32_t>("0xffffffff", 16, std::nothrow).value());
+    REQUIRE(     false == to<uint32_t>("4294967296", 10, std::nothrow).has_value());
+    REQUIRE(     false == to<uint32_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE(     false == to<uint32_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE(     false == to<uint32_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(                                   0 == try_to<uint64_t>("0").value());
-    REQUIRE(std::numeric_limits<uint64_t>::max() == try_to<uint64_t>("18446744073709551615").value());
-    REQUIRE(std::numeric_limits<uint64_t>::max() == try_to<uint64_t>("0xffffffffffffffff", 16).value());
-    REQUIRE(false == try_to<uint64_t>("18446744073709551616)").has_value());
-    REQUIRE(false == try_to<uint64_t>("foo").has_value());
-    REQUIRE(false == try_to<uint64_t>(" 0").has_value());
-    REQUIRE(false == try_to<uint64_t>("0 ").has_value());
+    REQUIRE(                                   0 == to<uint64_t>("0", 10, std::nothrow).value());
+    REQUIRE(std::numeric_limits<uint64_t>::max() == to<uint64_t>("18446744073709551615", 10, std::nothrow).value());
+    REQUIRE(std::numeric_limits<uint64_t>::max() == to<uint64_t>("0xffffffffffffffff", 16, std::nothrow).value());
+    REQUIRE(                               false == to<uint64_t>("18446744073709551616)", 10, std::nothrow).has_value());
+    REQUIRE(                               false == to<uint64_t>("foo", 10, std::nothrow).has_value());
+    REQUIRE(                               false == to<uint64_t>(" 0", 10, std::nothrow).has_value());
+    REQUIRE(                               false == to<uint64_t>("0 ", 10, std::nothrow).has_value());
 
-    REQUIRE(0.0f == try_to<float>("0.0").value());
-    REQUIRE(1.0f == try_to<float>("1.0").value());
-    REQUIRE(-1.0f == try_to<float>("-1").value());
-    REQUIRE(false == try_to<float>("foo").has_value());
-    REQUIRE(false == try_to<float>(" 0.0").has_value());
-    REQUIRE(false == try_to<float>("0.0 ").has_value());
+    REQUIRE( 0.0f == to<float>("0.0", std::nothrow).value());
+    REQUIRE( 1.0f == to<float>("1.0", std::nothrow).value());
+    REQUIRE(-1.0f == to<float>("-1", std::nothrow).value());
+    REQUIRE(false == to<float>("foo", std::nothrow).has_value());
+    REQUIRE(false == to<float>(" 0.0", std::nothrow).has_value());
+    REQUIRE(false == to<float>("0.0 ", std::nothrow).has_value());
 
-    REQUIRE(0.0 == try_to<double>("0.0").value());
-    REQUIRE(1.0 == try_to<double>("1.0").value());
-    REQUIRE(-1.0 == try_to<double>("-1").value());
-    REQUIRE(false == try_to<double>("foo").has_value());
-    REQUIRE(false == try_to<double>(" 0.0").has_value());
-    REQUIRE(false == try_to<double>("0.0 ").has_value());
+    REQUIRE(  0.0 == to<double>("0.0", std::nothrow).value());
+    REQUIRE(  1.0 == to<double>("1.0", std::nothrow).value());
+    REQUIRE( -1.0 == to<double>("-1", std::nothrow).value());
+    REQUIRE(false == to<double>("foo", std::nothrow).has_value());
+    REQUIRE(false == to<double>(" 0.0", std::nothrow).has_value());
+    REQUIRE(false == to<double>("0.0 ", std::nothrow).has_value());
 }
 
 TEST_CASE("String To", "[string]")
