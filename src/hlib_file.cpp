@@ -91,7 +91,7 @@ std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size,
 {
     char* ptr = reserve_as<char>(buffer, buffer.size() + size, std::nothrow);
     if (ptr == nullptr) {
-        error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
         return stream;
     }
 
@@ -148,7 +148,7 @@ ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size, std::error_code
 {
     uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + size, std::nothrow);
     if (ptr == nullptr) {
-        error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
         return -1;
     }
 
@@ -205,7 +205,7 @@ ssize_t file::read(int fd, Buffer& buffer, std::size_t size, std::error_code& er
 {
     uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + size, std::nothrow);
     if (ptr == nullptr) {
-        error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
         return -1;
     }
 
