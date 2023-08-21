@@ -92,9 +92,10 @@ std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size,
     char* ptr = reserve_as<char>(buffer, buffer.size() + size, std::nothrow);
     if (ptr == nullptr) {
         error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+        return stream;
     }
 
-    stream.read(ptr, size);
+    stream.read(ptr + buffer.size(), size);
     if (true == stream.fail()) {
         error_code = std::make_error_code(static_cast<std::errc>(errno));
         return stream;
@@ -110,7 +111,7 @@ std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size)
 
     read(stream, buffer, size, error_code);
     if (error_code) {
-        throw std::system_error(error_code, "Failed to read from stream to buffer");
+        throw std::system_error(error_code, "read() failed");
     }
 
     return stream;
@@ -137,7 +138,7 @@ Buffer file::read(std::istream& stream, std::size_t partial_size)
 
     Buffer buffer = read(stream, partial_size, error_code);
     if (error_code) {
-        throw std::system_error(error_code, "Failed to read from stream to buffer");
+        throw std::system_error(error_code, "read() failed");
     }
 
     return buffer;
@@ -145,12 +146,13 @@ Buffer file::read(std::istream& stream, std::size_t partial_size)
 
 ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
 {
-    void* ptr = buffer.reserve(buffer.size() + size, std::nothrow);
+    uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + size, std::nothrow);
     if (ptr == nullptr) {
         error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+        return -1;
     }
 
-    ssize_t count = fread(ptr, 1, size, file);
+    ssize_t count = fread(ptr + buffer.size(), 1, size, file);
     if (count < 0) {
         error_code = std::make_error_code(static_cast<std::errc>(errno));
         return -1;
@@ -166,7 +168,7 @@ ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size)
 
     ssize_t count = read(file, buffer, size, error_code);
     if (error_code) {
-        throw std::system_error(error_code, "Failed to read from file to buffer");
+        throw std::system_error(error_code, "read() failed");
     }
 
     return count;
@@ -193,7 +195,69 @@ Buffer file::read(FILE* file, std::size_t partial_size)
 
     Buffer buffer = read(file, partial_size, error_code);
     if (error_code) {
-        throw std::system_error(error_code, "Failed to read from file to buffer");
+        throw std::system_error(error_code, "read() failed");
+    }
+
+    return buffer;
+}
+
+ssize_t file::read(int fd, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
+{
+    uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + size, std::nothrow);
+    if (ptr == nullptr) {
+        error_code = std::make_error_code(static_cast<std::errc>(ENOMEM));
+        return -1;
+    }
+
+    ssize_t count = ::read(fd, ptr + buffer.size(), size);
+    if (count < 0) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return -1;
+    }
+
+    hverify(nullptr != buffer.resize(buffer.size() + count, std::nothrow));
+    return count;
+}
+
+ssize_t file::read(int fd, Buffer& buffer, std::size_t size)
+{
+    std::error_code error_code;
+
+    ssize_t count = read(fd, buffer, size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "read() failed");
+    }
+
+    return count;
+}
+
+Buffer file::read(int fd, std::size_t partial_size, std::error_code& error_code) noexcept
+{
+    assert(partial_size > 0);
+    partial_size += 0 == partial_size;
+
+    Buffer buffer;
+
+    do {
+        if (0 == read(fd, buffer, partial_size, error_code)) {
+            return buffer;
+        }
+
+        if (-1 == fcntl(fd, F_GETFL)) {
+            error_code = std::make_error_code(static_cast<std::errc>(errno));
+            return buffer;
+        }
+    }
+    while (true);
+}
+
+Buffer file::read(int fd, std::size_t partial_size)
+{
+    std::error_code error_code;
+
+    Buffer buffer = read(fd, partial_size, error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "read() failed");
     }
 
     return buffer;
@@ -223,7 +287,7 @@ Buffer file::read(std::string const& filepath)
 
     Buffer buffer = read(filepath, error_code);
     if (error_code) {
-        throw std::system_error(error_code, "Failed to read from file to buffer");
+        throw std::system_error(error_code, "read() failed");
     }
 
     return buffer;

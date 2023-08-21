@@ -41,6 +41,11 @@ bool is_creatable(std::filesystem::path const& filepath) noexcept;
 bool is_readable(std::filesystem::path const& filepath) noexcept;
 bool is_writable(std::filesystem::path const& filepath) noexcept;
 
+//
+// These functions follow the std::filesystem convention of passing
+// a std::error_code to differentiate between the noexcept and exception
+// throwing variants.
+//
 std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
 std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size);
 
@@ -52,6 +57,12 @@ ssize_t read(FILE* file, Buffer& buffer, std::size_t size);
 
 Buffer read(FILE* file, std::size_t partial_size, std::error_code& error_code) noexcept;
 Buffer read(FILE* file, std::size_t partial_size);
+
+ssize_t read(int fd, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
+ssize_t read(int fd, Buffer& buffer, std::size_t size);
+
+Buffer read(int fd, std::size_t partial_size, std::error_code& error_code) noexcept;
+Buffer read(int fd, std::size_t partial_size);
 
 Buffer read(std::string const& filepath, std::error_code& error_code) noexcept;
 Buffer read(std::string const& filepath);
