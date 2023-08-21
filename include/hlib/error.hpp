@@ -48,10 +48,14 @@ public:
     Error(std::error_code code);
     Error(std::string string);
 
+    explicit Error(int error);
+
     Error& operator =(std::error_code const& code);
     Error& operator =(std::error_code&& code);
     Error& operator =(std::string const& string);
     Error& operator =(std::string&& string);
+
+    Error& operator =(int error);
 
     bool operator == (Error const& that) const noexcept;
     bool operator != (Error const& that) const noexcept;

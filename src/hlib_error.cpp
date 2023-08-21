@@ -41,6 +41,11 @@ Error::Error(std::string string)
 {
 }
 
+Error::Error(int error)
+    : m_value(std::make_error_code(static_cast<std::errc>(error)))
+{
+}
+
 Error& Error::operator =(std::error_code const& code)
 {
     m_value = code;
@@ -62,6 +67,12 @@ Error& Error::operator =(std::string const& string)
 Error& Error::operator =(std::string&& string)
 {
     m_value = std::move(string);
+    return *this;
+}
+
+Error& Error::operator =(int error)
+{
+    m_value = std::make_error_code(static_cast<std::errc>(error));
     return *this;
 }
 
