@@ -71,6 +71,18 @@ bool read_to_buffer(int fd, Buffer& buffer)
 } // namespace
 
 //
+// Implementation (Subprocess::Stream)
+//
+void Subprocess::Stream::closed()
+{
+    if (nullptr == m_on_close) {
+        return;
+    }
+
+    m_on_close();
+}
+
+//
 // Public (Subprocess::Stream)
 //
 Subprocess::Stream::Stream() noexcept
@@ -114,9 +126,17 @@ Subprocess::Stream::Stream(std::shared_ptr<Buffer> buffer) noexcept
 {
 }
 
+Subprocess::Stream::Stream(std::shared_ptr<Buffer> buffer, OnClose on_close) noexcept
+    : m_fd(file::fd_close)
+    , m_buffer(std::move(buffer))
+    , m_on_close(std::move(on_close))
+{
+}
+
 Subprocess::Stream::Stream(Stream&& that) noexcept
     : m_fd(std::move(that.m_fd))
     , m_buffer(std::move(that.m_buffer))
+    , m_on_close(std::move(that.m_on_close))
 {
 }
 
@@ -124,7 +144,18 @@ Subprocess::Stream& Subprocess::Stream::operator =(Stream&& that) noexcept
 {
     m_fd = std::move(that.m_fd);
     m_buffer = std::move(that.m_buffer);
+    m_on_close = std::move(that.m_on_close);
     return *this;
+}
+
+bool Subprocess::Stream::valid() const noexcept
+{
+    return nullptr != m_buffer || -1 != *m_fd;
+}
+
+void Subprocess::Stream::setCloseCallback(OnClose on_close) noexcept
+{
+    m_on_close = std::move(on_close);
 }
 
 //
@@ -135,7 +166,7 @@ void Subprocess::onInput(int fd, std::uint32_t events)
     assert(nullptr != m_input.m_buffer);
 
     if (0 == (EventLoop::Write & events)) {
-        m_event_loop_private->interrupt();
+        m_input.closed();
         return;
     }
 
@@ -174,7 +205,7 @@ void Subprocess::onOutput(int fd, std::uint32_t events)
 
     if (0 == (EventLoop::Read & events)
      || false == read_to_buffer(fd, *m_output.m_buffer)) {
-        m_event_loop_private->interrupt();
+        m_output.closed();
     }
 }
 
@@ -184,8 +215,17 @@ void Subprocess::onError(int fd, std::uint32_t events)
 
     if (0 == (EventLoop::Read & events)
      || false == read_to_buffer(fd, *m_error.m_buffer)) {
-        m_event_loop_private->interrupt();
+        m_error.closed();
     }
+}
+
+void Subprocess::onStreamClose()
+{
+    if (nullptr == m_event_loop_private) {
+        return;
+    }
+
+    m_event_loop_private->interrupt();
 }
 
 int Subprocess::run(std::vector<char const*> argv)
@@ -201,6 +241,16 @@ int Subprocess::run(std::vector<char const*> argv)
         : m_event_loop_extern.lock();
     if (nullptr == event_loop) {
         throwf<std::logic_error>("External event loop not available");
+    }
+
+    if (nullptr == m_input.m_on_close) {
+        m_input.setCloseCallback(std::bind(&Subprocess::onStreamClose, this));
+    }
+    if (nullptr == m_output.m_on_close) {
+        m_output.setCloseCallback(std::bind(&Subprocess::onStreamClose, this));
+    }
+    if (nullptr == m_error.m_on_close) {
+        m_error.setCloseCallback(std::bind(&Subprocess::onStreamClose, this));
     }
 
     file::Pipe input_pipe;

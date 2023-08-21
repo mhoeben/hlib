@@ -93,5 +93,22 @@ TEST_CASE("Subprocess EventLoop", "[subprocess]")
     process.run("echo", { "Hello World!" });
 
     event_loop->dispatch();
+
+    process.wait();
+}
+
+TEST_CASE("Subprocess EventLoop Buffer", "[subprocess]")
+{
+    auto event_loop = std::make_shared<EventLoop>();
+
+    Subprocess process(event_loop);
+    process.setOutput(Subprocess::Stream(std::make_shared<Buffer>(), std::bind([&event_loop] {
+        event_loop->interrupt();
+    })));
+    process.run("echo", { "Hello World!" });
+
+    event_loop->dispatch();
+
+    process.wait();
 }
 

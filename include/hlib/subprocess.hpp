@@ -51,19 +51,30 @@ public:
         HLIB_NOT_COPYABLE(Stream);
 
     public:
+        typedef std::function<void()> OnClose;
+
+    public:
         Stream() noexcept;
         Stream(int fd) noexcept;
         Stream(UniqueOwner<int, -1>&& fd) noexcept;
         Stream(std::string const& filename);
         Stream(std::string const& filename, int flags, mode_t mode = S_IRUSR|S_IWUSR);
         Stream(std::shared_ptr<Buffer> buffer) noexcept;
+        Stream(std::shared_ptr<Buffer> buffer, OnClose on_close) noexcept;
         Stream(Stream&& that) noexcept;
 
         Stream& operator =(Stream&& that) noexcept;
 
+        bool valid() const noexcept;
+
+        void setCloseCallback(OnClose on_close) noexcept;
+
     private:
         UniqueOwner<int, -1> m_fd;
         std::shared_ptr<Buffer> m_buffer;
+        OnClose m_on_close;
+
+        void closed();
     };
 
 public:
@@ -115,6 +126,7 @@ private:
     void onInput(int fd, std::uint32_t events);
     void onOutput(int fd, std::uint32_t events);
     void onError(int fd, std::uint32_t events);
+    void onStreamClose();
 
     int run(std::vector<char const*> argv);
 };
