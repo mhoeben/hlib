@@ -60,13 +60,13 @@ std::vector<char const*> to_argv(std::string const& command, std::vector<std::st
 //
 // Implementation (Subprocess::Stream)
 //
-void Subprocess::Stream::closed()
+void Subprocess::Stream::update(std::uint32_t events)
 {
-    if (nullptr == m_on_close) {
+    if (nullptr == m_on_update) {
         return;
     }
 
-    m_on_close();
+    m_on_update(events);
 }
 
 //
@@ -113,17 +113,17 @@ Subprocess::Stream::Stream(std::shared_ptr<Buffer> buffer) noexcept
 {
 }
 
-Subprocess::Stream::Stream(std::shared_ptr<Buffer> buffer, OnClose on_close) noexcept
+Subprocess::Stream::Stream(std::shared_ptr<Buffer> buffer, OnUpdate on_update) noexcept
     : m_fd(file::fd_close)
     , m_buffer(std::move(buffer))
-    , m_on_close(std::move(on_close))
+    , m_on_update(std::move(on_update))
 {
 }
 
 Subprocess::Stream::Stream(Stream&& that) noexcept
     : m_fd(std::move(that.m_fd))
     , m_buffer(std::move(that.m_buffer))
-    , m_on_close(std::move(that.m_on_close))
+    , m_on_update(std::move(that.m_on_update))
 {
 }
 
@@ -131,7 +131,7 @@ Subprocess::Stream& Subprocess::Stream::operator =(Stream&& that) noexcept
 {
     m_fd = std::move(that.m_fd);
     m_buffer = std::move(that.m_buffer);
-    m_on_close = std::move(that.m_on_close);
+    m_on_update = std::move(that.m_on_update);
     return *this;
 }
 
@@ -140,9 +140,9 @@ bool Subprocess::Stream::valid() const noexcept
     return nullptr != m_buffer || -1 != *m_fd;
 }
 
-void Subprocess::Stream::setCloseCallback(OnClose on_close) noexcept
+void Subprocess::Stream::setUpdateCallback(OnUpdate on_update) noexcept
 {
-    m_on_close = std::move(on_close);
+    m_on_update = std::move(on_update);
 }
 
 //
@@ -153,7 +153,7 @@ void Subprocess::onInput(int fd, std::uint32_t events)
     assert(nullptr != m_input.m_buffer);
 
     if (0 == (EventLoop::Write & events)) {
-        m_input.closed();
+        m_input.update(events);
         return;
     }
 
@@ -190,24 +190,38 @@ void Subprocess::onOutput(int fd, std::uint32_t events)
 {
     assert(nullptr != m_output.m_buffer);
 
-    if (0 == (EventLoop::Read & events)
-     || file::read(fd, *m_output.m_buffer, Config::subprocessOutputBatchSize()) <= 0) {
-        m_output.closed();
+    if (0 != (EventLoop::Read & events)) {
+        ssize_t count = file::read(fd, *m_output.m_buffer, Config::subprocessOutputBatchSize());
+        if (count < 0) {
+            return m_output.update(EventLoop::Hup);
+        }
+
     }
+
+    return m_output.update(events);
 }
 
 void Subprocess::onError(int fd, std::uint32_t events)
 {
     assert(nullptr != m_error.m_buffer);
 
-    if (0 == (EventLoop::Read & events)
-     || file::read(fd, *m_error.m_buffer, Config::subprocessOutputBatchSize()) <= 0) {
-        m_error.closed();
+    if (0 != (EventLoop::Read & events)) {
+        ssize_t count = file::read(fd, *m_error.m_buffer, Config::subprocessOutputBatchSize());
+        if (count < 0) {
+            return m_error.update(EventLoop::Hup);
+        }
+
     }
+
+    return m_error.update(events);
 }
 
-void Subprocess::onStreamClose()
+void Subprocess::onStreamUpdate(std::uint32_t events)
 {
+    if (0 == ((EventLoop::Hup|EventLoop::RdHup|EventLoop::Error) & events)) {
+        return;
+    }
+
     if (nullptr == m_event_loop_private) {
         return;
     }
@@ -230,14 +244,14 @@ int Subprocess::run(std::vector<char const*> argv)
         throwf<std::logic_error>("External event loop not available");
     }
 
-    if (nullptr == m_input.m_on_close) {
-        m_input.setCloseCallback(std::bind(&Subprocess::onStreamClose, this));
+    if (nullptr == m_input.m_on_update) {
+        m_input.setUpdateCallback(std::bind(&Subprocess::onStreamUpdate, this, _1));
     }
-    if (nullptr == m_output.m_on_close) {
-        m_output.setCloseCallback(std::bind(&Subprocess::onStreamClose, this));
+    if (nullptr == m_output.m_on_update) {
+        m_output.setUpdateCallback(std::bind(&Subprocess::onStreamUpdate, this, _1));
     }
-    if (nullptr == m_error.m_on_close) {
-        m_error.setCloseCallback(std::bind(&Subprocess::onStreamClose, this));
+    if (nullptr == m_error.m_on_update) {
+        m_error.setUpdateCallback(std::bind(&Subprocess::onStreamUpdate, this, _1));
     }
 
     file::Pipe input_pipe;
