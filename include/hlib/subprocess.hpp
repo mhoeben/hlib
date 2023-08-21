@@ -107,6 +107,8 @@ private:
     Stream m_output;
     Stream m_error;
 
+    // These allow for the output and error buffers to be available
+    // after the process finishes.
     std::shared_ptr<Buffer> m_output_buffer;
     std::shared_ptr<Buffer> m_error_buffer;
 
