@@ -55,19 +55,6 @@ std::vector<char const*> to_argv(std::string const& command, std::vector<std::st
     return argv;
 }
 
-bool read_to_buffer(int fd, Buffer& buffer)
-{
-    std::uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + Config::subprocessOutputBatchSize());
-
-    ssize_t size = ::read(fd, ptr + buffer.size(), Config::subprocessOutputBatchSize());
-    if (-1 == size) {
-        return false;
-    }
-
-    buffer.resize(buffer.size() + size);
-    return size > 0;
-}
-
 } // namespace
 
 //
@@ -204,7 +191,7 @@ void Subprocess::onOutput(int fd, std::uint32_t events)
     assert(nullptr != m_output.m_buffer);
 
     if (0 == (EventLoop::Read & events)
-     || false == read_to_buffer(fd, *m_output.m_buffer)) {
+     || file::read(fd, *m_output.m_buffer, Config::subprocessOutputBatchSize()) <= 0) {
         m_output.closed();
     }
 }
@@ -214,7 +201,7 @@ void Subprocess::onError(int fd, std::uint32_t events)
     assert(nullptr != m_error.m_buffer);
 
     if (0 == (EventLoop::Read & events)
-     || false == read_to_buffer(fd, *m_error.m_buffer)) {
+     || file::read(fd, *m_error.m_buffer, Config::subprocessOutputBatchSize()) <= 0) {
         m_error.closed();
     }
 }
