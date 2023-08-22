@@ -74,6 +74,7 @@ void Socket::updateEventsLocked(std::uint32_t events) noexcept
 void Socket::onAccept(int fd, std::uint32_t events)
 {
     assert(m_fd.value() == fd);
+    assert(nullptr != m_on_accept);
 
     // Error condition while listening?
     if (0 != (EPOLLERR & events)) {
@@ -90,9 +91,12 @@ void Socket::onAccept(int fd, std::uint32_t events)
     );
     if (-1 == socket.value()) {
         callbackAndClose(errno);
+        return;
     }
 
-    if (nullptr == m_on_accept) {
+    // Make non-blocking.
+    if (false == file::fd_set_non_blocking(socket.value(), true)) {
+        callbackAndClose(errno);
         return;
     }
 
@@ -244,11 +248,9 @@ Socket::Socket(std::weak_ptr<EventLoop> event_loop) noexcept
 }
 
 Socket::Socket(std::weak_ptr<EventLoop> event_loop, UniqueOwner<int, -1> fd) noexcept
-    : m_event_loop(std::move(event_loop))
-    , m_fd(std::move(fd))
-    , m_receive_buffer_size(Config::socketReceiveBufferSize())
-    , m_receive_buffer_gather(Config::socketReceiveBufferGather())
+    : Socket(std::move(event_loop))
 {
+    open(std::move(fd));
 }
 
 Socket::~Socket()
@@ -354,7 +356,7 @@ bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog
     }
 
     // Make non-blocking.
-    if (false == file::fd_set_nonblocking(fd.value(), true)) {
+    if (false == file::fd_set_non_blocking(fd.value(), true)) {
         return false;
     }
 
@@ -415,7 +417,7 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
     }
 
     // Make non-blocking.
-    if (false == file::fd_set_nonblocking(fd.value(), true)) {
+    if (false == file::fd_set_non_blocking(fd.value(), true)) {
         return false;
     }
 

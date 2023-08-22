@@ -473,7 +473,7 @@ std::string file::get_mime_type_from_file(std::string const& pathname, std::stri
     return get_mime_type_from_extension(path.extension(), default_mime_type);
 }
 
-bool file::fd_set_nonblocking(int fd, bool enable) noexcept
+bool file::fd_set_non_blocking(int fd, bool enable) noexcept
 {
     int flags = fcntl(fd, F_GETFL, 0);
     if (-1 == flags) {

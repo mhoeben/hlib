@@ -85,7 +85,7 @@ void write(std::string const& filepath, Buffer const& buffer);
 std::string get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type);
 std::string get_mime_type_from_file(std::string const& pathname, std::string const& default_mime_type);
 
-bool fd_set_nonblocking(int fd, bool enable) noexcept;
+bool fd_set_non_blocking(int fd, bool enable) noexcept;
 
 void fd_close(int fd) noexcept;
 
