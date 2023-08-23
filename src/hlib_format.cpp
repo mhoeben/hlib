@@ -29,17 +29,28 @@ using namespace hlib;
 void hlib::hexdump(FILE* output, void const* data, std::size_t size, std::size_t columns, bool ascii)
 {
     const std::uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
+    std::size_t row = 0;
     std::size_t index;
     std::size_t column;
 
     fmt::memory_buffer hex_buffer;
     fmt::memory_buffer ascii_buffer;
 
-    (void)ascii; // TODO
+    auto print_row = [&]
+    {
+        fmt::print(output, "{:8x} |{:<{}}", row, fmt::to_string(hex_buffer), columns * 3);
+        if (true == ascii) {
+            fmt::print(output, "| {}\n", fmt::to_string(ascii_buffer));
+        }
+        else {
+            fmt::print(output, "\n");
+        }
+        row += columns;
+    };
 
     for (index = 0, column = 0; index < size; ++index, ++column) {
         if (column == columns) {
-            fmt::print(output, "{:8x} |{:<{}} | {}\n", index - columns, fmt::to_string(hex_buffer), columns * 3, fmt::to_string(ascii_buffer));
+            print_row();
 
             column = 0;
             hex_buffer.clear();
@@ -51,7 +62,7 @@ void hlib::hexdump(FILE* output, void const* data, std::size_t size, std::size_t
     }
 
     if (0 != column) {
-        fmt::print(output, "{:8x} |{:<{}} | {}\n", index - columns, fmt::to_string(hex_buffer), columns * 3, fmt::to_string(ascii_buffer));
+        print_row();
     }
 }
 
