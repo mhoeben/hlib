@@ -235,6 +235,7 @@ int Subprocess::run(std::vector<char const*> argv)
 
     assert(-1 == m_pid);
 
+    m_state = Failed;
     m_return_code = Pending;
 
     std::shared_ptr<EventLoop> event_loop = m_event_loop_private
@@ -309,7 +310,7 @@ int Subprocess::run(std::vector<char const*> argv)
 
         fmt::print(stderr, "execvp() failed ({})", get_error_string());
         abort();
-        return Error;
+        return -1;
 
     default:
         if (nullptr != m_input.m_buffer) {
@@ -359,6 +360,8 @@ int Subprocess::run(std::vector<char const*> argv)
         error_pipe.close();
 
         event_loop.reset();
+
+        m_state = Running;
 
         if (nullptr == m_event_loop_private) {
             return Pending;
@@ -450,6 +453,11 @@ Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
     return *this;
 }
 
+Subprocess::State Subprocess::state() const noexcept
+{
+    return m_state;
+}
+
 int Subprocess::pid() const noexcept
 {
     return m_pid;
@@ -520,10 +528,14 @@ int Subprocess::run(std::string const& command, std::vector<std::string> const& 
 
 int Subprocess::wait()
 {
+    assert(Running == m_state);
+
     int status;
 
+    m_state = Failed;
+
     if (m_pid != waitpid(m_pid, &status, 0)) {
-        throwf<std::runtime_error>("Failed to wait for pid {} to exit ({})", m_pid, get_error_string());
+        throwf<std::runtime_error>("waitpid failed ({})", get_error_string());
     }
 
     if (WIFEXITED(status)) {
@@ -550,5 +562,6 @@ int Subprocess::wait()
     m_error = Stream(std::make_shared<Buffer>());
 
     m_pid = -1;
+    m_state = Exited;
     return m_return_code;
 }

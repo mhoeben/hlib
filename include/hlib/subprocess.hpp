@@ -41,8 +41,16 @@ class Subprocess final
 
 public:
     static constexpr int Pending{ -2 };
-    static constexpr int Error{ -1 };
-    static constexpr int Ok{ 0 };
+    static constexpr int Failure{ -1 };
+    static constexpr int Success{ 0 };
+
+    enum State
+    {
+        Idle,
+        Running,
+        Exited,
+        Failed
+    };
 
     class Stream
     {
@@ -89,6 +97,7 @@ public:
 
     Subprocess& operator =(Subprocess&& that) noexcept;
 
+    State state() const noexcept;
     int pid() const noexcept;
     int returnCode() const noexcept;
     Buffer& output() const noexcept;
@@ -110,6 +119,7 @@ private:
     std::weak_ptr<EventLoop> m_event_loop_extern;
     std::shared_ptr<EventLoop> m_event_loop_private;
 
+    State m_state{ State::Idle };
     int m_pid{ -1 };
     int m_return_code{ Pending };
 

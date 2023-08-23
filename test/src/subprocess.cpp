@@ -28,17 +28,29 @@
 
 using namespace hlib;
 
+TEST_CASE("Subprocess", "[subprocess]")
+{
+    Subprocess process;
+    REQUIRE(Subprocess::Idle == process.state());
+    REQUIRE(-1 == process.pid());
+    REQUIRE(Subprocess::Pending == process.returnCode());
+    REQUIRE(true == process.output().empty());
+    REQUIRE(true == process.error().empty());
+}
+
 TEST_CASE("Subprocess Echo", "[subprocess]")
 {
     Subprocess process("echo", { "Hello World!" });
     REQUIRE(0 == process.returnCode());
     REQUIRE("Hello World!\n" == to_string(process.output()));
     REQUIRE(true == process.error().empty());
+    REQUIRE(Subprocess::Exited == process.state());
 
     process.run("echo", { "Good", "morning" });
     REQUIRE(0 == process.returnCode());
     REQUIRE("Good morning\n" == to_string(process.output()));
     REQUIRE(true == process.error().empty());
+    REQUIRE(Subprocess::Exited == process.state());
 }
 
 TEST_CASE("Subprocess StdIn to StdOut", "[subprocess]")
@@ -47,11 +59,13 @@ TEST_CASE("Subprocess StdIn to StdOut", "[subprocess]")
     REQUIRE(0 == process.returnCode());
     REQUIRE("Hello World!" == to_string(process.output()));
     REQUIRE(true == process.error().empty());
+    REQUIRE(Subprocess::Exited == process.state());
 
     process.run("cat", { "-" }, "Good morning");
     REQUIRE(0 == process.returnCode());
     REQUIRE("Good morning" == to_string(process.output()));
     REQUIRE(true == process.error().empty());
+    REQUIRE(Subprocess::Exited == process.state());
 
 }
 
@@ -61,6 +75,7 @@ TEST_CASE("Subprocess Stdin to Null", "[subprocess]")
     REQUIRE(0 == process.returnCode());
     REQUIRE(true == process.output().empty());
     REQUIRE(true == process.error().empty());
+    REQUIRE(Subprocess::Exited == process.state());
 }
 
 TEST_CASE("Subprocess EventLoop", "[subprocess]")
@@ -89,12 +104,18 @@ TEST_CASE("Subprocess EventLoop", "[subprocess]")
     );
 
     Subprocess process(event_loop);
+    REQUIRE(Subprocess::Idle == process.state());
+
     process.setOutput(std::move(output_pipe.get<1>()));
     process.run("echo", { "Hello World!" });
+
+    REQUIRE(Subprocess::Running == process.state());
 
     event_loop->dispatch();
 
     process.wait();
+
+    REQUIRE(Subprocess::Exited == process.state());
 }
 
 TEST_CASE("Subprocess EventLoop Buffer", "[subprocess]")
