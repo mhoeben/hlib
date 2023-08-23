@@ -46,6 +46,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/buffer.hpp
     include/hlib/codec.hpp
     include/hlib/config.hpp
+    include/hlib/endian.hpp
     include/hlib/error.hpp
     include/hlib/event_loop.hpp
     include/hlib/file.hpp
@@ -76,6 +77,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/c/buffer.h
     include/hlib/c/codec.h
     include/hlib/c/codec_binary.h
+    include/hlib/c/endian.h
     include/hlib/c/error.h
     include/hlib/c/vector.h
 
