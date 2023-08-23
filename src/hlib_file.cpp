@@ -89,7 +89,7 @@ bool file::is_writable(std::filesystem::path const& filepath) noexcept
 
 std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
 {
-    char* ptr = reserve_as<char>(buffer, buffer.size() + size, std::nothrow);
+    char* ptr = static_cast<char*>(buffer.extend(size, std::nothrow));
     if (ptr == nullptr) {
         error_code = std::make_error_code(static_cast<std::errc>(errno));
         return stream;
@@ -146,7 +146,7 @@ Buffer file::read(std::istream& stream, std::size_t partial_size)
 
 ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
 {
-    uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + size, std::nothrow);
+    uint8_t* ptr = static_cast<uint8_t*>(buffer.extend(size, std::nothrow));
     if (ptr == nullptr) {
         error_code = std::make_error_code(static_cast<std::errc>(errno));
         return -1;
@@ -203,7 +203,7 @@ Buffer file::read(FILE* file, std::size_t partial_size)
 
 ssize_t file::read(int fd, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
 {
-    uint8_t* ptr = reserve_as<uint8_t>(buffer, buffer.size() + size, std::nothrow);
+    uint8_t* ptr = static_cast<uint8_t*>(buffer.extend(size, std::nothrow));
     if (ptr == nullptr) {
         error_code = std::make_error_code(static_cast<std::errc>(errno));
         return -1;

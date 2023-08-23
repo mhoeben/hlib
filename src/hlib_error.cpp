@@ -91,26 +91,6 @@ bool Error::operator !() const noexcept
     return success();
 }
 
-Error::operator std::error_code const&() const
-{
-    return std::get<Code>(m_value);
-}
-
-Error::operator std::error_code&()
-{
-    return std::get<Code>(m_value);
-}
-
-Error::operator std::string const&() const
-{
-    return std::get<String>(m_value);
-}
-
-Error::operator std::string&()
-{
-    return std::get<String>(m_value);
-}
-
 Error::operator bool() const noexcept
 {
     return failure();

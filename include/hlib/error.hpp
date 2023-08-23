@@ -63,11 +63,6 @@ public:
     bool operator !() const noexcept;
     operator bool() const noexcept;
 
-    explicit operator std::error_code const&() const;
-    explicit operator std::error_code&();
-    explicit operator std::string const&() const;
-    explicit operator std::string&();
-
     Index index() const noexcept;
     bool success() const noexcept;
     bool failure() const noexcept;
@@ -86,18 +81,6 @@ public:
 private:
     Value m_value;
 };
-
-template<typename T>
-T const& as(Error const& error)
-{
-    return static_cast<T const&>(error);
-}
-
-template<typename T>
-T& as(Error& error)
-{
-    return static_cast<T&>(error);
-}
 
 int get_socket_error(int fd) noexcept;
 

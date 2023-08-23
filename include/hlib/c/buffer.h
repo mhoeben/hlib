@@ -55,6 +55,7 @@ HLIB_C_VISIBILITY void hlib_buffer_clear(hlib_buffer_t* buffer);
 HLIB_C_VISIBILITY int hlib_buffer_shrink(hlib_buffer_t* buffer);
 HLIB_C_VISIBILITY void* hlib_buffer_reserve(hlib_buffer_t* buffer, size_t capacity);
 HLIB_C_VISIBILITY void* hlib_buffer_resize(hlib_buffer_t* buffer, size_t size);
+HLIB_C_VISIBILITY void* hlib_buffer_extend(hlib_buffer_t* buffer, size_t capacity);
 HLIB_C_VISIBILITY int hlib_buffer_assign(hlib_buffer_t* buffer, void const* data, size_t size);
 HLIB_C_VISIBILITY int hlib_buffer_append(hlib_buffer_t* buffer, void const* data, size_t size);
 HLIB_C_VISIBILITY int hlib_buffer_insert(hlib_buffer_t* buffer, size_t offset, void const* data, size_t size);
@@ -231,6 +232,17 @@ void* hlib_buffer_resize(hlib_buffer_t* buffer, size_t size)
 
     buffer->size = size;
     return buffer->data;
+}
+
+void* hlib_buffer_extend(hlib_buffer_t* buffer, size_t capacity)
+{
+    assert(buffer->size <= buffer->capacity);
+
+    if (capacity > 0 && NULL == hlib_buffer_realloc(buffer, buffer->size + capacity, 0)) {
+        return NULL;
+    }
+
+    return ((char*)buffer->data) + buffer->size;
 }
 
 int hlib_buffer_assign(hlib_buffer_t* buffer, void const* data, size_t size)

@@ -529,12 +529,12 @@ void Server::Socket::close(uint16_t code, Buffer reason)
     // code before the reason. Else, make sure reason is empty.
     if (1005 != code) {
         // Reserve space for code bytes, obtaining a pointer to the buffer.
-        uint8_t* ptr = reserve_as<uint8_t>(reason, reason.size() + 2);
+        std::uint8_t* ptr = static_cast<std::uint8_t*>(reason.reserve(reason.size() + 2));
         // Insert space for code bytes.
         reason.insert(0, nullptr, 2);
         // Encode code.
-        ptr[0] = static_cast<uint8_t>(code >> 8);
-        ptr[1] = static_cast<uint8_t>(code >> 0);
+        ptr[0] = static_cast<std::uint8_t>(code >> 8);
+        ptr[1] = static_cast<std::uint8_t>(code >> 0);
     }
     else {
         assert(true == reason.empty());

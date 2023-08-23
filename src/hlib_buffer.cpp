@@ -164,6 +164,20 @@ void* Buffer::resize(std::size_t size)
     return data;
 }
 
+void* Buffer::extend(std::size_t capacity, std::nothrow_t) noexcept
+{
+    return hlib_buffer_extend(&m_buffer, capacity);
+}
+
+void* Buffer::extend(std::size_t capacity)
+{
+    void* data = hlib_buffer_extend(&m_buffer, capacity);
+    if (nullptr == data && capacity > 0) {
+        throw std::bad_alloc();
+    }
+    return data;
+}
+
 bool Buffer::assign(void const* data, std::size_t size, std::nothrow_t) noexcept
 {
     return -1 != hlib_buffer_assign(&m_buffer, data, size);

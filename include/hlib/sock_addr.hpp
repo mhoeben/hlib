@@ -63,15 +63,19 @@ public:
     bool empty() const noexcept;
 
     explicit operator sockaddr const* () const noexcept;
+    explicit operator sockaddr const* () noexcept;
     explicit operator sockaddr* () noexcept;
 
     explicit operator sockaddr_in const*() const noexcept;
+    explicit operator sockaddr_in const*() noexcept;
     explicit operator sockaddr_in*() noexcept;
 
     explicit operator sockaddr_in6 const*() const noexcept;
+    explicit operator sockaddr_in6 const*() noexcept;
     explicit operator sockaddr_in6*() noexcept;
 
     explicit operator sockaddr_un const*() const noexcept;
+    explicit operator sockaddr_un const*() noexcept;
     explicit operator sockaddr_un*() noexcept;
 
     bool setPort(uint16_t port, std::nothrow_t) noexcept;
@@ -92,18 +96,6 @@ private:
 };
 
 std::string to_string(SockAddr const& sa);
-
-template<typename T>
-T const* as(SockAddr const& sa) noexcept
-{
-    return static_cast<T const*>(sa);
-}
-
-template<typename T>
-T* as(SockAddr& sa) noexcept
-{
-    return static_cast<T*>(sa);
-}
 
 } // namespace hlib
 

@@ -139,7 +139,7 @@ Server::Transaction::Transaction(Server& a_server, hserv_s* a_hserv, hserv_sessi
 {
     int size = hserv_header_fields_copy(
         hserv_request_get_header_fields(a_session),
-        reserve_as<char>(m_request_fields, HSERV_MAX_HEADERS_LENGTH),
+        static_cast<char*>(m_request_fields.reserve(HSERV_MAX_HEADERS_LENGTH)),
         HSERV_MAX_HEADERS_LENGTH
     );
     assert(size >= 0);
@@ -312,7 +312,7 @@ void Server::Transaction::receive(std::shared_ptr<Buffer> content, OnRequestCont
     hverify(hserv_request_receive(
         m_hserv,
         m_session, 
-        reserve_as<char>(*m_request_content, m_request_content->capacity()) + m_request_content->size(),
+        static_cast<char*>(m_request_content->extend(0)),
         m_request_content->capacity() - m_request_content->size(),
         [](hserv_t* /* hserv */, hserv_session_t* session, void* buffer, std::size_t size, std::size_t more) -> int
         {

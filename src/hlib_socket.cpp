@@ -86,7 +86,7 @@ void Socket::onAccept(int fd, std::uint32_t events)
 
     // Accept socket and peer address.
     UniqueOwner<int, -1> socket(
-        accept(fd, as<sockaddr>(address), &length),
+        accept(fd, static_cast<sockaddr*>(address), &length),
         file::fd_close
     );
     if (-1 == socket.value()) {
@@ -158,7 +158,7 @@ void Socket::onEvent(int fd, std::uint32_t events)
 
     if (0 != (EventLoop::Read & events)) {
         // Reserve up to configured size.
-        std::uint8_t* ptr = reserve_as<std::uint8_t>(m_receive_buffer, m_receive_buffer_size);
+        std::uint8_t* ptr = static_cast<std::uint8_t*>(m_receive_buffer.reserve(m_receive_buffer_size));
         std::size_t offset = m_receive_buffer.size();
 
         assert(offset < m_receive_buffer_size);
@@ -366,7 +366,7 @@ bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog
     }
 
     // Bind socket to address.
-    if (-1 == ::bind(fd.value(), as<sockaddr>(address), address.length())) {
+    if (-1 == ::bind(fd.value(), static_cast<sockaddr const*>(address), address.length())) {
         return false;
     }
 
@@ -427,7 +427,7 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
     }
 
     // Connect to peer address.
-    if (-1 == ::connect(fd.value(), as<sockaddr>(address), address.length())) {
+    if (-1 == ::connect(fd.value(), static_cast<sockaddr const*>(address), address.length())) {
         if (EINPROGRESS != errno) {
             return false;
         }

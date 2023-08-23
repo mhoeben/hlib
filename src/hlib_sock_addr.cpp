@@ -249,12 +249,23 @@ SockAddr::operator sockaddr const* () const noexcept
     return reinterpret_cast<sockaddr const*>(&m_storage);
 }
 
+SockAddr::operator sockaddr const* () noexcept
+{
+    return reinterpret_cast<sockaddr const*>(&m_storage);
+}
+
 SockAddr::operator sockaddr* () noexcept
 {
     return reinterpret_cast<sockaddr*>(&m_storage);
 }
 
 SockAddr::operator sockaddr_in const*() const noexcept
+{
+    assert(AF_INET == m_family);
+    return &m_inet;
+}
+
+SockAddr::operator sockaddr_in const*() noexcept
 {
     assert(AF_INET == m_family);
     return &m_inet;
@@ -272,6 +283,12 @@ SockAddr::operator sockaddr_in6 const*() const noexcept
     return &m_inet6;
 }
 
+SockAddr::operator sockaddr_in6 const*() noexcept
+{
+    assert(AF_INET6 == m_family);
+    return &m_inet6;
+}
+
 SockAddr::operator sockaddr_in6*() noexcept
 {
     assert(AF_INET6 == m_family);
@@ -279,6 +296,12 @@ SockAddr::operator sockaddr_in6*() noexcept
 }
 
 SockAddr::operator sockaddr_un const*() const noexcept
+{
+    assert(AF_UNIX == m_family);
+    return &m_unix;
+}
+
+SockAddr::operator sockaddr_un const*() noexcept
 {
     assert(AF_UNIX == m_family);
     return &m_unix;

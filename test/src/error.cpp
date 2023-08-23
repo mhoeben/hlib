@@ -34,8 +34,8 @@ TEST_CASE("Error", "[error]")
     REQUIRE(false == error);
     REQUIRE(true == error.success());
     REQUIRE(false == error.failure());
-    REQUIRE_THROWS(as<std::error_code&>(error));
-    REQUIRE_THROWS(as<std::string&>(error));
+    REQUIRE_THROWS(error.code());
+    REQUIRE_THROWS(error.string());
 
     std::error_code const error_code = std::make_error_code(std::errc::invalid_argument);
 
@@ -43,8 +43,8 @@ TEST_CASE("Error", "[error]")
     REQUIRE(Error::Code == error.index());
     REQUIRE(false == error.success());
     REQUIRE(true == error.failure());
-    REQUIRE(error_code == as<std::error_code>(error));
-    REQUIRE_THROWS(as<std::string const&>(error));
+    REQUIRE(error_code == error.code());
+    REQUIRE_THROWS(error.string());
 
     std::string const error_string = "error string";
 
@@ -52,8 +52,8 @@ TEST_CASE("Error", "[error]")
     REQUIRE(Error::String == error.index());
     REQUIRE(false == error.success());
     REQUIRE(true == error.failure());
-    REQUIRE_THROWS(as<std::error_code const&>(error));
-    REQUIRE(error_string == as<std::string>(error));
+    REQUIRE_THROWS(error.code());
+    REQUIRE(error_string == error.string());
 
     Error copy = error;
     REQUIRE(copy == error);

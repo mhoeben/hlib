@@ -31,7 +31,7 @@ TEST_CASE("Result Monostate", "[result]")
     Result<> result;
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
-    REQUIRE(std::monostate() == as<decltype(result)::Type>(result));
+    REQUIRE(std::monostate() == result.value());
 }
 
 TEST_CASE("Result String", "[result]")
@@ -41,40 +41,43 @@ TEST_CASE("Result String", "[result]")
     REQUIRE(false == !result);
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
-    REQUIRE("" == as<std::string>(result));
-    REQUIRE_THROWS(as<std::error_code>(result));
+    REQUIRE("" == result.value());
+    REQUIRE_THROWS(result.errorCode());
+    REQUIRE_THROWS(result.errorString());
 
     std::string const string = "success";
 
     result = Result(string);
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
-    REQUIRE(string == as<std::string>(result));
-    REQUIRE_THROWS(as<std::error_code>(result));
+    REQUIRE(string == result.value());
+    REQUIRE_THROWS(result.errorCode());
+    REQUIRE_THROWS(result.errorString());
 
     result = "more success";
-    REQUIRE("more success" == as<std::string>(result));
+    REQUIRE("more success" == result.value());
 
     std::error_code const error_code = std::make_error_code(std::errc::invalid_argument);
 
     result = Error(error_code);
     REQUIRE(false == result.success());
     REQUIRE(true == result.failure());
-    REQUIRE_THROWS(as<std::string>(result));
-    REQUIRE(error_code == as<std::error_code>(result));
+    REQUIRE_THROWS(result.value());
+    REQUIRE(error_code == result.errorCode());
 
     std::string const error_string = "error string";
 
     result = Error(error_string);
     REQUIRE(false == result.success());
     REQUIRE(true == result.failure());
-    REQUIRE_THROWS(as<std::string>(result));
-    REQUIRE_THROWS(as<std::error_code>(result));
+    REQUIRE_THROWS(result.value());
+    REQUIRE_THROWS(result.errorCode());
+    REQUIRE(error_string == result.errorString());
 
     Error error = to<Error>(result);
     REQUIRE(false == error.success());
     REQUIRE(true == error.failure());
-    REQUIRE(error_string == as<std::string>(error));
+    REQUIRE(error_string == error.string());
 }
 
 TEST_CASE("Result Integer", "[result]")
@@ -82,15 +85,15 @@ TEST_CASE("Result Integer", "[result]")
     Result<int> result;
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
-    REQUIRE(0 == as<int>(result));
-    REQUIRE_THROWS(as<std::error_code>(result));
-    REQUIRE_THROWS(as<std::string>(result));
+    REQUIRE(0 == result.value());
+    REQUIRE_THROWS(result.errorCode());
+    REQUIRE_THROWS(result.errorString());
 
     result = 1311;
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
-    REQUIRE(1311 == as<int>(result));
-    REQUIRE_THROWS(as<std::error_code>(result));
-    REQUIRE_THROWS(as<std::string>(result));
+    REQUIRE(1311 == result.value());
+    REQUIRE_THROWS(result.errorCode());
+    REQUIRE_THROWS(result.errorString());
 }
 

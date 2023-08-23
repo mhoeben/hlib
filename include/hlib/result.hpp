@@ -168,40 +168,6 @@ public:
         return failure();
     }
 
-    operator T const&() const
-    {
-        return std::get<Success>(m_value);
-    }
-
-    operator T&()
-    {
-        return std::get<Success>(m_value);
-    }
-
-    operator std::error_code const&() const
-    {
-        return std::get<ErrorCode>(m_value);
-    }
-
-    operator std::error_code&()
-    {
-        return std::get<ErrorCode>(m_value);
-    }
-
-    template<typename U, typename = std::enable_if_t<std::is_same<std::string, U>::value
-                                                  && !std::is_same<T, U>::value>>
-    operator U const&() const
-    {
-        return std::get<ErrorString>(m_value);
-    }
-
-    template<typename U, typename = std::enable_if_t<std::is_same<std::string, U>::value
-                                                  && !std::is_same<T, U>::value>>
-    operator U&()
-    {
-        return std::get<ErrorString>(m_value);
-    }
-
     Index index() const noexcept
     {
         return static_cast<Index>(m_value.index());
@@ -217,12 +183,12 @@ public:
         return Success != index();
     }
 
-    T const& value() const noexcept
+    T const& value() const
     {
         return std::get<Success>(m_value);
     }
 
-    T& value() noexcept
+    T& value()
     {
         return std::get<Success>(m_value);
     }
@@ -251,18 +217,6 @@ public:
 private:
     std::variant<T, std::error_code, std::string> m_value;
 };
-
-template<typename T, typename U>
-T as(Result<U> const& result)
-{
-    return static_cast<T const&>(result);
-}
-
-template<typename T, typename U>
-T as(Result<U>& result)
-{
-    return static_cast<T&>(result);
-}
 
 template<typename T, typename U>
 typename std::enable_if<std::is_same<Error, T>::value, T>::type
