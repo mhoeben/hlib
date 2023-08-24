@@ -147,14 +147,14 @@ public:
 };
 
 template<typename R = std::ratio<1, 1>, typename T = int>
-struct Unit final
+struct UnitValue final
 {
     typedef R Ratio;
     typedef T Type;
 
     T value;
 
-    Unit(T a_value)
+    UnitValue(T a_value)
         : value{ a_value }
     {
     }
@@ -174,136 +174,136 @@ struct Unit final
         return 0 != value;
     }
 
-    bool operator == (Unit const& that) const noexcept
+    bool operator == (UnitValue const& that) const noexcept
     {
         return that.value == value;
     }
 
-    bool operator != (Unit const& that) const noexcept
+    bool operator != (UnitValue const& that) const noexcept
     {
         return that.value != value;
     }
 
-    bool operator <(Unit const& that) const noexcept
+    bool operator <(UnitValue const& that) const noexcept
     {
         return value < that.value;
     }
 
-    bool operator <=(Unit const& that) const noexcept
+    bool operator <=(UnitValue const& that) const noexcept
     {
         return value <= that.value;
     }
 
-    bool operator >(Unit const& that) const noexcept
+    bool operator >(UnitValue const& that) const noexcept
     {
         return value >= that.value;
     }
 
-    bool operator >=(Unit const& that) const noexcept
+    bool operator >=(UnitValue const& that) const noexcept
     {
         return value >= that.value;
     }
 
-    Unit operator +() const noexcept
+    UnitValue operator +() const noexcept
     {
-        return Unit(+value);
+        return UnitValue(+value);
     }
 
-    Unit operator -() const noexcept
+    UnitValue operator -() const noexcept
     {
-        return Unit(-value);
+        return UnitValue(-value);
     }
 
-    Unit operator +(Unit const& that) const noexcept
+    UnitValue operator +(UnitValue const& that) const noexcept
     {
-        return Unit(value + that.value);
+        return UnitValue(value + that.value);
     }
 
-    Unit operator -(Unit const& that) const noexcept
+    UnitValue operator -(UnitValue const& that) const noexcept
     {
-        return Unit(value - that.value);
+        return UnitValue(value - that.value);
     }
 
-    Unit operator *(Unit const& that) const noexcept
+    UnitValue operator *(UnitValue const& that) const noexcept
     {
-        return Unit(value * that.value);
+        return UnitValue(value * that.value);
     }
 
-    Unit operator /(Unit const& that) const
+    UnitValue operator /(UnitValue const& that) const
     {
-        return Unit(value / that.value);
+        return UnitValue(value / that.value);
     }
 
-    Unit operator %(Unit const& that) const
+    UnitValue operator %(UnitValue const& that) const
     {
-        return Unit(value % that.value);
+        return UnitValue(value % that.value);
     }
 
-    Unit& operator ++() noexcept
+    UnitValue& operator ++() noexcept
     {
-        return Unit(++value);
+        return UnitValue(++value);
     }
 
-    Unit operator ++(int) noexcept
+    UnitValue operator ++(int) noexcept
     {
-        return Unit(value++);
+        return UnitValue(value++);
     }
 
-    Unit& operator --() noexcept
+    UnitValue& operator --() noexcept
     {
-        return Unit(--value);
+        return UnitValue(--value);
     }
 
-    Unit operator --(int) noexcept
+    UnitValue operator --(int) noexcept
     {
-        return Unit(value--);
+        return UnitValue(value--);
     }
 
-    Unit& operator =(Unit const& that) noexcept
+    UnitValue& operator =(UnitValue const& that) noexcept
     {
         value = that.value;
         return *this;
     }
 
-    Unit& operator +=(Unit const& that) noexcept
+    UnitValue& operator +=(UnitValue const& that) noexcept
     {
         value += that.value;
         return *this;
     }
 
-    Unit& operator -=(Unit const& that) noexcept
+    UnitValue& operator -=(UnitValue const& that) noexcept
     {
         value -= that.value;
         return *this;
     }
 
-    Unit& operator *=(Unit const& that) noexcept
+    UnitValue& operator *=(UnitValue const& that) noexcept
     {
         value *= that.value;
         return *this;
     }
 
-    Unit& operator /=(Unit const& that)
+    UnitValue& operator /=(UnitValue const& that)
     {
         value /= that.value;
         return *this;
     }
 
-    Unit& operator %=(Unit const& that)
+    UnitValue& operator %=(UnitValue const& that)
     {
         value %= that.value;
         return *this;
     }
 
     template<typename TRatio, typename TType = T>
-    Unit<TRatio, TType> to() const
+    UnitValue<TRatio, TType> to() const
     {
         using Factor = std::ratio_divide<R, TRatio>;
-        return Unit<TRatio, TType>(static_cast<TType>(value) * static_cast<TType>(Factor::num) / static_cast<TType>(Factor::den));
+        return UnitValue<TRatio, TType>(static_cast<TType>(value) * static_cast<TType>(Factor::num) / static_cast<TType>(Factor::den));
     }
 
     template<typename TRatio, typename TType = T>
-    operator Unit<TRatio, TType>() const
+    operator UnitValue<TRatio, TType>() const
     {
         return to<TRatio, TType>();
     }
