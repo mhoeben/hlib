@@ -264,7 +264,7 @@ std::optional<std::string> Server::Transaction::getRequestValue(std::string cons
     do {
         it = hserv_header_field_find(it, name.c_str(), &value);
         if (nullptr == it) {
-            return std::optional<std::string>();
+            return std::nullopt;
         }
     }
     while (index-- > 0);
@@ -519,9 +519,11 @@ std::optional<std::reference_wrapper<Server::Transaction>> Server::getTransactio
     assert(true == callback_from(m_event_loop));
 
     auto it = m_transactions.find(id);
-    return m_transactions.end() == it
-        ? *it->second
-        : std::optional<std::reference_wrapper<Transaction>>();
+    if (m_transactions.end() == it) {
+        return std::nullopt;
+    }
+
+    return *it->second;
 }
 
 void Server::start(Config const& config)
@@ -621,7 +623,7 @@ std::optional<std::string> http::canonicalize(std::string target)
 
         if (".." == component) {
             if (true == canonical.empty()) {
-                return std::optional<std::string>();
+                return std::nullopt;
             }
 
             canonical.pop_back();
@@ -649,21 +651,21 @@ std::optional<std::string> http::is_upgrade(Server::Transaction const& transacti
     std::optional<std::string> value;
 
     if (Method::Get != transaction.request_method) {
-        return std::optional<std::string>();
+        return std::nullopt;
     }
 
     value = transaction.getRequestValue("Connection");
     if (false == value.has_value() || false == iequals("upgrade", value.value())) {
-        return std::optional<std::string>();
+        return std::nullopt;
     }
 
     value = transaction.getRequestValue("Upgrade");
     if (false == value.has_value()) {
-        return std::optional<std::string>();
+        return std::nullopt;
     }
 
     if (0 != transaction.request_content_length) {
-        return std::optional<std::string>();
+        return std::nullopt;
     }
 
     return value;

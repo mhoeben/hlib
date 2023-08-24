@@ -40,13 +40,13 @@ std::optional<bool> hlib::stob(std::string const& value, std::nothrow_t)
         return false;
     }
 
-    return std::optional<bool>();
+    return std::nullopt;
 }
 
 std::optional<std::int8_t> hlib::stoi8(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<std::int8_t>();
+        return std::nullopt;
     }
 
     char* pos = nullptr;
@@ -55,7 +55,7 @@ std::optional<std::int8_t> hlib::stoi8(std::string const& value, int base, std::
      || 0 != *pos
      || r < std::numeric_limits<std::int8_t>::min()
      || r > std::numeric_limits<std::int8_t>::max()) {
-        return std::optional<std::int8_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -63,7 +63,7 @@ std::optional<std::int8_t> hlib::stoi8(std::string const& value, int base, std::
 std::optional<int16_t> hlib::stoi16(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<int16_t>();
+        return std::nullopt;
     }
 
     char* pos = nullptr;
@@ -72,7 +72,7 @@ std::optional<int16_t> hlib::stoi16(std::string const& value, int base, std::not
      || 0 != *pos
      || r < std::numeric_limits<int16_t>::min()
      || r > std::numeric_limits<int16_t>::max()) {
-        return std::optional<int16_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -80,7 +80,7 @@ std::optional<int16_t> hlib::stoi16(std::string const& value, int base, std::not
 std::optional<int32_t> hlib::stoi32(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<int32_t>();
+        return std::nullopt;
     }
 
     errno = 0;
@@ -92,7 +92,7 @@ std::optional<int32_t> hlib::stoi32(std::string const& value, int base, std::not
      || r < std::numeric_limits<int32_t>::min()
      || r > std::numeric_limits<int32_t>::max()
      || ((LONG_MIN == r || LONG_MAX == r) && ERANGE == errno)) {
-        return std::optional<int32_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -100,7 +100,7 @@ std::optional<int32_t> hlib::stoi32(std::string const& value, int base, std::not
 std::optional<int64_t> hlib::stoi64(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<int64_t>();
+        return std::nullopt;
     }
 
     errno = 0;
@@ -110,7 +110,7 @@ std::optional<int64_t> hlib::stoi64(std::string const& value, int base, std::not
     if (nullptr == pos
      || 0 != *pos
      || ((LLONG_MIN == r || LLONG_MAX == r) && ERANGE == errno)) {
-        return std::optional<int64_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -118,7 +118,7 @@ std::optional<int64_t> hlib::stoi64(std::string const& value, int base, std::not
 std::optional<std::uint8_t> hlib::stoui8(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<std::uint8_t>();
+        return std::nullopt;
     }
 
     char* pos = nullptr;
@@ -127,7 +127,7 @@ std::optional<std::uint8_t> hlib::stoui8(std::string const& value, int base, std
      || 0 != *pos
      || r < std::numeric_limits<std::uint8_t>::min()
      || r > std::numeric_limits<std::uint8_t>::max()) {
-        return std::optional<std::uint8_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -135,7 +135,7 @@ std::optional<std::uint8_t> hlib::stoui8(std::string const& value, int base, std
 std::optional<std::uint16_t> hlib::stoui16(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<std::uint16_t>();
+        return std::nullopt;
     }
 
     char* pos = nullptr;
@@ -144,7 +144,7 @@ std::optional<std::uint16_t> hlib::stoui16(std::string const& value, int base, s
      || 0 != *pos
      || r < std::numeric_limits<std::uint16_t>::min()
      || r > std::numeric_limits<std::uint16_t>::max()) {
-        return std::optional<std::uint16_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -152,7 +152,7 @@ std::optional<std::uint16_t> hlib::stoui16(std::string const& value, int base, s
 std::optional<std::uint32_t> hlib::stoui32(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<std::uint32_t>();
+        return std::nullopt;
     }
 
     errno = 0;
@@ -164,7 +164,7 @@ std::optional<std::uint32_t> hlib::stoui32(std::string const& value, int base, s
      || r < std::numeric_limits<std::uint32_t>::min()
      || r > std::numeric_limits<std::uint32_t>::max()
      || (ULONG_MAX == r && ERANGE == errno)) {
-        return std::optional<std::uint32_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -172,7 +172,7 @@ std::optional<std::uint32_t> hlib::stoui32(std::string const& value, int base, s
 std::optional<std::uint64_t> hlib::stoui64(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<std::uint64_t>();
+        return std::nullopt;
     }
 
     errno = 0;
@@ -182,7 +182,7 @@ std::optional<std::uint64_t> hlib::stoui64(std::string const& value, int base, s
     if (nullptr == pos
      || 0 != *pos
      || (ULLONG_MAX == r && ERANGE == errno)) {
-        return std::optional<int64_t>();
+        return std::nullopt;
     }
     return r;
 }
@@ -190,7 +190,7 @@ std::optional<std::uint64_t> hlib::stoui64(std::string const& value, int base, s
 std::optional<float> hlib::stof32(std::string const& value, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<float>();
+        return std::nullopt;
     }
 
     char* pos = nullptr;
@@ -198,7 +198,7 @@ std::optional<float> hlib::stof32(std::string const& value, std::nothrow_t)
     if (nullptr == pos
      || 0 != *pos
      || ERANGE == errno) {
-        return std::optional<float>();
+        return std::nullopt;
     }
     return r;
 }
@@ -206,7 +206,7 @@ std::optional<float> hlib::stof32(std::string const& value, std::nothrow_t)
 std::optional<double> hlib::stof64(std::string const& value, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
-        return std::optional<double>();
+        return std::nullopt;
     }
 
     char* pos = nullptr;
@@ -214,7 +214,7 @@ std::optional<double> hlib::stof64(std::string const& value, std::nothrow_t)
     if (nullptr == pos
      || 0 != *pos
      || ERANGE == errno) {
-        return std::optional<double>();
+        return std::nullopt;
     }
     return r;
 }

@@ -602,10 +602,13 @@ std::shared_ptr<EventLoop> Server::getEventLoop() const
 std::optional<std::reference_wrapper<Server::Socket>> Server::getSocket(Socket::Id id) const
 {
     HLIB_LOCK_GUARD(lock, m_sockets_mutex);
+
     auto it = m_sockets.find(id);
-    return m_sockets.end() != it
-        ? *it->second
-        : std::optional<std::reference_wrapper<Socket>>();
+    if (m_sockets.end() == it) {
+        return std::nullopt;
+    }
+
+    return *it->second;
 }
 
 void Server::start()
@@ -672,26 +675,26 @@ std::optional<std::vector<std::string>> ws::is_upgrade(http::Server::Transaction
 
     value = http::is_upgrade(transaction);
     if (false == value.has_value() || false == iequals("websocket", value.value())) {
-        return std::optional<std::vector<std::string>>();
+        return std::nullopt;
     }
 
     if (0 != transaction.request_content_length) {
-        return std::optional<std::vector<std::string>>();
+        return std::nullopt;
     }
 
     value = transaction.getRequestValue("Sec-WebSocket-Version");
     if (false == value.has_value() || "13" != value.value()) {
-        return std::optional<std::vector<std::string>>();
+        return std::nullopt;
     }
 
     value = transaction.getRequestValue("Sec-WebSocket-Key");
     if (false == value.has_value()) {
-        return std::optional<std::vector<std::string>>();
+        return std::nullopt;
     }
 
     value = transaction.getRequestValue("Sec-WebSocket-Protocol");
     if (false == value.has_value()) {
-        return std::optional<std::vector<std::string>>();
+        return std::nullopt;
     }
 
     // Split subprotocols in vector.
