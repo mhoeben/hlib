@@ -61,13 +61,6 @@ bool definitely_less_than(T a, T b, T epsilon = std::numeric_limits<T>::epsilon(
     return (b - a) > ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
 }
 
-namespace detail
-{
-
-void to_fraction(int64_t& num, int64_t& den, double value, double tolerance) noexcept;
-
-} // namespace detail
-
 template<typename N = int, typename D = N>
 class Fraction final
 {
@@ -84,15 +77,6 @@ public:
         : n{ numerator }
         , d{ denominator }
     {
-    }
-
-    template<typename T = double>
-    Fraction(T value, T tolerance = 1.0E-6) noexcept
-    {
-        int64_t num, den;
-        detail::to_fraction(num, den, value, tolerance);
-        n = static_cast<N>(num);
-        d = static_cast<D>(den);
     }
 
     bool operator !() const noexcept
@@ -145,6 +129,21 @@ public:
         return static_cast<T>(std::round(to<double>()));
     }
 };
+
+namespace detail
+{
+
+void to_fraction(int64_t& num, int64_t& den, double value, double tolerance) noexcept;
+
+} // namespace detail
+
+template<typename N = int, typename D = N>
+Fraction<N, D> to_fraction(double value, double tolerance = 1.0E-6) noexcept
+{
+    int64_t num, den;
+    detail::to_fraction(num, den, value, tolerance);
+    return Fraction<N, D>(static_cast<N>(num), static_cast<D>(den));
+}
 
 template<typename R = std::ratio<1, 1>, typename T = int>
 struct UnitValue final

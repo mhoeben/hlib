@@ -62,7 +62,7 @@ TEST_CASE("Fraction to Integer", "[math]")
 
 TEST_CASE("Double to Fraction", "[math]")
 {
-    REQUIRE(Fraction<>(1, 1) == Fraction<>(1.0));
+    REQUIRE(Fraction<>(1, 1) == to_fraction<>(1.0));
 
     // TODO
 }
