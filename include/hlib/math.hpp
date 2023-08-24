@@ -145,6 +145,12 @@ Fraction<N, D> to_fraction(double value, double tolerance = 1.0E-6) noexcept
     return Fraction<N, D>(static_cast<N>(num), static_cast<D>(den));
 }
 
+template<typename T, typename N, typename D>
+T fraction_to(Fraction<N, D> const& fraction) noexcept
+{
+    return fraction.template to<T>();
+}
+
 template<typename R = std::ratio<1, 1>, typename T = int>
 struct RatioValue final
 {

@@ -62,7 +62,7 @@ struct bind_port
     template<typename INPUT>
     static void apply(INPUT const& input, URI& uri)
     {
-        uri.port = to<std::uint16_t>(input.string());
+        uri.port = string_to<std::uint16_t>(input.string());
     }
 };
 

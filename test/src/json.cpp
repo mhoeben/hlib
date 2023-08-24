@@ -102,9 +102,9 @@ TEST_CASE("JSON", "[json]")
     REQUIRE(JSON::Undefined == json.at("foo").type());
     REQUIRE(JSON::Undefined == json.at("foo").at("bar").type());
 
-    REQUIRE("John"  == to<std::string>(json["firstName"]));
-    REQUIRE(true    == to<bool>(json["isAlive"]));
-    REQUIRE(27      == to<int>(json["age"]));
+    REQUIRE("John"  == json_to<std::string>(json["firstName"]));
+    REQUIRE(true    == json_to<bool>(json["isAlive"]));
+    REQUIRE(27      == json_to<int>(json["age"]));
 
     REQUIRE(8 == json.size());
     REQUIRE(0 == json["firstName"].size());
@@ -128,9 +128,9 @@ TEST_CASE("JSON Literal", "[json]")
 {
     auto const json = "[true, 1311, \"foo bar\"]"_json;
     REQUIRE(3 == json.size());
-    REQUIRE(true == to<bool>(json[0]));
-    REQUIRE(1311 == to<int>(json[1]));
-    REQUIRE("foo bar" == to<std::string>(json[2]));
+    REQUIRE(true == json_to<bool>(json[0]));
+    REQUIRE(1311 == json_to<int>(json[1]));
+    REQUIRE("foo bar" == json_to<std::string>(json[2]));
 }
 
 TEST_CASE("JSONPointer Parsing", "[json]")
@@ -214,8 +214,8 @@ TEST_CASE("JSONPointer At", "[json]")
 
     REQUIRE("John" == json.at("/firstName"_json_pointer).value());
     REQUIRE("Smith" == json.at("/lastName"_json_pointer).value());
-    REQUIRE(true == to<bool>(json.at("/isAlive"_json_pointer)));
-    REQUIRE(27 == to<int>(json.at("/age"_json_pointer)));
+    REQUIRE(true == json_to<bool>(json.at("/isAlive"_json_pointer)));
+    REQUIRE(27 == json_to<int>(json.at("/age"_json_pointer)));
 
     REQUIRE(4 == json.at("/address"_json_pointer).size());
     REQUIRE("21 2nd Street" == json.at("/address/streetAddress"_json_pointer).value());

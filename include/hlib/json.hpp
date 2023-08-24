@@ -109,31 +109,36 @@ private:
 template<typename T, typename U>
 typename std::enable_if<!std::is_same<std::string, T>::value
                      &&  std::is_same<JSON, U>::value, std::optional<T>>::type
-try_to(JSON const& json)
+json_to(JSON const& json, std::nothrow_t) noexcept
 {
-    return to<T>(json.value());
+    return string_to<T>(json.value(), std::nothrow);
 }
 
 template<typename T, typename U>
 typename std::enable_if<std::is_same<std::string, T>::value
                     &&  std::is_same<JSON, U>::value, std::optional<T>>::type
-try_to(U const& json)
+json_to(U const& json, std::nothrow_t) noexcept
 {
-    return json.value();
+    try {
+        return json.value();
+    }
+    catch (...) {
+        return std::nullopt;
+    }
 }
 
 template<typename T, typename U>
 typename std::enable_if<!std::is_same<std::string, T>::value
                       && std::is_same<JSON, U>::value, T>::type
-to(U const& json)
+json_to(U const& json)
 {
-    return to<T>(json.value());
+    return string_to<T>(json.value());
 }
 
 template<typename T, typename U>
 typename std::enable_if<std::is_same<std::string, T>::value
                      && std::is_same<JSON, U>::value, T>::type
-to(U const& json)
+json_to(U const& json)
 {
     return json.value();
 }

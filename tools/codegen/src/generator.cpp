@@ -150,7 +150,7 @@ int Generator::generate(FILE* output, FILE* input, Side side)
 
     // Get optional base id.
     if (true == m_input.contains("base_id")) {
-        m_base_id = to<int>(m_input.at("base_id"));
+        m_base_id = json_to<int>(m_input.at("base_id"));
     }
 
     JSON declarations = m_input.at("declarations");

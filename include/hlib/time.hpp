@@ -97,7 +97,7 @@ struct NanoSeconds : Duration
 
 template<typename T>
 typename std::enable_if<std::is_base_of<Duration, T>::value, double>::type
-to(Duration const& duration)
+duration_to(Duration const& duration)
 {
     return static_cast<double>(duration) * T::Ratio;
 }

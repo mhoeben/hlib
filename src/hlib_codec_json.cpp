@@ -186,11 +186,11 @@ void JSONDecoder::decode(char const* name, T& value)
     switch (m_node.type()) {
     case JSON::Object:
         assert(nullptr != name);
-        value = to<T>(m_node.at(name));
+        value = json_to<T>(m_node.at(name));
         break;
 
     case JSON::Array:
-        value = to<T>(m_node.at(m_index));
+        value = json_to<T>(m_node.at(m_index));
         break;
 
     default:
@@ -351,6 +351,6 @@ Type::Id JSONDecoder::peek() const
         throwf<std::runtime_error>("Data is not a wrapped codec::Type");
     }
 
-    return to<Type::Id>(id);
+    return json_to<Type::Id>(id);
 }
 

@@ -51,7 +51,7 @@ std::optional<double> stof64(std::string const& value, std::nothrow_t);
 
 template<typename T>
 typename std::enable_if<std::is_same<bool, T>::value, std::optional<bool>>::type
-to(std::string const& value, std::nothrow_t)
+string_to(std::string const& value, std::nothrow_t)
 {
     return stob(value, std::nothrow);
 }
@@ -61,7 +61,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 1 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoi8(value, base, std::nothrow);
 }
@@ -71,7 +71,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 2 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoi16(value, base, std::nothrow);
 }
@@ -81,7 +81,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 4 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoi32(value, base, std::nothrow);
 }
@@ -91,7 +91,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 8 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoi64(value, base, std::nothrow);
 }
@@ -101,7 +101,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 1 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoui8(value, base, std::nothrow);
 }
@@ -111,7 +111,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 2 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoui16(value, base, std::nothrow);
 }
@@ -121,7 +121,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 4 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoui32(value, base, std::nothrow);
 }
@@ -131,7 +131,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 8 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, int base, std::nothrow_t)
+string_to(std::string const& value, int base, std::nothrow_t)
 {
     return stoui64(value, base, std::nothrow);
 }
@@ -139,7 +139,7 @@ to(std::string const& value, int base, std::nothrow_t)
 template<typename T>
 typename std::enable_if<std::is_floating_point<T>::value
                      && 4 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, std::nothrow_t)
+string_to(std::string const& value, std::nothrow_t)
 {
     return stof32(value, std::nothrow);
 }
@@ -147,7 +147,7 @@ to(std::string const& value, std::nothrow_t)
 template<typename T>
 typename std::enable_if<std::is_floating_point<T>::value
                      && 8 == sizeof(T), std::optional<T>>::type
-to(std::string const& value, std::nothrow_t)
+string_to(std::string const& value, std::nothrow_t)
 {
     return stof64(value, std::nothrow);
 }
@@ -169,7 +169,7 @@ double stof64(std::string const& value);
 
 template<typename T>
 typename std::enable_if<std::is_same<bool, T>::value, T>::type
-to(std::string const& value)
+string_to(std::string const& value)
 {
     return stob(value);
 }
@@ -179,7 +179,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 1 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoi8(value, base);
 }
@@ -189,7 +189,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 2 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoi16(value, base);
 }
@@ -199,7 +199,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 4 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoi32(value, base);
 }
@@ -209,7 +209,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_signed<T>::value
                      && 8 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoi64(value, base);
 }
@@ -219,7 +219,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 1 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoui8(value, base);
 }
@@ -229,7 +229,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 2 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoui16(value, base);
 }
@@ -239,7 +239,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 4 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoui32(value, base);
 }
@@ -249,7 +249,7 @@ typename std::enable_if<!std::is_same<bool, T>::value
                      && std::is_integral<T>::value
                      && std::is_unsigned<T>::value
                      && 8 == sizeof(T), T>::type
-to(std::string const& value, int base = 10)
+string_to(std::string const& value, int base = 10)
 {
     return stoui64(value, base);
 }
@@ -257,7 +257,7 @@ to(std::string const& value, int base = 10)
 template<typename T>
 typename std::enable_if<std::is_floating_point<T>::value
                      && 4 == sizeof(T), T>::type
-to(std::string const& value)
+string_to(std::string const& value)
 {
     return stof32(value);
 }
@@ -265,7 +265,7 @@ to(std::string const& value)
 template<typename T>
 typename std::enable_if<std::is_floating_point<T>::value
                      && 8 == sizeof(T), T>::type
-to(std::string const& value)
+string_to(std::string const& value)
 {
     return stof64(value);
 }
