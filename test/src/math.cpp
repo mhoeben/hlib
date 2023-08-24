@@ -67,10 +67,10 @@ TEST_CASE("Double to Fraction", "[math]")
     // TODO
 }
 
-TEST_CASE("UnitValue", "[math]")
+TEST_CASE("RatioValue", "[math]")
 {
-    UnitValue<std::deci> unit(1);
+    RatioValue<std::deci> value(1);
 
-    REQUIRE(100 == unit.to<std::milli>().value);
+    REQUIRE(100 == value.to<std::milli>().value);
 }
 
