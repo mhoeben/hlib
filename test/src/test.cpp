@@ -27,15 +27,11 @@
 
 using namespace hlib;
 
-#include "hlib/format.hpp"
-
 //
 // Scratch tests.
 //
 TEST_CASE("Test")
 {
-    std::uint8_t data[18] = { 'a', 'b' };
-    hexdump(data, 2);
 }
 
 //
