@@ -28,7 +28,7 @@ using namespace hlib;
 //
 // Implementation
 //
-math::Fraction<int64_t> math::detail::to_fraction(double value, double tolerance) noexcept
+void math::detail::to_fraction(int64_t& num, int64_t& den, double value, double tolerance) noexcept
 {
     int64_t sign = (value < 0) ? -1 : 1;
     value = std::abs(value);
@@ -37,7 +37,9 @@ math::Fraction<int64_t> math::detail::to_fraction(double value, double tolerance
     value -= integral;
 
     if (value < tolerance) {
-        return Fraction<int64_t>(integral * sign, 1);
+        num = integral * sign;
+        den = 1;
+        return;
     }
 
     int64_t a = integral;
@@ -52,10 +54,10 @@ math::Fraction<int64_t> math::detail::to_fraction(double value, double tolerance
 
         if (std::abs(value - static_cast<double>(h) / k) < tolerance) {
             int64_t common_factor = std::gcd((integral * k + h) * sign, k);
-            return Fraction<int64_t>(
-                ((integral * k + h) * sign) / common_factor,
-                k / common_factor
-            );
+
+            num = ((integral * k + h) * sign) / common_factor;
+            den = k / common_factor;
+            return;
         }
 
         a = static_cast<int64_t>(1.0 / (value - static_cast<double>(h) / k));

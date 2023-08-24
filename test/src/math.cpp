@@ -38,32 +38,39 @@ TEST_CASE("Fraction", "[math]")
 
 TEST_CASE("Fraction to Double", "[math]")
 {
-    REQUIRE(true == essentially_equal(1.0, to<double>(Fraction<>(1, 1))));
-    REQUIRE(true == essentially_equal(0.5, to<double>(Fraction<>(1, 2))));
+    REQUIRE(true == essentially_equal(1.0, Fraction<>(1, 1).to<double>()));
+    REQUIRE(true == essentially_equal(0.5, Fraction<>(1, 2).to<double>()));
 
     // TODO
 }
 
 TEST_CASE("Fraction to Integer", "[math]")
 {
-    REQUIRE(1 == to<int>(Fraction<>(1, 1)));
-    REQUIRE(2 == to<int>(Fraction<>(2, 1)));
-    REQUIRE(3 == to<int>(Fraction<>(6, 2)));
+    REQUIRE(1 == Fraction<>(1, 1).to<int>());
+    REQUIRE(2 == Fraction<>(2, 1).to<int>());
+    REQUIRE(3 == Fraction<>(6, 2).to<int>());
 
-    REQUIRE(-1 == to<int>(Fraction<>(-1,  1)));
-    REQUIRE(-1 == to<int>(Fraction<>( 2, -2)));
-    REQUIRE( 1 == to<int>(Fraction<>(-3, -3)));
+    REQUIRE(-1 == Fraction<>(-1,  1).to<int>());
+    REQUIRE(-1 == Fraction<>( 2, -2).to<int>());
+    REQUIRE( 1 == Fraction<>(-3, -3).to<int>());
 
-    REQUIRE(0 == to<int>(Fraction(1, 3)));
-    REQUIRE(1 == to<int>(Fraction(1, 2)));
-    REQUIRE(0 == to<int>(Fraction(-1, 3)));
-    REQUIRE(-1 == to<int>(Fraction(-2, 4)));
+    REQUIRE(0 == Fraction(1, 3).to<int>());
+    REQUIRE(1 == Fraction(1, 2).to<int>());
+    REQUIRE(0 == Fraction(-1, 3).to<int>());
+    REQUIRE(-1 == Fraction(-2, 4).to<int>());
 }
 
 TEST_CASE("Double to Fraction", "[math]")
 {
-    REQUIRE(Fraction<>(1, 1) == to<Fraction<>>(1.0));
+    REQUIRE(Fraction<>(1, 1) == Fraction<>(1.0));
 
     // TODO
+}
+
+TEST_CASE("Unit", "[math]")
+{
+    Unit<std::deci> unit(1);
+
+    REQUIRE(100 == unit.to<std::milli>().value);
 }
 

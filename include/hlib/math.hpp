@@ -26,6 +26,7 @@
 #include "hlib/base.hpp"
 #include <cmath>
 #include <numeric>
+#include <ratio>
 
 namespace hlib
 {
@@ -60,10 +61,17 @@ bool definitely_less_than(T a, T b, T epsilon = std::numeric_limits<T>::epsilon(
     return (b - a) > ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
 }
 
+namespace detail
+{
+
+void to_fraction(int64_t& num, int64_t& den, double value, double tolerance) noexcept;
+
+} // namespace detail
 
 template<typename N = int, typename D = N>
-struct Fraction
+class Fraction final
 {
+public:
     typedef N Numerator;
     typedef D Denominator;
 
@@ -76,6 +84,15 @@ struct Fraction
         : n{ numerator }
         , d{ denominator }
     {
+    }
+
+    template<typename T = double>
+    Fraction(T value, T tolerance = 1.0E-6) noexcept
+    {
+        int64_t num, den;
+        detail::to_fraction(num, den, value, tolerance);
+        n = static_cast<N>(num);
+        d = static_cast<D>(den);
     }
 
     bool operator !() const noexcept
@@ -93,58 +110,205 @@ struct Fraction
         return n * that.d != that.n * d;
     }
 
-    bool operator<(Fraction const& that) const noexcept
+    bool operator <(Fraction const& that) const noexcept
     {
         return n * that.d < that.n * d;
     }
 
-    bool operator<=(Fraction const& that) const noexcept
+    bool operator <=(Fraction const& that) const noexcept
     {
         return n * that.d <= that.n * d;
     }
 
-    bool operator>(Fraction const& that) const noexcept
+    bool operator >(Fraction const& that) const noexcept
     {
         return n * that.d > that.n * d;
     }
 
-    bool operator>=(Fraction const& that) const noexcept
+    bool operator >=(Fraction const& that) const noexcept
     {
         return n * that.d >= that.n * d;
     }
+
+    template<typename T>
+    typename std::enable_if<std::is_floating_point<T>::value, T>::type
+    to() const noexcept
+    {
+        return static_cast<T>(n) / static_cast<T>(d);
+    }
+
+    template<typename T>
+    typename std::enable_if<!std::is_same<bool, T>::value
+                         && std::is_integral<T>::value, T>::type
+    to() const
+    {
+        return static_cast<T>(std::round(to<double>()));
+    }
 };
 
-namespace detail
+template<typename R = std::ratio<1, 1>, typename T = int>
+struct Unit final
 {
+    typedef R Ratio;
+    typedef T Type;
 
-Fraction<int64_t> to_fraction(double value, double tolerance) noexcept;
+    T value;
 
-} // namespace detail
+    Unit(T a_value)
+        : value{ a_value }
+    {
+    }
 
-template<typename F, typename T = double>
-F to(T value, T tolerance = 1.0E-6) noexcept
-{
-    Fraction<int64_t> const f = detail::to_fraction(value, tolerance);
-    return F(
-        static_cast<typename F::Numerator>(f.n),
-        static_cast<typename F::Denominator>(f.d)
-    );
-}
+    Type const& operator *() const noexcept
+    {
+        return value;
+    }
 
-template<typename T, typename N = int, typename D = N>
-typename std::enable_if<std::is_floating_point<T>::value, T>::type
-to(Fraction<N, D> const& fraction) noexcept
-{
-    return static_cast<T>(fraction.n) / static_cast<T>(fraction.d);
-}
+    Type& operator *()
+    {
+        return value;
+    }
 
-template<typename T, typename N = int, typename D = N>
-typename std::enable_if<!std::is_same<bool, T>::value
-                     && std::is_integral<T>::value, T>::type
-to(Fraction<N, D> const& fraction) noexcept
-{
-    return static_cast<T>(std::round(to<double>(fraction)));
-}
+    bool operator !() const noexcept
+    {
+        return 0 != value;
+    }
+
+    bool operator == (Unit const& that) const noexcept
+    {
+        return that.value == value;
+    }
+
+    bool operator != (Unit const& that) const noexcept
+    {
+        return that.value != value;
+    }
+
+    bool operator <(Unit const& that) const noexcept
+    {
+        return value < that.value;
+    }
+
+    bool operator <=(Unit const& that) const noexcept
+    {
+        return value <= that.value;
+    }
+
+    bool operator >(Unit const& that) const noexcept
+    {
+        return value >= that.value;
+    }
+
+    bool operator >=(Unit const& that) const noexcept
+    {
+        return value >= that.value;
+    }
+
+    Unit operator +() const noexcept
+    {
+        return Unit(+value);
+    }
+
+    Unit operator -() const noexcept
+    {
+        return Unit(-value);
+    }
+
+    Unit operator +(Unit const& that) const noexcept
+    {
+        return Unit(value + that.value);
+    }
+
+    Unit operator -(Unit const& that) const noexcept
+    {
+        return Unit(value - that.value);
+    }
+
+    Unit operator *(Unit const& that) const noexcept
+    {
+        return Unit(value * that.value);
+    }
+
+    Unit operator /(Unit const& that) const
+    {
+        return Unit(value / that.value);
+    }
+
+    Unit operator %(Unit const& that) const
+    {
+        return Unit(value % that.value);
+    }
+
+    Unit& operator ++() noexcept
+    {
+        return Unit(++value);
+    }
+
+    Unit operator ++(int) noexcept
+    {
+        return Unit(value++);
+    }
+
+    Unit& operator --() noexcept
+    {
+        return Unit(--value);
+    }
+
+    Unit operator --(int) noexcept
+    {
+        return Unit(value--);
+    }
+
+    Unit& operator =(Unit const& that) noexcept
+    {
+        value = that.value;
+        return *this;
+    }
+
+    Unit& operator +=(Unit const& that) noexcept
+    {
+        value += that.value;
+        return *this;
+    }
+
+    Unit& operator -=(Unit const& that) noexcept
+    {
+        value -= that.value;
+        return *this;
+    }
+
+    Unit& operator *=(Unit const& that) noexcept
+    {
+        value *= that.value;
+        return *this;
+    }
+
+    Unit& operator /=(Unit const& that)
+    {
+        value /= that.value;
+        return *this;
+    }
+
+    Unit& operator %=(Unit const& that)
+    {
+        value %= that.value;
+        return *this;
+    }
+
+    template<typename TRatio, typename TType = T>
+    Unit<TRatio, TType> to() const
+    {
+        using Factor = std::ratio_divide<R, TRatio>;
+        return Unit<TRatio, TType>(static_cast<TType>(value) * static_cast<TType>(Factor::num) / static_cast<TType>(Factor::den));
+    }
+
+    template<typename TRatio, typename TType = T>
+    operator Unit<TRatio, TType>() const
+    {
+        return to<TRatio, TType>();
+    }
+
+};
 
 } // namespace math
 } // namespace hlib
