@@ -26,6 +26,17 @@
 
 using namespace hlib;
 
+namespace
+{
+
+enum FooBar
+{
+    Foo,
+    Bar
+};
+
+} // namespace
+
 TEST_CASE("Big Endian", "[endian]")
 {
     Buffer buffer;
@@ -40,7 +51,8 @@ TEST_CASE("Big Endian", "[endian]")
               .transform<std::uint32_t>(1971)
               .transform<std::uint64_t>(13111971)
               .transform<float>(-3.14159f)
-              .transform<double>(3.14159);
+              .transform<double>(3.14159)
+              .transform<FooBar, uint8_t>(Bar);
 
     std::int8_t i8;
     std::int16_t i16;
@@ -52,6 +64,8 @@ TEST_CASE("Big Endian", "[endian]")
     std::uint64_t u64;
     float f;
     double d;
+    FooBar foo_bar;
+
     be::BufferDeserializer deserializer(buffer);
     deserializer.transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
@@ -62,7 +76,8 @@ TEST_CASE("Big Endian", "[endian]")
                 .transform<std::uint32_t>(u32)
                 .transform<std::uint64_t>(u64)
                 .transform<float>(f)
-                .transform<double>(d);
+                .transform<double>(d)
+                .transform<FooBar, uint8_t>(foo_bar);
 
     REQUIRE(-13 == i8);
     REQUIRE(-11 == i16);
@@ -74,6 +89,7 @@ TEST_CASE("Big Endian", "[endian]")
     REQUIRE( 13111971 == u64);
     REQUIRE(-3.14159f == f);
     REQUIRE( 3.14159 == d);
+    REQUIRE( Bar == foo_bar);
 }
 
 TEST_CASE("Little Endian", "[endian]")
@@ -90,7 +106,8 @@ TEST_CASE("Little Endian", "[endian]")
               .transform<std::uint32_t>(1971)
               .transform<std::uint64_t>(13111971)
               .transform<float>(-3.14159f)
-              .transform<double>(3.14159);
+              .transform<double>(3.14159)
+              .transform<FooBar, uint8_t>(Bar);
 
     std::int8_t i8;
     std::int16_t i16;
@@ -102,6 +119,8 @@ TEST_CASE("Little Endian", "[endian]")
     std::uint64_t u64;
     float f;
     double d;
+
+    FooBar foo_bar;
     le::BufferDeserializer deserializer(buffer);
     deserializer.transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
@@ -112,7 +131,8 @@ TEST_CASE("Little Endian", "[endian]")
                 .transform<std::uint32_t>(u32)
                 .transform<std::uint64_t>(u64)
                 .transform<float>(f)
-                .transform<double>(d);
+                .transform<double>(d)
+                .transform<FooBar, uint8_t>(foo_bar);
 
     REQUIRE(-13 == i8);
     REQUIRE(-11 == i16);
@@ -124,5 +144,6 @@ TEST_CASE("Little Endian", "[endian]")
     REQUIRE( 13111971 == u64);
     REQUIRE(-3.14159f == f);
     REQUIRE( 3.14159 == d);
+    REQUIRE( Bar == foo_bar);
 }
 

@@ -123,7 +123,7 @@ public:
     template<typename T, typename U = T>
     BufferSerializer& transform(T const& value) noexcept
     {
-        be::transform<T>(m_buffer.extend(sizeof(U)), static_cast<U>(value));
+        be::transform<U>(m_buffer.extend(sizeof(U)), static_cast<U>(value));
         m_buffer.resize(m_buffer.size() + sizeof(U));
         return *this;
     }
@@ -353,7 +353,7 @@ public:
     template<typename T, typename U = T>
     BufferSerializer& transform(T const& value) noexcept
     {
-        le::transform<T>(m_buffer.extend(sizeof(U)), static_cast<U>(value));
+        le::transform<U>(m_buffer.extend(sizeof(U)), static_cast<U>(value));
         m_buffer.resize(m_buffer.size() + sizeof(U));
         return *this;
     }
