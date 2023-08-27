@@ -48,6 +48,7 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.h
     src/codegen.cpp
     src/container.cpp
+    src/endian.cpp
     src/error.cpp
     src/file_server.cpp
     src/hash_map.cpp

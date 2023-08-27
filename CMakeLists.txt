@@ -89,6 +89,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_codec_binary.hpp
     src/hlib_codec_json.cpp
     src/hlib_codec_json.hpp
+    src/hlib_endian.cpp
     src/hlib_error.cpp
     src/hlib_event_loop.cpp
     src/hlib_file.cpp
