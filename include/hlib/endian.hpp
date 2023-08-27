@@ -120,6 +120,8 @@ class BufferSerializer final
 public:
     BufferSerializer(Buffer& buffer);
 
+    Buffer& buffer() noexcept;
+
     template<typename T, typename U = T>
     BufferSerializer& transform(T const& value) noexcept
     {
@@ -232,6 +234,8 @@ class BufferDeserializer final
 {
 public:
     BufferDeserializer(Buffer const& buffer, std::size_t offset = 0);
+
+    Buffer const& buffer() const noexcept;
 
     template<typename T>
     inline BufferDeserializer& transform(T& value)
@@ -350,6 +354,8 @@ class BufferSerializer final
 public:
     BufferSerializer(Buffer& buffer);
 
+    Buffer& buffer() noexcept;
+
     template<typename T, typename U = T>
     BufferSerializer& transform(T const& value) noexcept
     {
@@ -462,6 +468,8 @@ class BufferDeserializer final
 {
 public:
     BufferDeserializer(Buffer const& buffer, std::size_t offset = 0);
+
+    Buffer const& buffer() const noexcept;
 
     template<typename T>
     inline BufferDeserializer& transform(T& value)

@@ -49,6 +49,11 @@ be::BufferSerializer::BufferSerializer(Buffer& buffer)
 {
 }
 
+Buffer& be::BufferSerializer::buffer() noexcept
+{
+    return m_buffer;
+}
+
 //
 // Public (be::Deserializer)
 //
@@ -67,6 +72,11 @@ be::BufferDeserializer::BufferDeserializer(Buffer const& buffer, std::size_t off
     : m_buffer(buffer)
     , m_offset{ offset }
 {
+}
+
+Buffer const& be::BufferDeserializer::buffer() const noexcept
+{
+    return m_buffer;
 }
 
 //
@@ -93,6 +103,11 @@ le::BufferSerializer::BufferSerializer(Buffer& buffer)
 {
 }
 
+Buffer& le::BufferSerializer::buffer() noexcept
+{
+    return m_buffer;
+}
+
 //
 // Public (le::Deserializer)
 //
@@ -112,3 +127,9 @@ le::BufferDeserializer::BufferDeserializer(Buffer const& buffer, std::size_t off
     , m_offset{ offset }
 {
 }
+
+Buffer const& le::BufferDeserializer::buffer() const noexcept
+{
+    return m_buffer;
+}
+
