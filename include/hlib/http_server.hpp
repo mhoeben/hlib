@@ -245,6 +245,7 @@ public:
 
         void finish(bool failed);
     };
+
     struct Config
     {
         SockAddr binding;

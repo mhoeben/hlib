@@ -575,7 +575,7 @@ void Server::start(Config const& config)
     // Create hserv server.
     m_hserv = hserv_create(&hserv_config);
     if (nullptr == m_hserv) {
-        throw std::runtime_error("Failed to create HTTP server");
+        throwf<std::runtime_error>("Failed to create HTTP server ({})", get_error_string());
     }
 
     // Add hserv's poll fd to event loop.
@@ -654,8 +654,7 @@ std::optional<std::string> http::is_upgrade(Server::Transaction const& transacti
         return std::nullopt;
     }
 
-    value = transaction.getRequestValue("Connection");
-    if (false == value.has_value() || false == iequals("upgrade", value.value())) {
+    if (false == transaction.containsRequestValue("Connection", "upgrade", ",")) {
         return std::nullopt;
     }
 
