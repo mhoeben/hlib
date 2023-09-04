@@ -304,6 +304,27 @@ struct RatioValue final
         return *this;
     }
 
+    RatioValue operator *(T that) const noexcept
+    {
+        return RatioValue(value * that);
+    }
+
+    RatioValue operator /(T that) const noexcept
+    {
+        assert(0 != that);
+        return RatioValue(value / that);
+    }
+
+    RatioValue& operator *=(T that) noexcept
+    {
+        return *this = *this * that;
+    }
+
+    RatioValue& operator /=(T that) noexcept
+    {
+        return *this = *this / that;
+    }
+
     template<typename Fraction>
     RatioValue operator *(Fraction const& that) const noexcept
     {
