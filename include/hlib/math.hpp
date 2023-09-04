@@ -338,7 +338,7 @@ struct RatioValue final
     }
 
     template<typename TRatio, typename TType = T>
-    operator RatioValue<TRatio, TType>() const
+    explicit operator RatioValue<TRatio, TType>() const
     {
         return to<TRatio, TType>();
     }
