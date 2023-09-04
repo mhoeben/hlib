@@ -65,8 +65,8 @@ template<typename N = int, typename D = N>
 class Fraction final
 {
 public:
-    typedef N Numerator;
-    typedef D Denominator;
+    typedef N Num;
+    typedef D Denom;
 
     N n{ 0 };
     D d{ 0 };
@@ -124,7 +124,7 @@ public:
     template<typename T>
     typename std::enable_if<!std::is_same<bool, T>::value
                          && std::is_integral<T>::value, T>::type
-    to() const
+    to() const noexcept
     {
         return static_cast<T>(std::round(to<double>()));
     }
@@ -151,7 +151,9 @@ T fraction_to(Fraction<N, D> const& fraction) noexcept
     return fraction.template to<T>();
 }
 
-template<typename R = std::ratio<1, 1>, typename T = int>
+typedef std::ratio<1, 1> One;
+
+template<typename R = One, typename T = int>
 struct RatioValue final
 {
     typedef R Ratio;
@@ -236,12 +238,12 @@ struct RatioValue final
         return RatioValue(value * that.value);
     }
 
-    RatioValue operator /(RatioValue const& that) const
+    RatioValue operator /(RatioValue const& that) const noexcept
     {
         return RatioValue(value / that.value);
     }
 
-    RatioValue operator %(RatioValue const& that) const
+    RatioValue operator %(RatioValue const& that) const noexcept
     {
         return RatioValue(value % that.value);
     }
@@ -290,16 +292,42 @@ struct RatioValue final
         return *this;
     }
 
-    RatioValue& operator /=(RatioValue const& that)
+    RatioValue& operator /=(RatioValue const& that) noexcept
     {
         value /= that.value;
         return *this;
     }
 
-    RatioValue& operator %=(RatioValue const& that)
+    RatioValue& operator %=(RatioValue const& that) noexcept
     {
         value %= that.value;
         return *this;
+    }
+
+    template<typename Fraction>
+    RatioValue operator *(Fraction const& that) const noexcept
+    {
+        assert(0 != that.d);
+        return RatioValue((value * that.n) / that.d);
+    }
+
+    template<typename Fraction>
+    RatioValue operator /(Fraction const& that) const noexcept
+    {
+        assert(0 != that.n);
+        return RatioValue((value * that.d) / that.n);
+    }
+
+    template<typename Fraction>
+    RatioValue& operator *=(Fraction const& that) const noexcept
+    {
+        return *this = *this * that;
+    }
+
+    template<typename Fraction>
+    RatioValue& operator /=(Fraction const& that) const noexcept
+    {
+        return *this = *this / that;
     }
 
     template<typename TRatio, typename TType = T>
@@ -314,7 +342,6 @@ struct RatioValue final
     {
         return to<TRatio, TType>();
     }
-
 };
 
 } // namespace math
