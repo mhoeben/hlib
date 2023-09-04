@@ -159,6 +159,9 @@ struct RatioValue final
     typedef R Ratio;
     typedef T Type;
 
+    static constexpr std::intmax_t num = R::num;
+    static constexpr std::intmax_t den = R::den;
+
     T value{ 0 };
 
     constexpr RatioValue() = default;

@@ -72,6 +72,9 @@ TEST_CASE("RatioValue", "[math]")
     RatioValue<std::deci> value(1);
 
     REQUIRE(100 == value.to<std::milli>().value);
+
+    typedef RatioValue<std::milli> MilliRatio;
+    REQUIRE(100 == value.to<MilliRatio>().value);
 }
 
 TEST_CASE("RatioValue and Fraction", "[math]")
