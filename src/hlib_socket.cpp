@@ -28,6 +28,7 @@
 #include "hlib/event_loop.hpp"
 #include "hlib/file.hpp"
 #include "hlib/format.hpp"
+#include <fcntl.h>
 
 using namespace hlib;
 
@@ -352,6 +353,11 @@ bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog
         file::fd_close
     );
     if (-1 == fd.value()) {
+        return false;
+    }
+
+    // Set close-on-exec on listening sockets.
+    if (-1 == fcntl(fd.value(), F_SETFD, FD_CLOEXEC)) {
         return false;
     }
 
