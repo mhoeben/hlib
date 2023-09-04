@@ -136,22 +136,22 @@ bool hlib::operator >= (std::timespec const& lhs, std::timespec const& rhs) noex
 //
 // Public (Duration)
 //
-Duration::Duration() noexcept
+time::Duration::Duration() noexcept
     : timespec{ 0, 0 }
 {
 }
 
-Duration::Duration(std::timespec const& ts) noexcept
+time::Duration::Duration(std::timespec const& ts) noexcept
     : timespec{ ts }
 {
 }
 
-Duration::Duration(std::time_t secs, long nsecs) noexcept
+time::Duration::Duration(std::time_t secs, long nsecs) noexcept
     : timespec{ secs, nsecs }
 {
 }
 
-Duration::Duration(double secs) noexcept
+time::Duration::Duration(double secs) noexcept
 {
     assert(secs >= 0.0);
 
@@ -159,51 +159,51 @@ Duration::Duration(double secs) noexcept
     timespec.tv_nsec = static_cast<long>(std::fmod(secs, 1.0) * NSecsPerSec);
 }
 
-Duration::operator double () const noexcept
+time::Duration::operator double () const noexcept
 {
     return static_cast<double>(timespec.tv_sec)
          + static_cast<double>(timespec.tv_nsec) / static_cast<double>(NSecsPerSec);
 }
 
-Duration Duration::operator + (Duration const& rhs) const noexcept
+time::Duration time::Duration::operator + (time::Duration const& rhs) const noexcept
 {
-    return Duration(timespec_add(timespec, rhs.timespec));
+    return time::Duration(timespec_add(timespec, rhs.timespec));
 }
 
-Duration Duration::operator - (Duration const& rhs) const noexcept
+time::Duration time::Duration::operator - (time::Duration const& rhs) const noexcept
 {
-    return Duration(timespec_subtract(timespec, rhs.timespec));
+    return time::Duration(timespec_subtract(timespec, rhs.timespec));
 }
 
-Duration& Duration::operator += (Duration const& rhs) noexcept
+time::Duration& time::Duration::operator += (time::Duration const& rhs) noexcept
 {
     timespec = timespec_add(timespec, rhs.timespec);
     return *this;
 }
 
-Duration& Duration::operator -= (Duration const& rhs) noexcept
+time::Duration& time::Duration::operator -= (time::Duration const& rhs) noexcept
 {
     timespec = timespec_subtract(timespec, rhs.timespec);
     return *this;
 }
 
-Duration Duration::operator * (double rhs) const noexcept
+time::Duration time::Duration::operator * (double rhs) const noexcept
 {
-    return Duration(timespec_multiply(timespec, rhs));
+    return time::Duration(timespec_multiply(timespec, rhs));
 }
 
-Duration Duration::operator / (double rhs) const
+time::Duration time::Duration::operator / (double rhs) const
 {
-    return Duration(timespec_divide(timespec, rhs));
+    return time::Duration(timespec_divide(timespec, rhs));
 }
 
-Duration& Duration::operator *= (double rhs) noexcept
+time::Duration& time::Duration::operator *= (double rhs) noexcept
 {
     timespec = timespec_multiply(timespec, rhs);
     return *this;
 }
 
-Duration& Duration::operator /= (double rhs)
+time::Duration& time::Duration::operator /= (double rhs)
 {
     timespec = timespec_divide(timespec, rhs);
     return *this;
@@ -212,7 +212,7 @@ Duration& Duration::operator /= (double rhs)
 //
 // Public (Seconds)
 //
-Seconds::Seconds(double secs)
+time::Seconds::Seconds(double secs)
     : Duration{ secs }
 {
 }
@@ -220,7 +220,7 @@ Seconds::Seconds(double secs)
 //
 // Public (MilliSeconds)
 //
-MilliSeconds::MilliSeconds(double msecs)
+time::MilliSeconds::MilliSeconds(double msecs)
     : Duration{ msecs * Ratio }
 {
 }
@@ -228,7 +228,7 @@ MilliSeconds::MilliSeconds(double msecs)
 //
 // Public (MicroSeconds)
 //
-MicroSeconds::MicroSeconds(double usecs)
+time::MicroSeconds::MicroSeconds(double usecs)
     : Duration{ usecs * Ratio }
 {
 }
@@ -236,7 +236,7 @@ MicroSeconds::MicroSeconds(double usecs)
 //
 // Public (NanoSeconds)
 //
-NanoSeconds::NanoSeconds(double nsecs)
+time::NanoSeconds::NanoSeconds(double nsecs)
     : Duration{ nsecs * Ratio }
 {
 }
@@ -244,39 +244,39 @@ NanoSeconds::NanoSeconds(double nsecs)
 //
 // Public (Clock)
 //
-Clock::Clock() noexcept
+time::Clock::Clock() noexcept
 {
     tv_sec = 0;
     tv_nsec = 0;
 }
 
-Clock::Clock(clockid_t clock_id) noexcept
+time::Clock::Clock(clockid_t clock_id) noexcept
 {
     hverify(0 == clock_gettime(clock_id, static_cast<std::timespec*>(this)));
 }
 
-Clock::Clock(std::timespec const& ts) noexcept
+time::Clock::Clock(std::timespec const& ts) noexcept
 {
     tv_sec = ts.tv_sec;
     tv_nsec = ts.tv_nsec;
 }
 
-Duration Clock::operator - (Clock const& rhs) const noexcept
+time::Duration time::Clock::operator - (time::Clock const& rhs) const noexcept
 {
-    return Duration(timespec_subtract(*this, rhs));
+    return time::Duration(timespec_subtract(*this, rhs));
 }
 
-Clock Clock::operator + (Duration const& rhs) const noexcept
+time::Clock time::Clock::operator + (time::Duration const& rhs) const noexcept
 {
-    return Clock(timespec_add(*this, rhs.timespec));
+    return time::Clock(timespec_add(*this, rhs.timespec));
 }
 
-Clock Clock::operator - (Duration const& rhs) const noexcept
+time::Clock time::Clock::operator - (time::Duration const& rhs) const noexcept
 {
-    return Clock(timespec_subtract(*this, rhs.timespec));
+    return time::Clock(timespec_subtract(*this, rhs.timespec));
 }
 
-Clock& Clock::operator += (Duration const& rhs) noexcept
+time::Clock& time::Clock::operator += (time::Duration const& rhs) noexcept
 {
     Clock result(timespec_add(*this, rhs.timespec));
     tv_sec = result.tv_sec;
@@ -284,7 +284,7 @@ Clock& Clock::operator += (Duration const& rhs) noexcept
     return *this;
 }
 
-Clock& Clock::operator -= (Duration const& rhs) noexcept
+time::Clock& time::Clock::operator -= (time::Duration const& rhs) noexcept
 {
     Clock result(timespec_subtract(*this, rhs.timespec));
     tv_sec = result.tv_sec;
@@ -295,7 +295,7 @@ Clock& Clock::operator -= (Duration const& rhs) noexcept
 //
 // Public
 //
-Clock hlib::now(clockid_t clock_id)
+time::Clock hlib::time::now(clockid_t clock_id)
 {
     return Clock(clock_id);
 }

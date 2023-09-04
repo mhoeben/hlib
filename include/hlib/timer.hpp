@@ -43,11 +43,12 @@ public:
 
 public:
     Timer(std::weak_ptr<EventLoop> event_loop, Callback callback);
-    Timer(std::weak_ptr<EventLoop> event_loop, Callback callback, Duration const& expire, Duration const& interval = {});
+    Timer(std::weak_ptr<EventLoop> event_loop, Callback callback,
+        time::Duration const& expire, time::Duration const& interval = {});
     ~Timer();
 
     void clear();
-    void set(Duration const& expire, Duration const& interval = {});
+    void set(time::Duration const& expire, time::Duration const& interval = {});
 
 private:
     std::weak_ptr<EventLoop> m_event_loop;

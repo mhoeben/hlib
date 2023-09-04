@@ -38,7 +38,7 @@ using namespace hlib;
 //
 // Implementation
 //
-void EventLoop::dispatch(Duration const* timeout)
+void EventLoop::dispatch(time::Duration const* timeout)
 {
     ScopeGuard thread_scope(
         [this]{
@@ -52,10 +52,10 @@ void EventLoop::dispatch(Duration const* timeout)
     );
 
     int timeout_ms = -1;
-    Clock expire;
+    time::Clock expire;
 
     if (nullptr != timeout) {
-        expire = now() + *timeout;
+        expire = time::now() + *timeout;
     }
 
     HLIB_UNIQUE_LOCK_DEFERRED(lock, m_mutex);
@@ -69,9 +69,9 @@ void EventLoop::dispatch(Duration const* timeout)
         }
 
         if (nullptr != timeout) {
-            Clock const current = now();
+            time::Clock const current = time::now();
             if (current < expire) {
-                timeout_ms = duration_to<MilliSeconds>(expire - current);
+                timeout_ms = time::duration_to<time::MilliSeconds>(expire - current);
             }
             else {
                 timeout_ms = 0;
@@ -258,7 +258,7 @@ void EventLoop::dispatch()
     dispatch(nullptr);
 }
 
-void EventLoop::dispatch(Duration const& timeout)
+void EventLoop::dispatch(time::Duration const& timeout)
 {
     dispatch(&timeout);
 }

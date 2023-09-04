@@ -433,7 +433,7 @@ void Server::Socket::setNoDelay(bool enable)
     hverify(-1 != hws_socket_set_nodelay(m_socket, enable));
 }
 
-void Server::Socket::setPingInterval(Duration interval)
+void Server::Socket::setPingInterval(time::Duration interval)
 {
     m_ping_timer.set(interval, interval);
 }

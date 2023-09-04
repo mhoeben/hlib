@@ -100,7 +100,7 @@ public:
         void setCloseCallback(OnClose callback);
 
         void setNoDelay(bool enable);
-        void setPingInterval(Duration interval);
+        void setPingInterval(time::Duration interval);
         void setMaxReceiveMessageSize(std::size_t size);
         void setFragmentMessageThreshold(std::size_t size);
 

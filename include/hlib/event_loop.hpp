@@ -66,7 +66,7 @@ public:
     void remove(int fd);
 
     void dispatch();
-    void dispatch(Duration const& timeout);
+    void dispatch(time::Duration const& timeout);
 
     bool interrupt(std::nothrow_t) noexcept;
     void interrupt();
@@ -86,7 +86,7 @@ private:
 
     int m_callback_fd{ -1 };
 
-    void dispatch(Duration const* timeout);
+    void dispatch(time::Duration const* timeout);
 };
 
 bool callback_from(EventLoop const& event_loop);

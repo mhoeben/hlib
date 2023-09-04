@@ -41,6 +41,9 @@ bool operator > (std::timespec const& lhs, std::timespec const& rhs) noexcept;
 bool operator <= (std::timespec const& lhs, std::timespec const& rhs) noexcept;
 bool operator >= (std::timespec const& lhs, std::timespec const& rhs) noexcept;
 
+namespace time
+{
+
 struct Duration
 {
     std::timespec timespec;
@@ -119,5 +122,6 @@ struct Clock : std::timespec
 
 Clock now(clockid_t clock_id = CLOCK_MONOTONIC);
 
+} // namespace time
 } // namespace hlib
 

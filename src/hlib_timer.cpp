@@ -66,7 +66,8 @@ Timer::Timer(std::weak_ptr<EventLoop> event_loop, Callback callback)
     });
 }
 
-Timer::Timer(std::weak_ptr<EventLoop> event_loop, Callback callback, Duration const& expire, Duration const& interval)
+Timer::Timer(std::weak_ptr<EventLoop> event_loop, Callback callback,
+        time::Duration const& expire, time::Duration const& interval)
     : Timer(std::move(event_loop), std::move(callback))
 {
     set(expire, interval);
@@ -92,7 +93,7 @@ void Timer::clear()
     set({}, {});
 }
 
-void Timer::set(Duration const& expire, Duration const& interval)
+void Timer::set(time::Duration const& expire, time::Duration const& interval)
 {
     itimerspec ts = {};
     ts.it_value = expire.timespec;
