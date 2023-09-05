@@ -271,12 +271,6 @@ struct RatioValue final
         return RatioValue(value--);
     }
 
-    RatioValue& operator =(RatioValue const& that) noexcept
-    {
-        value = that.value;
-        return *this;
-    }
-
     RatioValue& operator +=(RatioValue const& that) noexcept
     {
         value += that.value;
