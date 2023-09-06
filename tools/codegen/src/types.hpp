@@ -29,7 +29,7 @@ enum class Language
 {
     Invalid,
 
-    CPP11,
+    CPP17,
     C99,
     Typescript
 };

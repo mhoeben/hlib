@@ -61,7 +61,7 @@ void usage()
         "    -s, --side <side>       output for <side> component\n"
         "\n"
         "WHERE\n"
-        "   <lang> = cpp11*|c99|typescript\n"
+        "   <lang> = cpp17*|c99|typescript\n"
         "   <side> = left*|right\n"
         "   * = default\n"
     );
@@ -71,7 +71,7 @@ void usage()
 
 int main(int argc, char* argv[])
 {
-    auto language = Language::CPP11;
+    auto language = Language::CPP17;
     auto side = Side::Left;
     FILE* input = stdin;
     FILE* output = stdout;

@@ -24,7 +24,7 @@
 #include "config.hpp"
 #include "generator.hpp"
 #include "generator_c99.hpp"
-#include "generator_cpp11.hpp"
+#include "generator_cpp17.hpp"
 #include "generator_typescript.hpp"
 #include "utility.hpp"
 #include "hlib/file.hpp"
@@ -100,8 +100,8 @@ std::unique_ptr<Generator> Generator::create(Language language)
     std::unique_ptr<Generator> generator;
 
     switch (language) {
-    case Language::CPP11:
-        generator.reset(new GeneratorCPP11);
+    case Language::CPP17:
+        generator.reset(new GeneratorCPP17);
         break;
 
     case Language::C99:

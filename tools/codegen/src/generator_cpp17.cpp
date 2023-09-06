@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "generator_cpp11.hpp"
+#include "generator_cpp17.hpp"
 #include "utility.hpp"
 #include <unordered_map>
 
@@ -63,7 +63,7 @@ std::string to_string(Type type)
 //
 // Public
 //
-int GeneratorCPP11::generate(FILE* output, FILE* input, Side side)
+int GeneratorCPP17::generate(FILE* output, FILE* input, Side side)
 {
     if (-1 == Generator::generate(output, input, side)) {
         return -1;

@@ -25,10 +25,10 @@
 
 #include "generator.hpp"
 
-class GeneratorCPP11 final : public Generator
+class GeneratorCPP17 final : public Generator
 {
 public:
-    GeneratorCPP11() = default;
+    GeneratorCPP17() = default;
 
     int generate(FILE* output, FILE* input, Side side) override;
 };

@@ -28,7 +28,7 @@ Language to_language(std::string const& string)
 {
     static std::unordered_map<std::string, Language> const map
     {
-        { "cpp11",      Language::CPP11 },
+        { "cpp11",      Language::CPP17 },
         { "c99",        Language::C99 },
         { "typescript", Language::Typescript }
     };

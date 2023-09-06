@@ -33,8 +33,8 @@ add_executable(${PROJECT_NAME}
     src/generator.hpp
     src/generator_c99.cpp
     src/generator_c99.hpp
-    src/generator_cpp11.cpp
-    src/generator_cpp11.hpp
+    src/generator_cpp17.cpp
+    src/generator_cpp17.hpp
     src/generator_typescript.cpp
     src/generator_typescript.hpp
     src/main.cpp
