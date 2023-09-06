@@ -61,6 +61,12 @@ bool definitely_less_than(T a, T b, T epsilon = std::numeric_limits<T>::epsilon(
     return (b - a) > ( (std::abs(a) < std::abs(b) ? std::abs(b) : std::abs(a)) * epsilon);
 }
 
+template<typename T>
+const T& clamp(T const& value, T const& min, T const& max)
+{
+    return std::max(std::min(value, max), min);
+}
+
 template<typename N = int, typename D = N>
 class Fraction final
 {
