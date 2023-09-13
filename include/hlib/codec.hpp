@@ -26,6 +26,7 @@
 #include "hlib/base.hpp"
 #include <memory>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -44,8 +45,8 @@ struct Type
 {
     typedef int Id;
 
-    virtual explicit operator Id() const = 0;
-    virtual explicit operator std::size_t() const = 0;
+    virtual explicit operator Id() const noexcept = 0;
+    virtual explicit operator std::size_t() const noexcept = 0;
 
     virtual void operator()(Encoder& encoder) const = 0;
     virtual void operator()(Decoder& decoder) = 0;
@@ -55,7 +56,7 @@ struct Map
 {
     std::size_t size;
 
-    Map(std::size_t a_size = 0)
+    Map(std::size_t a_size = 0) noexcept
         : size{ a_size }
         {}
 };
@@ -64,7 +65,7 @@ struct Array
 { 
     std::size_t size;
 
-    Array(std::size_t a_size = 0)
+    Array(std::size_t a_size = 0) noexcept
         : size{ a_size }
         {}
 };
@@ -78,6 +79,18 @@ struct Binary
         : data(a_data)
         , size(a_size)
         {}
+
+    bool operator ==(Binary const& that) const noexcept
+    {
+        return size == that.size
+            && 0 == memcmp(data, that.data, that.size);
+    }
+
+    bool operator !=(Binary const& that) const noexcept
+    {
+        return size != that.size
+            || 0 == memcmp(data, that.data, that.size);
+    }
 };
 
 class Encoder
