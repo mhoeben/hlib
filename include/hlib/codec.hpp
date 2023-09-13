@@ -58,7 +58,8 @@ struct Map
 
     Map(std::size_t a_size = 0) noexcept
         : size{ a_size }
-        {}
+    {
+    }
 };
 
 struct Array
@@ -67,7 +68,8 @@ struct Array
 
     Array(std::size_t a_size = 0) noexcept
         : size{ a_size }
-        {}
+    {
+    }
 };
 
 struct Binary
@@ -75,10 +77,17 @@ struct Binary
     void const* data;
     std::size_t size;
 
-    Binary(void const* a_data, size_t a_size)
+    Binary(void const* a_data = nullptr, size_t a_size = 0)
         : data(a_data)
         , size(a_size)
-        {}
+    {
+    }
+
+    Binary(std::string const& string)
+        : data(string.data())
+        , size(string.size())
+    {
+    }
 
     bool operator ==(Binary const& that) const noexcept
     {
