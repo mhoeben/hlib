@@ -154,3 +154,30 @@ TEST_CASE("URI Wikipedia Examples", "[uri]")
     REQUIRE("urn:oasis:names:specification:docbook:dtd:xml:4.1.2" == to_string(uri));
 }
 
+TEST_CASE("URI Target Utilities", "[uri]")
+{
+    REQUIRE("path" == target_get_path("path"));
+    REQUIRE("path" == target_get_path("path?query"));
+    REQUIRE("path" == target_get_path("path#fragment"));
+    REQUIRE("path" == target_get_path("path?query#fragment"));
+    REQUIRE(""     == target_get_path("?query"));
+    REQUIRE(""     == target_get_path("?query#fragment"));
+    REQUIRE(""     == target_get_path("#fragment"));
+
+    REQUIRE(""      == target_get_query("path"));
+    REQUIRE("query" == target_get_query("path?query"));
+    REQUIRE(""      == target_get_query("path#fragment"));
+    REQUIRE("query" == target_get_query("path?query#fragment"));
+    REQUIRE("query" == target_get_query("?query"));
+    REQUIRE("query" == target_get_query("?query#fragment"));
+    REQUIRE(""      == target_get_query("#fragment"));
+
+    REQUIRE(""         == target_get_fragment("path"));
+    REQUIRE(""         == target_get_fragment("path?query"));
+    REQUIRE("fragment" == target_get_fragment("path#fragment"));
+    REQUIRE("fragment" == target_get_fragment("path?query#fragment"));
+    REQUIRE(""         == target_get_fragment("?query"));
+    REQUIRE("fragment" == target_get_fragment("?query#fragment"));
+    REQUIRE("fragment" == target_get_fragment("#fragment"));
+}
+

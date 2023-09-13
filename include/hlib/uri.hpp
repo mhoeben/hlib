@@ -63,5 +63,9 @@ std::uint16_t uri_get_default_port_for_scheme(std::string const& scheme);
 std::string uri_encoding_escape(std::string const& string);
 std::string uri_encoding_unescape(std::string const& string);
 
+std::string target_get_path(std::string const& target);
+std::string target_get_query(std::string const& target);
+std::string target_get_fragment(std::string const& target);
+
 } // namespace tools
 

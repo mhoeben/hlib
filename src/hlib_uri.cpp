@@ -282,3 +282,40 @@ std::string hlib::uri_encoding_unescape(std::string const& string)
     return fmt::to_string(buffer);
 }
 
+std::string hlib::target_get_path(std::string const& target)
+{
+    std::string::size_type end = target.find_first_of("?#");
+    if (std::string::npos == end) {
+        return target;
+    }
+
+    return target.substr(0, end);
+}
+
+std::string hlib::target_get_query(std::string const& target)
+{
+    std::string::size_type start = target.find('?');
+    if (std::string::npos == start) {
+        return std::string();
+    }
+
+    ++start;
+
+    std::string::size_type end = target.find('#', start);
+    if (std::string::npos == end) {
+        end = target.length();
+    }
+
+    return target.substr(start, end - start);
+}
+
+std::string hlib::target_get_fragment(std::string const& target)
+{
+    std::string::size_type start = target.find('#');
+    if (std::string::npos == start) {
+        return std::string();
+    }
+
+    return target.substr(start + 1);
+}
+
