@@ -98,7 +98,7 @@ struct Binary
     bool operator !=(Binary const& that) const noexcept
     {
         return size != that.size
-            || 0 == memcmp(data, that.data, that.size);
+            || 0 != memcmp(data, that.data, that.size);
     }
 };
 
