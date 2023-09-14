@@ -526,6 +526,20 @@ int Subprocess::run(std::string const& command, std::vector<std::string> const& 
     return run(to_argv(command, args));
 }
 
+bool Subprocess::kill(int signal) noexcept
+{
+    if (m_pid <= 0) {
+        errno = 0;
+        return false;
+    }
+
+    if (-1 == ::kill(m_pid, signal)) {
+        return false;
+    }
+
+    return true;
+}
+
 int Subprocess::wait()
 {
     assert(Running == m_state);

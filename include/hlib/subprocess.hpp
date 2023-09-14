@@ -26,6 +26,7 @@
 #include "hlib/buffer.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/memory.hpp"
+#include <csignal>
 #include <fcntl.h>
 #include <string>
 #include <vector>
@@ -113,6 +114,7 @@ public:
     int run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error);
     int run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error);
 
+    bool kill(int signal = SIGKILL) noexcept;
     int wait();
 
 private:
