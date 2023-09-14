@@ -232,11 +232,13 @@ TEST_CASE("String C++20", "[string]")
     REQUIRE(false == starts_with("foobar", "bar"));
     REQUIRE(false == starts_with("foo", "foobar"));
     REQUIRE(true  == starts_with("foobar", "foobar"));
+    REQUIRE(false == starts_with("", "foobar"));
 
     REQUIRE(true  == ends_with("foobar", "bar"));
     REQUIRE(false == ends_with("foobar", "foo"));
     REQUIRE(false == ends_with("bar", "foobar"));
     REQUIRE(true  == ends_with("foobar", "foobar"));
+    REQUIRE(false == ends_with("", "foobar"));
 
     REQUIRE(true  == contains("foobar", "foo"));
     REQUIRE(true  == contains("foobar", "bar"));
@@ -245,6 +247,7 @@ TEST_CASE("String C++20", "[string]")
     REQUIRE(false == contains("foobar", "--"));
     REQUIRE(false == contains("foo", "foobar"));
     REQUIRE(false == contains("bar", "foobar"));
+    REQUIRE(false == contains("", "foobar"));
 }
 
 TEST_CASE("String Strip", "[string]")

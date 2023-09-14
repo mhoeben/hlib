@@ -67,5 +67,5 @@ std::string target_get_path(std::string const& target);
 std::string target_get_query(std::string const& target);
 std::string target_get_fragment(std::string const& target);
 
-} // namespace tools
+} // namespace hlib
 
