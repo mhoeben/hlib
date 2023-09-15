@@ -210,6 +210,7 @@ void upgrade(http::Server::Transaction& transaction, std::string subprotocol);
 
 std::string const& to_string(ws::State state);
 std::string const& to_string(ws::Opcode opcode);
+std::string const& to_string(ws::StatusCode status_code);
 
 } // namespace hlib
 

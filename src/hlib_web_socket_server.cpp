@@ -779,3 +779,30 @@ std::string const& hlib::to_string(Opcode opcode)
     return table.end() != it ? it->second : invalid;
 }
 
+std::string const& hlib::to_string(ws::StatusCode status_code)
+{
+    static std::unordered_map<StatusCode, std::string> const table =
+    {
+        { StatusCode::Normal,               "Normal" },
+        { StatusCode::GoingAway,            "Going Away" },
+        { StatusCode::ProtocolError,        "Protocol Error" },
+        { StatusCode::Unsupported,          "Unsupported" },
+        { StatusCode::Reserved,             "Reserved" },
+        { StatusCode::NoStatus,             "No Status" },
+        { StatusCode::Abnormal,             "Abnormal Termination" },
+        { StatusCode::UnsupportedPayload,   "Unsupported Payload" },
+        { StatusCode::PolicyViolation,      "Policy Violation" },
+        { StatusCode::TooLarge,             "Message Too Large" },
+        { StatusCode::MandatoryExtension,   "Mandatory Extension" },
+        { StatusCode::ServerError,          "Server Error" },
+        { StatusCode::ServiceRestart,       "Service Restart" },
+        { StatusCode::TryAgain,             "Try Again" },
+        { StatusCode::BadGateway,           "Bad Gateway" },
+        { StatusCode::TLSHandshakeFailed,   "TLS Handshake Failed" }
+    };
+    static std::string const invalid("Invalid");
+
+    auto it = table.find(status_code);
+    return table.end() != it ? it->second : invalid;
+}
+
