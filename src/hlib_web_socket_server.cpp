@@ -248,9 +248,10 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
               {
                 uint8_t const* ptr = static_cast<uint8_t*>(buffer);
                 if (size >= 2) {
+                    std::uint16_t status_code = static_cast<uint16_t>(ptr[0]) << 8
+                                              | static_cast<uint16_t>(ptr[1]) << 0;
                     // Decode close code.
-                    m_close_code = static_cast<uint16_t>(ptr[0]) << 8
-                                 | static_cast<uint16_t>(ptr[1]) << 0;
+                    m_close_code = static_cast<StatusCode>(status_code);
                     if (size > 2) {
                         // Copy close reason.
                         m_close_reason.assign(ptr + 2, size - 2);
@@ -364,7 +365,7 @@ void Server::Socket::onClosed(bool clean)
     try {
         if (false == clean) {
             // Set abnormale close code.
-            m_close_code = 1006;
+            m_close_code = StatusCode::Abnormal;
             m_close_reason.clear();
 
             // Emit an error callback?
@@ -375,7 +376,7 @@ void Server::Socket::onClosed(bool clean)
 
         // Emit close callback?
         if (nullptr != m_on_close) {
-            m_on_close(clean, m_close_code, m_close_reason);
+            m_on_close(m_close_code, m_close_reason);
         }
     }
     catch (...) {
@@ -386,9 +387,19 @@ void Server::Socket::onClosed(bool clean)
 //
 // Public (Socket)
 //
-State Server::Socket::state() const
+State Server::Socket::state() const noexcept
 {
     return static_cast<State>(hws_socket_get_state(m_socket));
+}
+
+StatusCode Server::Socket::closeCode() const noexcept
+{
+    return m_close_code;
+}
+
+std::string Server::Socket::closeReason() const
+{
+    return to_string(m_close_reason);
 }
 
 SockAddr Server::Socket::getPeerAddress() const
@@ -521,25 +532,21 @@ void Server::Socket::send(Message message)
     restart_locked();
 }
 
-void Server::Socket::close(uint16_t code, Buffer reason)
+void Server::Socket::close(StatusCode code, Buffer reason)
 {
+    assert(StatusCode::NoStatus != code);
+    assert(StatusCode::Abnormal != code);
+    assert(StatusCode::TLSHandshakeFailed != code);
+
     HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
-    // If code is not the reserved 'no present" value of 1005, insert
-    // code before the reason. Else, make sure reason is empty.
-    if (1005 != code) {
-        // Reserve space for code bytes, obtaining a pointer to the buffer.
-        std::uint8_t* ptr = static_cast<std::uint8_t*>(reason.reserve(reason.size() + 2));
-        // Insert space for code bytes.
-        reason.insert(0, nullptr, 2);
-        // Encode code.
-        ptr[0] = static_cast<std::uint8_t>(code >> 8);
-        ptr[1] = static_cast<std::uint8_t>(code >> 0);
-    }
-    else {
-        assert(true == reason.empty());
-        reason.clear();
-    }
+    // Reserve space for code bytes, obtaining a pointer to the buffer.
+    std::uint8_t* ptr = static_cast<std::uint8_t*>(reason.reserve(reason.size() + 2));
+    // Insert space for code bytes.
+    reason.insert(0, nullptr, 2);
+    // Encode code.
+    ptr[0] = static_cast<std::uint16_t>(code) >> 8;
+    ptr[1] = static_cast<std::uint16_t>(code) >> 0;
 
     // Send close frame.
     m_send_queue.emplace_back(Opcode::Close, false, std::move(reason));

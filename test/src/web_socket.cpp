@@ -61,8 +61,7 @@ TEST_CASE("WebSocket", "[websocket]")
             socket.close();
         });
 
-        socket.setCloseCallback([&](bool /* clean */, uint16_t /* code */, Buffer const& /* reason */) {
-            // TODO REQUIRE(true == clean);
+        socket.setCloseCallback([&](ws::StatusCode /* code */, Buffer const& /* reason */) {
             event_loop->interrupt();
         });
     };

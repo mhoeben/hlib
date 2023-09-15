@@ -61,6 +61,27 @@ enum class Opcode
     Pong = 10
 };
 
+// https://datatracker.ietf.org/doc/html/rfc6455#section-7.4
+enum class StatusCode : uint16_t
+{
+    Normal = 1000,
+    GoingAway = 1001,
+    ProtocolError = 1002,
+    Unsupported = 1003,
+    Reserved = 1004,
+    NoStatus = 1005,            // MUST NOT be send.
+    Abnormal = 1006,            // MUST NOT be send.
+    UnsupportedPayload = 1007,
+    PolicyViolation = 1008,
+    TooLarge = 1009,
+    MandatoryExtension = 1010,
+    ServerError = 1011,
+    ServiceRestart = 1012,
+    TryAgain = 1013,
+    BadGateway = 1014,
+    TLSHandshakeFailed = 1015     // MUST NOT be send.
+};
+
 typedef std::variant<std::monostate, std::string, Buffer> Message;
 
 class Server final
@@ -82,7 +103,7 @@ public:
         typedef std::function<void()> OnPong;
         typedef std::function<void(Message& message)> OnMessage;
         typedef std::function<void()> OnError;
-        typedef std::function<void(bool clean, std::uint16_t code, Buffer const& reason)> OnClose;
+        typedef std::function<void(StatusCode code, Buffer const& reason)> OnClose;
 
     public:
         Server& server;
@@ -90,7 +111,9 @@ public:
 
         std::shared_ptr<void> user;
 
-        State state() const;
+        State state() const noexcept;
+        StatusCode closeCode() const noexcept;
+        std::string closeReason() const;
 
         SockAddr getPeerAddress() const;
 
@@ -107,7 +130,7 @@ public:
         void ping();
         void receive(bool enable);
         void send(Message message);
-        void close(std::uint16_t code = 1005, Buffer reason = Buffer());
+        void close(StatusCode code = StatusCode::Normal, Buffer reason = Buffer());
 
     private:
         struct hws_s* m_hws;
@@ -138,7 +161,7 @@ public:
         std::mutex m_send_queue_mutex;
         std::list<Frame> m_send_queue;
 
-        std::uint16_t m_close_code{ 1005 };
+        StatusCode m_close_code{ StatusCode::NoStatus };
         Buffer m_close_reason;
 
         Socket(Server& server, Socket::Id a_id, struct hws_s* a_hws, http::Socket a_http_socket);
