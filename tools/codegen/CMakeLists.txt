@@ -77,7 +77,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Debug>:>
 
     $<$<CONFIG:Release>:
-        -flto
+        -flto=auto
     >
 
     $<$<COMPILE_LANG_AND_ID:C,GNU>:

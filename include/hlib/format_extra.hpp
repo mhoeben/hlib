@@ -23,12 +23,14 @@
 //
 #pragma once
 
+#include "hlib/format.hpp"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wswitch-default"
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 
-#include "../../third_party/fmt/include/fmt/format.h"
 #include "../../third_party/fmt/include/fmt/chrono.h"
 #include "../../third_party/fmt/include/fmt/color.h"
 #include "../../third_party/fmt/include/fmt/ostream.h"

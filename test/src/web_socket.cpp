@@ -71,7 +71,7 @@ TEST_CASE("WebSocket", "[websocket]")
         event_loop->dispatch();
     });
 
-    system("echo \"Hello World\" | uwsc -p test ws://localhost:6502/ >/dev/null");
+    REQUIRE(0 == system("echo \"Hello World\" | uwsc -p test ws://localhost:6502/ >/dev/null"));
 
     thread.join();
 }
