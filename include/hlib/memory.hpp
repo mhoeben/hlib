@@ -98,14 +98,39 @@ public:
         return m_value;
     }
 
-    T const& value() const noexcept
-    {
-        return m_value;
-    }
-
     explicit operator bool() const noexcept
     {
         return invalid_value != m_value;
+    }
+
+    bool operator ==(UniqueOwner const& that) const noexcept
+    {
+        return m_value == that.m_value;
+    }
+
+    bool operator ==(T const& that) const noexcept
+    {
+        return m_value == that;
+    }
+
+    bool operator !=(UniqueOwner const& that) const noexcept
+    {
+        return m_value != that.m_value;
+    }
+
+    bool operator !=(T const& that) const noexcept
+    {
+        return m_value != that;
+    }
+
+    bool hasValue() const noexcept
+    {
+        return invalid_value != m_value;
+    }
+
+    T const& value() const noexcept
+    {
+        return m_value;
     }
 
     T* reset() noexcept
@@ -119,7 +144,7 @@ public:
         if (invalid_value != m_value) {
             m_destructor(m_value);
         }
-        m_value = value;
+        m_value = std::move(value);
     }
 
     void swap(UniqueOwner& that) noexcept
