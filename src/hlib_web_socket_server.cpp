@@ -382,6 +382,9 @@ void Server::Socket::onClosed(bool clean)
     catch (...) {
         HLOGE(server.m_logger, "{}: Exception in closed callback", id);
     }
+
+    // Remove socket.
+    server.remove(id);
 }
 
 //
