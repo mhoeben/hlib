@@ -24,8 +24,9 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include <functional>
+#include <cstdio>
 #include <string>
-#include <sstream>
 
 namespace hlib
 {
@@ -52,16 +53,19 @@ struct Domain
     Domain(std::string a_name, std::string const& a_env_name) noexcept;
 };
 
-void log(Domain const& domain, Level level, std::string const& message);
+typedef std::function<void(Domain const& domain, Level level, std::string const& message)> Callback;
+extern Callback callback;
 
-#define HLOGF(domain, ...) do {                                             hlib::log::log(domain, hlib::log::Fatal,   fmt::format(__VA_ARGS__));   } while (false)
-#define HLOGE(domain, ...) do { if (hlib::log::Error   <= (domain).level) { hlib::log::log(domain, hlib::log::Error,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGW(domain, ...) do { if (hlib::log::Warning <= (domain).level) { hlib::log::log(domain, hlib::log::Warning, fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGN(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { hlib::log::log(domain, hlib::log::Notice,  fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGI(domain, ...) do { if (hlib::log::Info    <= (domain).level) { hlib::log::log(domain, hlib::log::Info,    fmt::format(__VA_ARGS__)); } } while (false)
+extern FILE* file;
+
+#define HLOGF(domain, ...) do {                                             hlib::log::callback(domain, hlib::log::Fatal,   fmt::format(__VA_ARGS__));   } while (false)
+#define HLOGE(domain, ...) do { if (hlib::log::Error   <= (domain).level) { hlib::log::callback(domain, hlib::log::Error,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGW(domain, ...) do { if (hlib::log::Warning <= (domain).level) { hlib::log::callback(domain, hlib::log::Warning, fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGN(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { hlib::log::callback(domain, hlib::log::Notice,  fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGI(domain, ...) do { if (hlib::log::Info    <= (domain).level) { hlib::log::callback(domain, hlib::log::Info,    fmt::format(__VA_ARGS__)); } } while (false)
 #ifndef NDEBUG
-#define HLOGD(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { hlib::log::log(domain, hlib::log::Debug,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGT(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { hlib::log::log(domain, hlib::log::Trace,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGD(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { hlib::log::callback(domain, hlib::log::Debug,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGT(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { hlib::log::callback(domain, hlib::log::Trace,   fmt::format(__VA_ARGS__)); } } while (false)
 #else
 #define HLOGD(domain, ...) do { } while (false)
 #define HLOGT(domain, ...) do { } while (false)

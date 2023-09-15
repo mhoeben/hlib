@@ -26,6 +26,7 @@
 #include "hlib/format.hpp"
 #include "hlib/utility.hpp"
 #include <array>
+#include <iostream>
 
 using namespace hlib;
 
@@ -48,6 +49,14 @@ std::array<std::string, kLevels> const kLevelStrings =
     "TRAC"
 };
 
+void print(log::Domain const& domain, log::Level level, std::string const& message)
+{
+    if (nullptr == log::file) {
+        return;
+    }
+    fmt::print(log::file, "{:<12}[{}]: {}\n", domain.name, to_string(level), message);
+}
+
 } // namespace
 
 //
@@ -68,10 +77,8 @@ log::Domain::Domain(std::string a_name, std::string const& a_env_name) noexcept
     ));
 }
 
-void log::log(Domain const& domain, Level level, std::string const& message)
-{
-    fmt::print("{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
+log::Callback log::callback = std::bind(&print, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+FILE* log::file = stdout;
 
 //
 // Public (Stringify)
