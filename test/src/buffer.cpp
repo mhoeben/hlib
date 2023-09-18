@@ -66,8 +66,8 @@ TEST_CASE("Buffer", "[buffer]")
     REQUIRE(4 == buffer.size());
     REQUIRE(0 == memcmp("abgh", buffer.data(), 4));
 
-    std::byte* data = static_cast<std::byte*>(buffer.reserve(buffer.capacity()));
     std::byte* extended = static_cast<std::byte*>(buffer.extend(4));
+    std::byte* data = static_cast<std::byte*>(buffer.reserve(buffer.capacity()));
     REQUIRE(8 == buffer.capacity());
     REQUIRE(4 == buffer.size());
     REQUIRE(data + buffer.size() == extended);

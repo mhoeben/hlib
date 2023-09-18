@@ -28,8 +28,10 @@
 #include "hlib/memory.hpp"
 #include <csignal>
 #include <fcntl.h>
+#include <set>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 namespace hlib
 {
@@ -107,6 +109,7 @@ public:
     void setInput(Stream input) noexcept;
     void setOutput(Stream output) noexcept;
     void setError(Stream error) noexcept;
+    void setCloseFDs(bool enable, std::set<int> exceptions = { STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO });
 
     int run(std::string const& command, std::vector<std::string> const& args);
     int run(std::string const& command, std::vector<std::string> const& args, Stream input);
@@ -129,6 +132,9 @@ private:
     Stream m_input;
     Stream m_output;
     Stream m_error;
+
+    bool m_close_fds{ true };
+    std::set<int> m_close_fds_exceptions{ STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO };
 
     // These allow for the output and error buffers to be available
     // after the process finishes.

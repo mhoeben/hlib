@@ -23,6 +23,7 @@
 //
 #include "hlib/subprocess.hpp"
 #include "hlib/config.hpp"
+#include "hlib/container.hpp"
 #include "hlib/error.hpp"
 #include "hlib/file.hpp"
 #include "hlib/format.hpp"
@@ -210,7 +211,6 @@ void Subprocess::onError(int fd, std::uint32_t events)
         if (count < 0) {
             return m_error.update(EventLoop::Hup);
         }
-
     }
 
     return m_error.update(events);
@@ -305,6 +305,17 @@ int Subprocess::run(std::vector<char const*> argv)
         input_pipe.close();
         output_pipe.close();
         error_pipe.close();
+
+        if (true == m_close_fds) {
+            int const max_fd = sysconf(_SC_OPEN_MAX);
+
+            for (int fd = 0; fd < max_fd; ++fd) {
+                if (true == container::contains(m_close_fds_exceptions, fd)) {
+                    continue;
+                }
+                close(fd);
+            }
+        }
 
         hverify(-1 == execvp(argv[0], const_cast<char * const *>(argv.data())));
 
@@ -491,6 +502,12 @@ void Subprocess::setOutput(Stream output) noexcept
 void Subprocess::setError(Stream error) noexcept
 {
     m_error = std::move(error);
+}
+
+void Subprocess::setCloseFDs(bool enable, std::set<int> exceptions)
+{
+    m_close_fds = enable;
+    m_close_fds_exceptions = std::move(exceptions);
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
