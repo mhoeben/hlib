@@ -60,6 +60,7 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/memory.hpp
     include/hlib/result.hpp
     include/hlib/scope_guard.hpp
+    include/hlib/signal.hpp
     include/hlib/sock_addr.hpp
     include/hlib/socket.hpp
     include/hlib/string.hpp
@@ -70,7 +71,6 @@ add_library(${PROJECT_NAME} SHARED
     include/hlib/uri.hpp
     include/hlib/utility.hpp
     include/hlib/uuid.hpp
-    include/hlib/wait.hpp
     include/hlib/web_socket_server.hpp
 
     include/hlib/c/base.h
@@ -100,6 +100,7 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_log.cpp
     src/hlib_math.cpp
     src/hlib_scope_guard.cpp
+    src/hlib_signal.cpp
     src/hlib_sock_addr.cpp
     src/hlib_socket.cpp
     src/hlib_string.cpp
@@ -109,7 +110,6 @@ add_library(${PROJECT_NAME} SHARED
     src/hlib_uri.cpp
     src/hlib_utility.cpp
     src/hlib_uuid.cpp
-    src/hlib_wait.cpp
     src/hlib_web_socket_server.cpp
 )
 

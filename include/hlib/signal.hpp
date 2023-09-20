@@ -24,11 +24,36 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include <csignal>
+#include <functional>
 
 namespace hlib
 {
 
-void wait_for_signal(int signal);
+enum class Signal
+{
+    Alarm = SIGALRM,
+    Child = SIGCHLD,
+    Continue = SIGCONT,
+    Hup = SIGHUP,
+    Interrupt = SIGINT,
+    Kill = SIGKILL,
+    Pipe = SIGPIPE,
+    Poll = SIGPOLL,
+    Quit = SIGQUIT,
+    Stop = SIGSTOP,
+    TStop = SIGTSTP,
+    Terminate = SIGTERM,
+    User1 = SIGUSR1,
+    User2 = SIGUSR2
+};
+
+typedef std::function<void(Signal signal)> OnSignal;
+
+bool set_signal_handler(Signal signal, OnSignal callback) noexcept;
+bool clear_signal_handler(Signal signal) noexcept;
+
+bool wait_for_signal(int signal) noexcept;
 
 } // namespace hlib
 
