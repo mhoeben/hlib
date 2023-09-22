@@ -58,6 +58,16 @@ struct Duration
     Duration& operator *=(double rhs) noexcept;
     Duration& operator /=(double rhs);
 
+    bool operator !() const noexcept;
+    bool operator ==(Duration const& rhs) const noexcept;
+    bool operator !=(Duration const& rhs) const noexcept;
+
+    bool operator <(Duration const& rhs) const noexcept;
+    bool operator >(Duration const& rhs) const noexcept;
+
+    bool operator <=(Duration const& rhs) const noexcept;
+    bool operator >=(Duration const& rhs) const noexcept;
+
     template<typename T>
     typename std::enable_if<std::is_same<double, T>::value, T>::type
     to()

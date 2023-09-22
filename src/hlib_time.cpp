@@ -167,6 +167,43 @@ time::Duration& time::Duration::operator /=(double rhs)
     return *this;
 }
 
+bool time::Duration::operator !() const noexcept
+{
+    return 0 == timespec.tv_sec && 0 == timespec.tv_nsec;
+}
+
+bool time::Duration::operator ==(Duration const& rhs) const noexcept
+{
+    return timespec.tv_sec == rhs.timespec.tv_sec && timespec.tv_nsec == rhs.timespec.tv_nsec;
+}
+
+bool time::Duration::operator !=(Duration const& rhs) const noexcept
+{
+    return !(*this == rhs);
+}
+
+bool time::Duration::operator <(Duration const& rhs) const noexcept
+{
+    return timespec.tv_sec < rhs.timespec.tv_sec
+        || (timespec.tv_sec == rhs.timespec.tv_sec && timespec.tv_nsec < rhs.timespec.tv_nsec);
+}
+
+bool time::Duration::operator >(Duration const& rhs) const noexcept
+{
+    return timespec.tv_sec > rhs.timespec.tv_sec
+        || (timespec.tv_sec == rhs.timespec.tv_sec && timespec.tv_nsec > rhs.timespec.tv_nsec);
+}
+
+bool time::Duration::operator <=(Duration const& rhs) const noexcept
+{
+    return !(*this > rhs);
+}
+
+bool time::Duration::operator >=(Duration const& rhs) const noexcept
+{
+    return !(*this < rhs);
+}
+
 //
 // Public (Clock)
 //
