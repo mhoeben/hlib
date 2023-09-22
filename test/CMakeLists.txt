@@ -50,6 +50,8 @@ add_executable(${PROJECT_NAME}
     src/container.cpp
     src/endian.cpp
     src/error.cpp
+    src/event_loop.cpp
+    src/event_queue.cpp
     src/file_server.cpp
     src/hash_map.cpp
     src/http_server.cpp

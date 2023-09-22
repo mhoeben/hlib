@@ -24,9 +24,10 @@
 #pragma once
 
 #include "hlib/time.hpp"
+#include <ctime>
 #include <functional>
 #include <memory>
-#include <time.h>
+#include <new>
 
 namespace hlib
 {
@@ -47,8 +48,8 @@ public:
         time::Duration const& expire, time::Duration const& interval = {});
     ~Timer();
 
-    void clear();
-    void set(time::Duration const& expire, time::Duration const& interval = {});
+    bool clear() noexcept;
+    bool set(time::Duration const& expire, time::Duration const& interval = {}) noexcept;
 
 private:
     std::weak_ptr<EventLoop> m_event_loop;

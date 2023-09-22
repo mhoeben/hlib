@@ -88,19 +88,21 @@ Timer::~Timer()
     }
 }
 
-void Timer::clear()
+bool Timer::clear() noexcept
 {
-    set({}, {});
+    return set({}, {});
 }
 
-void Timer::set(time::Duration const& expire, time::Duration const& interval)
+bool Timer::set(time::Duration const& expire, time::Duration const& interval) noexcept
 {
     itimerspec ts = {};
     ts.it_value = expire.timespec;
     ts.it_interval = interval.timespec;
 
     if (-1 == timerfd_settime(m_fd, 0, &ts, nullptr)) {
-        throwf<std::runtime_error>("timerfd_settime() failed ({})", get_error_string());
+        return false;
     }
+
+    return true;
 }
 

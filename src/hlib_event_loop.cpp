@@ -51,7 +51,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
         }
     );
 
-    int timeout_ms = -1;
+    time::MSec timeout_ms(-1);
     time::Clock expire;
 
     if (nullptr != timeout) {
@@ -71,7 +71,8 @@ void EventLoop::dispatch(time::Duration const* timeout)
         if (nullptr != timeout) {
             time::Clock const current = time::now();
             if (current < expire) {
-                timeout_ms = time::duration_to<time::MilliSeconds>(expire - current);
+                //timeout_ms = time::duration_to<time::MilliSeconds>(expire - current);
+                timeout_ms = (expire - current).to<time::MSec>();
             }
             else {
                 timeout_ms = 0;
@@ -79,7 +80,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
         }
 
         epoll_event event;
-        switch (epoll_wait(m_fd.value(), &event, 1, timeout_ms)) {
+        switch (epoll_wait(m_fd.value(), &event, 1, timeout_ms.value)) {
         case -1:
             if (EINTR != errno) {
                 throwf<std::runtime_error>("epoll_wait() failed ({})", get_error_string());

@@ -26,12 +26,10 @@
 
 using namespace hlib;
 
-namespace {
+namespace
+{
 
-constexpr long SecsPerSec{ 1L };
-constexpr long MSecsPerSec{ 1000L };
-constexpr long USecsPerSec{ 1000000L };
-constexpr long NSecsPerSec{ 1000000000L };
+constexpr long nsec_per_sec{ 1000000000L };
 
 std::timespec timespec_add(std::timespec const& lhs, std::timespec const& rhs) noexcept
 {
@@ -41,9 +39,9 @@ std::timespec timespec_add(std::timespec const& lhs, std::timespec const& rhs) n
         lhs.tv_nsec + rhs.tv_nsec
     };
 
-    if (result.tv_nsec >= NSecsPerSec) {
+    if (result.tv_nsec >= nsec_per_sec) {
         result.tv_sec += 1;
-        result.tv_nsec -= NSecsPerSec;
+        result.tv_nsec -= nsec_per_sec;
     }
 
     return result;
@@ -59,7 +57,7 @@ std::timespec timespec_subtract(std::timespec const& lhs, std::timespec const& r
 
     if (result.tv_nsec < 0) {
         result.tv_sec -= 1;
-        result.tv_nsec += NSecsPerSec;
+        result.tv_nsec += nsec_per_sec;
     }
 
     return result;
@@ -70,10 +68,10 @@ std::timespec timespec_multiply(const std::timespec& lhs, double rhs) noexcept
     std::timespec result;
 
     double const nsec = lhs.tv_nsec * rhs;
-    double const carry = std::floor(nsec / NSecsPerSec);
+    double const carry = std::floor(nsec / nsec_per_sec);
 
     result.tv_sec = lhs.tv_sec * static_cast<std::time_t>(rhs) + static_cast<std::time_t>(carry);
-    result.tv_nsec = static_cast<long>(nsec - carry * NSecsPerSec);
+    result.tv_nsec = static_cast<long>(nsec - carry * nsec_per_sec);
 
     return result;
 }
@@ -82,56 +80,16 @@ std::timespec timespec_divide(const timespec& lhs, double rhs)
 {
     std::timespec result;
 
-    double total_secs = lhs.tv_sec + lhs.tv_nsec / NSecsPerSec;
+    double total_secs = lhs.tv_sec + lhs.tv_nsec / nsec_per_sec;
     double divided_secs = total_secs / rhs;
 
     result.tv_sec = static_cast<std::time_t>(divided_secs);
-    result.tv_nsec = static_cast<long>((divided_secs - result.tv_sec) * NSecsPerSec);
+    result.tv_nsec = static_cast<long>((divided_secs - result.tv_sec) * nsec_per_sec);
 
     return result;
 }
 
 } // namespace
-
-//
-// Public (std::timespec)
-//
-bool hlib::operator !(std::timespec const& ts) noexcept
-{
-    return 0 == ts.tv_sec && 0 == ts.tv_nsec;
-}
-
-bool hlib::operator ==(std::timespec const& lhs, std::timespec const& rhs) noexcept
-{
-    return lhs.tv_sec == rhs.tv_sec && lhs.tv_nsec == rhs.tv_nsec;
-}
-
-bool hlib::operator !=(std::timespec const& lhs, std::timespec const& rhs) noexcept
-{
-    return !(lhs == rhs);
-}
-
-bool hlib::operator < (std::timespec const& lhs, std::timespec const& rhs) noexcept
-{
-    return lhs.tv_sec < rhs.tv_sec
-        || (lhs.tv_sec == rhs.tv_sec && lhs.tv_nsec < rhs.tv_nsec);
-}
-
-bool hlib::operator > (std::timespec const& lhs, std::timespec const& rhs) noexcept
-{
-    return lhs.tv_sec > rhs.tv_sec
-        || (lhs.tv_sec == rhs.tv_sec && lhs.tv_nsec > rhs.tv_nsec);
-}
-
-bool hlib::operator <= (std::timespec const& lhs, std::timespec const& rhs) noexcept
-{
-    return !(lhs > rhs);
-}
-
-bool hlib::operator >= (std::timespec const& lhs, std::timespec const& rhs) noexcept
-{
-    return !(lhs < rhs);
-}
 
 //
 // Public (Duration)
@@ -156,89 +114,57 @@ time::Duration::Duration(double secs) noexcept
     assert(secs >= 0.0);
 
     timespec.tv_sec = static_cast<time_t>(std::floor(secs));
-    timespec.tv_nsec = static_cast<long>(std::fmod(secs, 1.0) * NSecsPerSec);
+    timespec.tv_nsec = static_cast<long>(std::fmod(secs, 1.0) * nsec_per_sec);
 }
 
-time::Duration::operator double () const noexcept
+time::Duration::operator double() const noexcept
 {
     return static_cast<double>(timespec.tv_sec)
-         + static_cast<double>(timespec.tv_nsec) / static_cast<double>(NSecsPerSec);
+         + static_cast<double>(timespec.tv_nsec) / static_cast<double>(nsec_per_sec);
 }
 
-time::Duration time::Duration::operator + (time::Duration const& rhs) const noexcept
+time::Duration time::Duration::operator +(time::Duration const& rhs) const noexcept
 {
     return time::Duration(timespec_add(timespec, rhs.timespec));
 }
 
-time::Duration time::Duration::operator - (time::Duration const& rhs) const noexcept
+time::Duration time::Duration::operator -(time::Duration const& rhs) const noexcept
 {
     return time::Duration(timespec_subtract(timespec, rhs.timespec));
 }
 
-time::Duration& time::Duration::operator += (time::Duration const& rhs) noexcept
+time::Duration& time::Duration::operator +=(time::Duration const& rhs) noexcept
 {
     timespec = timespec_add(timespec, rhs.timespec);
     return *this;
 }
 
-time::Duration& time::Duration::operator -= (time::Duration const& rhs) noexcept
+time::Duration& time::Duration::operator -=(time::Duration const& rhs) noexcept
 {
     timespec = timespec_subtract(timespec, rhs.timespec);
     return *this;
 }
 
-time::Duration time::Duration::operator * (double rhs) const noexcept
+time::Duration time::Duration::operator *(double rhs) const noexcept
 {
     return time::Duration(timespec_multiply(timespec, rhs));
 }
 
-time::Duration time::Duration::operator / (double rhs) const
+time::Duration time::Duration::operator /(double rhs) const
 {
     return time::Duration(timespec_divide(timespec, rhs));
 }
 
-time::Duration& time::Duration::operator *= (double rhs) noexcept
+time::Duration& time::Duration::operator *=(double rhs) noexcept
 {
     timespec = timespec_multiply(timespec, rhs);
     return *this;
 }
 
-time::Duration& time::Duration::operator /= (double rhs)
+time::Duration& time::Duration::operator /=(double rhs)
 {
     timespec = timespec_divide(timespec, rhs);
     return *this;
-}
-
-//
-// Public (Seconds)
-//
-time::Seconds::Seconds(double secs)
-    : Duration{ secs }
-{
-}
-
-//
-// Public (MilliSeconds)
-//
-time::MilliSeconds::MilliSeconds(double msecs)
-    : Duration{ msecs * Ratio }
-{
-}
-
-//
-// Public (MicroSeconds)
-//
-time::MicroSeconds::MicroSeconds(double usecs)
-    : Duration{ usecs * Ratio }
-{
-}
-
-//
-// Public (NanoSeconds)
-//
-time::NanoSeconds::NanoSeconds(double nsecs)
-    : Duration{ nsecs * Ratio }
-{
 }
 
 //
@@ -261,12 +187,12 @@ time::Clock::Clock(std::timespec const& ts) noexcept
     tv_nsec = ts.tv_nsec;
 }
 
-time::Duration time::Clock::operator - (time::Clock const& rhs) const noexcept
+time::Duration time::Clock::operator -(time::Clock const& rhs) const noexcept
 {
     return time::Duration(timespec_subtract(*this, rhs));
 }
 
-time::Clock time::Clock::operator + (time::Duration const& rhs) const noexcept
+time::Clock time::Clock::operator +(time::Duration const& rhs) const noexcept
 {
     return time::Clock(timespec_add(*this, rhs.timespec));
 }
@@ -276,7 +202,7 @@ time::Clock time::Clock::operator - (time::Duration const& rhs) const noexcept
     return time::Clock(timespec_subtract(*this, rhs.timespec));
 }
 
-time::Clock& time::Clock::operator += (time::Duration const& rhs) noexcept
+time::Clock& time::Clock::operator +=(time::Duration const& rhs) noexcept
 {
     Clock result(timespec_add(*this, rhs.timespec));
     tv_sec = result.tv_sec;
@@ -284,12 +210,49 @@ time::Clock& time::Clock::operator += (time::Duration const& rhs) noexcept
     return *this;
 }
 
-time::Clock& time::Clock::operator -= (time::Duration const& rhs) noexcept
+time::Clock& time::Clock::operator -=(time::Duration const& rhs) noexcept
 {
     Clock result(timespec_subtract(*this, rhs.timespec));
     tv_sec = result.tv_sec;
     tv_nsec = result.tv_nsec;
     return *this;
+}
+
+bool time::Clock::operator !() const noexcept
+{
+    return 0 == tv_sec && 0 == tv_nsec;
+}
+
+bool time::Clock::operator ==(std::timespec const& rhs) const noexcept
+{
+    return tv_sec == rhs.tv_sec && tv_nsec == rhs.tv_nsec;
+}
+
+bool time::Clock::operator !=(std::timespec const& rhs) const noexcept
+{
+    return !(*this == rhs);
+}
+
+bool time::Clock::operator <(std::timespec const& rhs) const noexcept
+{
+    return tv_sec < rhs.tv_sec
+        || (tv_sec == rhs.tv_sec && tv_nsec < rhs.tv_nsec);
+}
+
+bool time::Clock::operator >(std::timespec const& rhs) const noexcept
+{
+    return tv_sec > rhs.tv_sec
+        || (tv_sec == rhs.tv_sec && tv_nsec > rhs.tv_nsec);
+}
+
+bool time::Clock::operator <=(std::timespec const& rhs) const noexcept
+{
+    return !(*this > rhs);
+}
+
+bool time::Clock::operator >=(std::timespec const& rhs) const noexcept
+{
+    return !(*this < rhs);
 }
 
 //
