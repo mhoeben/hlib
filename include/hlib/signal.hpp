@@ -50,10 +50,12 @@ enum class Signal
 
 typedef std::function<void(Signal signal)> OnSignal;
 
-bool set_signal_handler(Signal signal, OnSignal callback) noexcept;
-bool clear_signal_handler(Signal signal) noexcept;
+bool set_signal_handler(Signal signal, OnSignal callback);
+bool clear_signal_handler(Signal signal);
 
-bool wait_for_signal(int signal) noexcept;
+bool wait_for_signal(Signal signal);
+
+bool raise(Signal signal) noexcept;
 
 } // namespace hlib
 

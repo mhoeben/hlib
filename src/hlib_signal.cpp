@@ -23,8 +23,7 @@
 //
 #include "hlib/signal.hpp"
 #include "hlib/lock.hpp"
-#include <condition_variable>
-#include <mutex>
+#include <future>
 #include <unordered_map>
 
 using namespace hlib;
@@ -37,6 +36,8 @@ struct ActiveSignalHandler
     struct sigaction old_action{};
     OnSignal callback;
 
+    std::promise<void> promise;
+
     ActiveSignalHandler(OnSignal&& on_signal)
         : callback(std::move(on_signal))
     {
@@ -45,20 +46,9 @@ struct ActiveSignalHandler
 
 std::unordered_map<Signal, ActiveSignalHandler> signal_handlers;
 
-std::mutex wait_mutex;
-std::condition_variable wait_cv;
-volatile sig_atomic_t wait_signal{ 0 };
-
-void wait_on_signal(int /* signal */) noexcept
-{
-    HLIB_LOCK_GUARD(lock, wait_mutex);
-    wait_signal = 1;
-    wait_cv.notify_one();
-}
-
 } // namespace
 
-bool hlib::set_signal_handler(Signal signal, OnSignal callback) noexcept
+bool hlib::set_signal_handler(Signal signal, OnSignal callback)
 {
     auto handler = [](int sig) noexcept
     {
@@ -88,11 +78,12 @@ bool hlib::set_signal_handler(Signal signal, OnSignal callback) noexcept
     return true;
 }
 
-bool hlib::clear_signal_handler(Signal signal) noexcept
+bool hlib::clear_signal_handler(Signal signal)
 {
     // Find signal handler, if any.
     auto it = signal_handlers.find(signal);
     if (signal_handlers.end() == it) {
+        errno = EINVAL;
         return false;
     }
 
@@ -106,23 +97,29 @@ bool hlib::clear_signal_handler(Signal signal) noexcept
     return true;
 }
 
-bool hlib::wait_for_signal(int signal) noexcept
+bool hlib::wait_for_signal(Signal signal)
 {
-    struct sigaction new_action{};
-    struct sigaction old_action{};
-    new_action.sa_handler = wait_on_signal;
-    sigemptyset(&new_action.sa_mask);
-    if (-1 == sigaction(signal, &new_action, &old_action)) {
-        return false;
-    }
+    // Install a signal handler that sets the promise when signalled.
+    set_signal_handler(signal, [](Signal sig) {
+        auto it = signal_handlers.find(static_cast<Signal>(sig));
+        assert(signal_handlers.end() != it);
 
-    HLIB_UNIQUE_LOCK(lock, wait_mutex);
-    wait_cv.wait(lock, [] { return 0 != wait_signal; });
+        it->second.promise.set_value();
+    });
 
-    if (-1 != sigaction(signal, &old_action, nullptr)) {
-        return false;
-    }
+    auto it = signal_handlers.find(static_cast<Signal>(signal));
+    assert(signal_handlers.end() != it);
 
+    // Wait on the future.
+    it->second.promise.get_future().get();
+
+    // Clear signal handler.
+    clear_signal_handler(signal);
     return true;
+}
+
+bool hlib::raise(Signal signal) noexcept
+{
+    return 0 == ::raise(static_cast<int>(signal));
 }
 
