@@ -29,6 +29,7 @@
 #pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wswitch-default"
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 
 #include "../../third_party/fmt/include/fmt/format.h"
 
