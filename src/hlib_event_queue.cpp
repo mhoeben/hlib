@@ -48,8 +48,7 @@ void EventQueue::onTimer()
 // Public
 //
 EventQueue::EventQueue(std::weak_ptr<EventLoop> event_loop)
-    : m_event_loop(std::move(event_loop))
-    , m_timer(m_event_loop, std::bind(&EventQueue::onTimer, this))
+    : m_timer(std::move(event_loop), std::bind(&EventQueue::onTimer, this))
 {
 }
 

@@ -44,8 +44,6 @@ public:
     void push(Callback callback);
 
 private:
-    std::weak_ptr<EventLoop> m_event_loop;
-
     std::mutex m_mutex;
     std::deque<Callback> m_queue;
     Timer m_timer;
