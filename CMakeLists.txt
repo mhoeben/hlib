@@ -41,7 +41,7 @@ add_subdirectory(third_party/pegtl pegtl)
 
 add_subdirectory(tools/codegen codegen)
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/base.hpp
     include/hlib/buffer.hpp
     include/hlib/codec.hpp
