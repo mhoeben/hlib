@@ -138,7 +138,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wmissing-include-dirs
     -Wredundant-decls
     -Wshadow
-    -Wstrict-overflow=5
+    #-Wstrict-overflow=5
     -Wswitch-default
     -Wundef
     -Wno-variadic-macros
