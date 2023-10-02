@@ -75,14 +75,14 @@ extern FILE* file;
     do { \
         std::string message = fmt::format(__VA_ARGS__); \
         hlib::log::callback(domain, hlib::log::Fatal, message); \
-        throw exception(fmt::format("{}[FATL]: {}", domain, message)); \
+        throw exception(fmt::format("{}[FATL]: {}", domain.name, message)); \
     } while (false)
 
 #define HLOGE_THROW(domain, exception, ...) \
     do { \
         std::string message = fmt::format(__VA_ARGS__); \
         hlib::log::callback(domain, hlib::log::Error, message); \
-        throw exception(fmt::format("{}[ERRO]: {}", domain, message)); \
+        throw exception(fmt::format("{}[ERRO]: {}", domain.name, message)); \
     } while (false)
 
 } // namespace log
