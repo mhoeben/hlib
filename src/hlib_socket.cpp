@@ -269,6 +269,11 @@ bool Socket::connected() const noexcept
     return m_connected;
 }
 
+std::uint32_t Socket::events() const noexcept
+{
+    return m_events;
+}
+
 SockAddr Socket::getPeerAddress() const noexcept
 {
     sockaddr_storage storage{};

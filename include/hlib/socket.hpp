@@ -56,6 +56,7 @@ public:
 
     int fd() const noexcept;
     bool connected() const noexcept;
+    std::uint32_t events() const noexcept;
 
     SockAddr getPeerAddress() const noexcept;
 
