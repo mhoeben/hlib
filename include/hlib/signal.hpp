@@ -34,7 +34,7 @@ enum class Signal
 {
     Abort = SIGABRT,
     Alarm = SIGALRM,
-    Bus = SIGBUS,
+    BusError = SIGBUS,
     Child = SIGCHLD,
     Continue = SIGCONT,
     Hup = SIGHUP,
