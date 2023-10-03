@@ -32,10 +32,13 @@ namespace hlib
 
 enum class Signal
 {
+    Abort = SIGABRT,
     Alarm = SIGALRM,
+    Bus = SIGBUS,
     Child = SIGCHLD,
     Continue = SIGCONT,
     Hup = SIGHUP,
+    IllegalInstruction = SIGILL,
     Interrupt = SIGINT,
     Kill = SIGKILL,
     Pipe = SIGPIPE,
