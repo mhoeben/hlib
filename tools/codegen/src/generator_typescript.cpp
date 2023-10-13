@@ -211,7 +211,7 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
                         fmt::print(m_output,
                             "        this.{name}.length = decoder.openArray(\"{name}\");\n"
                             "        for (let i = 0; i < this.{name}.length; ++i) {{\n"
-                            "            this.{name}[i](decoder.decode{ext}(null));\n"
+                            "            this.{name}[i] = decoder.decode{ext}(null);\n"
                             "        }}\n"
                             "        decoder.close();\n",
                             fmt::arg("name", member.name),
