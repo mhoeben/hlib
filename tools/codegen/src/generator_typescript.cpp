@@ -209,7 +209,7 @@ int GeneratorTypescript::generate(FILE* output, FILE* input, Side side)
                         Type const underlying_type = to_underlying_type(member.type);
 
                         fmt::print(m_output,
-                            "        this.{name}.length = encoder.openArray(\"{name}\");\n"
+                            "        this.{name}.length = decoder.openArray(\"{name}\");\n"
                             "        for (let i = 0; i < this.{name}.length; ++i) {{\n"
                             "            this.{name}[i](decoder.decode{ext}(null));\n"
                             "        }}\n"
