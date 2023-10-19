@@ -44,8 +44,6 @@ struct Duration
 
     virtual ~Duration() = default;
 
-    operator double() const noexcept;
-
     Duration operator +(Duration const& rhs) const noexcept;
     Duration operator -(Duration const& rhs) const noexcept;
 

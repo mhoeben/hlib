@@ -269,6 +269,10 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
               }
 
             case Opcode::Pong:
+                // Update pong timestamp.
+                m_pong_last_timestamp = time::now();
+
+                // Callback?
                 if (nullptr != m_on_pong) {
                     m_on_pong();
                 }
@@ -450,6 +454,13 @@ void Server::Socket::setNoDelay(bool enable)
 void Server::Socket::setPingInterval(time::Duration interval)
 {
     m_ping_timer.set(interval, interval);
+    m_pong_last_timestamp = time::now();
+}
+
+void Server::Socket::setPongTimeout(time::Duration timeout)
+{
+    m_pong_timeout = timeout;
+    m_pong_last_timestamp = time::now();
 }
 
 void Server::Socket::setMaxReceiveMessageSize(std::size_t size)
@@ -574,6 +585,35 @@ void Server::onPoll(int fd, std::uint32_t events)
 void Server::onSocketsTimer()
 {
     HLIB_LOCK_GUARD(lock, m_sockets_mutex);
+
+    time::Clock const now = time::now();
+
+    // Check for pong timeouts.
+    for (auto it = m_sockets.begin(); m_sockets.end() != it;) {
+        Socket& socket = *it->second;
+
+        // Is a timeout configured?
+        if (socket.m_pong_timeout <= 0) {
+            ++it;
+            continue;
+        }
+
+        // Timeout expired?
+        if (socket.m_pong_last_timestamp - now > socket.m_pong_timeout) {
+            // Call close callback?
+            if (nullptr != socket.m_on_close) {
+                // Callback.
+                socket.m_on_close(StatusCode::Abnormal, Buffer());
+            }
+
+            // Remove socket.
+            HLOGE(m_logger, "{}: Socket pong timedout", it->second->id);
+            it = m_sockets.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
 
     // Remove closed sockets.
     for (auto it = m_sockets.begin(); m_sockets.end() != it;) {

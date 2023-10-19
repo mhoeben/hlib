@@ -124,6 +124,7 @@ public:
 
         void setNoDelay(bool enable);
         void setPingInterval(time::Duration interval);
+        void setPongTimeout(time::Duration timeout);
         void setMaxReceiveMessageSize(std::size_t size);
         void setFragmentMessageThreshold(std::size_t size);
 
@@ -142,6 +143,8 @@ public:
         OnClose m_on_close;
 
         Timer m_ping_timer;
+        time::Duration m_pong_timeout;
+        time::Clock m_pong_last_timestamp;
         std::size_t m_max_receive_message_size;
         std::size_t m_fragment_message_threshold;
 

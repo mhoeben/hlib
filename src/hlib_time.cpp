@@ -117,12 +117,6 @@ time::Duration::Duration(double secs) noexcept
     timespec.tv_nsec = static_cast<long>(std::fmod(secs, 1.0) * nsec_per_sec);
 }
 
-time::Duration::operator double() const noexcept
-{
-    return static_cast<double>(timespec.tv_sec)
-         + static_cast<double>(timespec.tv_nsec) / static_cast<double>(nsec_per_sec);
-}
-
 time::Duration time::Duration::operator +(time::Duration const& rhs) const noexcept
 {
     return time::Duration(timespec_add(timespec, rhs.timespec));
