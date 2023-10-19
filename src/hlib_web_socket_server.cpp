@@ -599,7 +599,7 @@ void Server::onSocketsTimer()
         }
 
         // Timeout expired?
-        if (socket.m_pong_last_timestamp - now > socket.m_pong_timeout) {
+        if (now - socket.m_pong_last_timestamp > socket.m_pong_timeout) {
             // Call close callback?
             if (nullptr != socket.m_on_close) {
                 // Callback.
