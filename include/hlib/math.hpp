@@ -159,6 +159,13 @@ T fraction_to(Fraction<N, D> const& fraction) noexcept
 
 typedef std::ratio<1, 1> One;
 
+
+template<typename T>
+struct IsRatio : std::false_type {};
+
+template<intmax_t Num, intmax_t Den>
+struct IsRatio<std::ratio<Num, Den>> : std::true_type {};
+
 template<typename R = One, typename T = int>
 struct RatioValue final
 {
@@ -354,11 +361,19 @@ struct RatioValue final
         return *this = *this / that;
     }
 
-    template<typename TRatio, typename TType = T>
-    RatioValue<TRatio, TType> to() const
+    template<typename Ratio, typename Type = T>
+    typename std::enable_if<IsRatio<Ratio>::value, RatioValue<Ratio, Type>>::type
+    to() const
     {
-        using Factor = std::ratio_divide<R, TRatio>;
-        return RatioValue<TRatio, TType>(static_cast<TType>(value) * static_cast<TType>(Factor::num) / static_cast<TType>(Factor::den));
+        using Factor = std::ratio_divide<R, Ratio>;
+        return RatioValue<Ratio, Type>(static_cast<Type>(value) * static_cast<Type>(Factor::num) / static_cast<Type>(Factor::den));
+    }
+
+    template<typename TRatioValue>
+    typename std::enable_if<!IsRatio<TRatioValue>::value, TRatioValue>::type
+    to() const
+    {
+        return to<typename TRatioValue::Ratio, typename TRatioValue::Type>();
     }
 
     template<typename TRatio, typename TType = T>
