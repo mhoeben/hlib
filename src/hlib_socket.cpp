@@ -65,7 +65,7 @@ void Socket::updateEventsLocked(std::uint32_t events) noexcept
     if (true == m_connected) {
         // Lock event loop and modify events.
         with_weak_ptr_locked(m_event_loop, [&](EventLoop& loop) {
-            loop.modify(m_fd.value(), events);
+            loop.modify(m_fd.get(), events);
         });
     }
 
@@ -74,7 +74,7 @@ void Socket::updateEventsLocked(std::uint32_t events) noexcept
 
 void Socket::onAccept(int fd, std::uint32_t events)
 {
-    assert(m_fd.value() == fd);
+    assert(m_fd.get() == fd);
     assert(nullptr != m_on_accept);
 
     // Error condition while listening?
@@ -86,17 +86,17 @@ void Socket::onAccept(int fd, std::uint32_t events)
     socklen_t length = address.length();
 
     // Accept socket and peer address.
-    UniqueOwner<int, -1> socket(
+    UniqueHandle<int, -1> socket(
         accept(fd, static_cast<sockaddr*>(address), &length),
         file::fd_close
     );
-    if (-1 == socket.value()) {
+    if (-1 == socket.get()) {
         callbackAndClose(errno);
         return;
     }
 
     // Make non-blocking.
-    if (false == file::fd_set_non_blocking(socket.value(), true)) {
+    if (false == file::fd_set_non_blocking(socket.get(), true)) {
         callbackAndClose(errno);
         return;
     }
@@ -137,7 +137,7 @@ void Socket::onConnect(int fd, std::uint32_t /* events */)
 
 void Socket::onEvent(int fd, std::uint32_t events)
 {
-    assert(m_fd.value() == fd);
+    assert(m_fd.get() == fd);
     assert(true == m_connected);
 
     auto callback_receive = [this]
@@ -248,7 +248,7 @@ Socket::Socket(std::weak_ptr<EventLoop> event_loop) noexcept
 {
 }
 
-Socket::Socket(std::weak_ptr<EventLoop> event_loop, UniqueOwner<int, -1> fd) noexcept
+Socket::Socket(std::weak_ptr<EventLoop> event_loop, UniqueHandle<int, -1> fd) noexcept
     : Socket(std::move(event_loop))
 {
     open(std::move(fd));
@@ -261,7 +261,7 @@ Socket::~Socket()
 
 int Socket::fd() const noexcept
 {
-    return m_fd.value();
+    return m_fd.get();
 }
 
 bool Socket::connected() const noexcept
@@ -279,7 +279,7 @@ SockAddr Socket::getPeerAddress() const noexcept
     sockaddr_storage storage{};
     socklen_t length = sizeof(storage);
 
-    if (-1 == getpeername(m_fd.value(), reinterpret_cast<sockaddr*>(&storage), &length)) {
+    if (-1 == getpeername(m_fd.get(), reinterpret_cast<sockaddr*>(&storage), &length)) {
         return SockAddr();
     }
 
@@ -314,7 +314,7 @@ void Socket::setReceiveBufferSize(std::size_t size, bool gather) noexcept
     m_receive_buffer_gather = gather;
 }
 
-bool Socket::open(UniqueOwner<int, -1> fd, std::nothrow_t) noexcept
+bool Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
 {
     using namespace std::placeholders;
 
@@ -324,7 +324,7 @@ bool Socket::open(UniqueOwner<int, -1> fd, std::nothrow_t) noexcept
 
     // Add socket's file descriptor to event loop.
     bool success = with_weak_ptr_locked(m_event_loop, [&](EventLoop& loop) {
-        loop.add(fd.value(), m_events, std::bind(&Socket::onEvent, this, _1, _2));
+        loop.add(fd.get(), m_events, std::bind(&Socket::onEvent, this, _1, _2));
     });
     if (false == success) {
         errno = ENODEV;
@@ -333,11 +333,11 @@ bool Socket::open(UniqueOwner<int, -1> fd, std::nothrow_t) noexcept
 
     // Store socket's file descriptor and signal it is connected.
     m_fd = std::move(fd);
-    m_connected = 0 == get_socket_error(m_fd.value());
+    m_connected = 0 == get_socket_error(m_fd.get());
     return true;
 }
 
-void Socket::open(UniqueOwner<int, -1> fd)
+void Socket::open(UniqueHandle<int, -1> fd)
 {
     if (false == Socket::open(std::move(fd), std::nothrow)) {
         throwf<std::runtime_error>("Socket::open() failed ({})", get_error_string());
@@ -353,42 +353,42 @@ bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog
     m_events = EventLoop::Read;
 
     // Create socket.
-    UniqueOwner<int, -1> fd(
+    UniqueHandle<int, -1> fd(
         ::socket(address.family(), type, protocol),
         file::fd_close
     );
-    if (-1 == fd.value()) {
+    if (-1 == fd.get()) {
         return false;
     }
 
     // Set close-on-exec on listening sockets.
-    if (-1 == fcntl(fd.value(), F_SETFD, FD_CLOEXEC)) {
+    if (-1 == fcntl(fd.get(), F_SETFD, FD_CLOEXEC)) {
         return false;
     }
 
     // Make non-blocking.
-    if (false == file::fd_set_non_blocking(fd.value(), true)) {
+    if (false == file::fd_set_non_blocking(fd.get(), true)) {
         return false;
     }
 
     // Set reuse options.
-    if (false == set_reuse(fd.value(), options)) {
+    if (false == set_reuse(fd.get(), options)) {
         return false;
     }
 
     // Bind socket to address.
-    if (-1 == ::bind(fd.value(), static_cast<sockaddr const*>(address), address.length())) {
+    if (-1 == ::bind(fd.get(), static_cast<sockaddr const*>(address), address.length())) {
         return false;
     }
 
     // Listen for incoming connections
-    if (-1 == ::listen(fd.value(), backlog)) {
+    if (-1 == ::listen(fd.get(), backlog)) {
         return false;
     }
 
     // Add file descriptor to event loop.
     bool success = with_weak_ptr_locked(m_event_loop, [&](EventLoop& loop) {
-        loop.add(fd.value(), m_events, std::bind(&Socket::onAccept, this, _1, _2));
+        loop.add(fd.get(), m_events, std::bind(&Socket::onAccept, this, _1, _2));
     });
     if (false == success) {
         errno = ENODEV;
@@ -419,26 +419,26 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
     m_events = events;
 
     // Create socket.
-    UniqueOwner<int, -1> fd(
+    UniqueHandle<int, -1> fd(
         ::socket(address.family(), type, protocol),
         file::fd_close
     );
-    if (-1 == fd.value()) {
+    if (-1 == fd.get()) {
         return false;
     }
 
     // Make non-blocking.
-    if (false == file::fd_set_non_blocking(fd.value(), true)) {
+    if (false == file::fd_set_non_blocking(fd.get(), true)) {
         return false;
     }
 
     // Set reuse options.
-    if (false == set_reuse(fd.value(), options)) {
+    if (false == set_reuse(fd.get(), options)) {
         return false;
     }
 
     // Connect to peer address.
-    if (-1 == ::connect(fd.value(), static_cast<sockaddr const*>(address), address.length())) {
+    if (-1 == ::connect(fd.get(), static_cast<sockaddr const*>(address), address.length())) {
         if (EINPROGRESS != errno) {
             return false;
         }
@@ -452,7 +452,7 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
 
     // Add file descriptor to event loop.
     bool success = with_weak_ptr_locked(m_event_loop, [&](EventLoop& loop) {
-        loop.add(fd.value(), events, std::move(callback));
+        loop.add(fd.get(), events, std::move(callback));
     });
     if (false == success) {
         errno = ENODEV;
@@ -511,12 +511,12 @@ void Socket::send(Buffer buffer)
 
 void Socket::close() noexcept
 {
-    if (-1 == m_fd.value()) {
+    if (-1 == m_fd.get()) {
         return;
     }
 
     with_weak_ptr_locked(m_event_loop, [&](EventLoop& loop) {
-        loop.remove(m_fd.value());
+        loop.remove(m_fd.get());
     });
 
     m_fd.reset();

@@ -44,124 +44,119 @@ bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, Lambda lambda)
     return true;
 }
 
-template<typename T, T invalid_value = 0, typename Destructor=void(T)>
-class UniqueOwner final
+template<typename T, T invalid_handle = 0, typename Destructor=void(T)>
+class UniqueHandle final
 {
     static_assert(true == std::is_trivial<T>::value, "T must be a trivial type");
 
-    HLIB_NOT_COPYABLE(UniqueOwner);
+    HLIB_NOT_COPYABLE(UniqueHandle);
 
 public:
     typedef T Type;
 
 public:
-    UniqueOwner(Destructor destructor) noexcept
+    UniqueHandle(Destructor destructor) noexcept
         : m_destructor(std::move(destructor))
     {
         assert(nullptr != m_destructor);
     }
 
-    UniqueOwner(T value, Destructor destructor) noexcept
-        : m_value{ value }
+    UniqueHandle(T handle, Destructor destructor) noexcept
+        : m_handle{ handle }
         , m_destructor(std::move(destructor))
     {
     }
 
-    UniqueOwner(UniqueOwner&& that) noexcept
-        : m_value{ that.m_value }
+    UniqueHandle(UniqueHandle&& that) noexcept
+        : m_handle{ that.m_handle }
         , m_destructor(std::move(that.m_destructor))
     {
-        that.m_value = invalid_value;
+        that.m_handle = invalid_handle;
     }
 
-    ~UniqueOwner()
+    ~UniqueHandle()
     {
         reset();
     }
 
-    UniqueOwner& operator=(UniqueOwner&& that) noexcept
+    UniqueHandle& operator=(UniqueHandle&& that) noexcept
     {
         reset();
 
-        std::swap(m_value, that.m_value);
+        std::swap(m_handle, that.m_handle);
         m_destructor = std::move(that.m_destructor);
         return *this;
     }
 
     T const& operator *() const noexcept
     {
-        return m_value;
+        return m_handle;
     }
 
     T const& operator ->() const noexcept
     {
-        return m_value;
+        return m_handle;
     }
 
-    explicit operator bool() const noexcept
+    operator bool() const noexcept
     {
-        return invalid_value != m_value;
+        return invalid_handle != m_handle;
     }
 
-    bool operator ==(UniqueOwner const& that) const noexcept
+    bool operator ==(UniqueHandle const& that) const noexcept
     {
-        return m_value == that.m_value;
+        return m_handle == that.m_handle;
     }
 
     bool operator ==(T const& that) const noexcept
     {
-        return m_value == that;
+        return m_handle == that;
     }
 
-    bool operator !=(UniqueOwner const& that) const noexcept
+    bool operator !=(UniqueHandle const& that) const noexcept
     {
-        return m_value != that.m_value;
+        return m_handle != that.m_handle;
     }
 
     bool operator !=(T const& that) const noexcept
     {
-        return m_value != that;
+        return m_handle != that;
     }
 
-    bool hasValue() const noexcept
+    T const& get() const noexcept
     {
-        return invalid_value != m_value;
-    }
-
-    T const& value() const noexcept
-    {
-        return m_value;
+        return m_handle;
     }
 
     T* reset() noexcept
     {
-        reset(invalid_value);
-        return &m_value;
+        reset(invalid_handle);
+        return &m_handle;
     }
 
-    void reset(T value) noexcept
+    void reset(T handle) noexcept
     {
-        if (invalid_value != m_value) {
-            m_destructor(m_value);
+        if (invalid_handle != m_handle) {
+            m_destructor(m_handle);
         }
-        m_value = std::move(value);
+        m_handle = std::move(handle);
     }
 
-    void swap(UniqueOwner& that) noexcept
+    void swap(UniqueHandle& that) noexcept
     {
-        std::swap(m_value, that.m_value);
+        std::swap(m_handle, that.m_handle);
         std::swap(m_destructor, that.m_destructor);
     }
 
     T release() noexcept
     {
-        T value = invalid_value;
-        std::swap(m_value, value);
-        return value;
+        T handle = invalid_handle;
+        std::swap(m_handle, handle);
+        return handle;
     }
 
 private:
-    T m_value{ invalid_value };
+    T m_handle{ invalid_handle };
     std::function<Destructor> m_destructor;
 };
 

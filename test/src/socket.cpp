@@ -38,7 +38,7 @@ TEST_CASE("Sockets", "[socket]")
 
     Socket server(event_loop);
     server.listen(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 1, Socket::ReusePort);
-    server.setAcceptCallback([&](UniqueOwner<int, -1> fd, SockAddr const& /*address*/) {
+    server.setAcceptCallback([&](UniqueHandle<int, -1> fd, SockAddr const& /*address*/) {
         accepted.open(std::move(fd));
         accepted.send(Buffer("Hello World!"));
     });

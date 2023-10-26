@@ -535,7 +535,7 @@ Pipe::~Pipe()
 int Pipe::operator[](std::size_t index) const noexcept
 {
     assert(index <= 1);
-    return m_fds[index].value();
+    return m_fds[index].get();
 }
 
 bool Pipe::open(std::nothrow_t) noexcept

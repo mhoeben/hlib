@@ -80,7 +80,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
         }
 
         epoll_event event;
-        switch (epoll_wait(m_fd.value(), &event, 1, timeout_ms.value)) {
+        switch (epoll_wait(m_fd.get(), &event, 1, timeout_ms.value)) {
         case -1:
             if (EINTR != errno) {
                 throwf<std::runtime_error>("epoll_wait() failed ({})", get_error_string());
@@ -126,7 +126,7 @@ EventLoop::EventLoop(log::Domain logger)
     : m_logger(std::move(logger))
     , m_fd(epoll_create1(0), file::fd_close)
 {
-    if (-1 == m_fd.value()) {
+    if (-1 == m_fd.get()) {
         throwf<std::runtime_error>("epoll_create() failed ({})", get_error_string());
     }
     m_pipe.open();
@@ -157,7 +157,7 @@ EventLoop::~EventLoop()
 
 int EventLoop::fd() const noexcept
 {
-    return m_fd.value();
+    return m_fd.get();
 }
 
 std::thread::id EventLoop::threadId() const noexcept
@@ -182,7 +182,7 @@ void EventLoop::add(int fd, std::uint32_t events, Callback callback)
         epoll_event event{};
         event.events = events;
         event.data.fd = fd;
-        if (-1 == epoll_ctl(m_fd.value(), EPOLL_CTL_ADD, fd, &event)) {
+        if (-1 == epoll_ctl(m_fd.get(), EPOLL_CTL_ADD, fd, &event)) {
             throwf<std::runtime_error>("epoll_ctl() failed ({})", get_error_string());
         }
     }
@@ -201,7 +201,7 @@ bool EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcept
     epoll_event event{};
     event.events = events;
     event.data.fd = fd;
-    if (-1 == epoll_ctl(m_fd.value(), EPOLL_CTL_MOD, fd, &event)) {
+    if (-1 == epoll_ctl(m_fd.get(), EPOLL_CTL_MOD, fd, &event)) {
         return false;
     }
 
@@ -249,7 +249,7 @@ void EventLoop::remove(int fd)
     struct epoll_event event;
     event.events = 0;
     event.data.fd = fd;
-    hverify(-1 != epoll_ctl(m_fd.value(), EPOLL_CTL_DEL, fd, &event));
+    hverify(-1 != epoll_ctl(m_fd.get(), EPOLL_CTL_DEL, fd, &event));
 
     m_callbacks.erase(fd);
 }

@@ -83,7 +83,7 @@ Subprocess::Stream::Stream(int fd) noexcept
 {
 }
 
-Subprocess::Stream::Stream(UniqueOwner<int, -1>&& fd) noexcept
+Subprocess::Stream::Stream(UniqueHandle<int, -1>&& fd) noexcept
     : m_fd(std::move(fd))
 {
 }
@@ -92,7 +92,7 @@ Subprocess::Stream::Stream(std::string const& filename)
     : m_fd(file::fd_close)
 {
     m_fd.reset(open(filename.c_str(), O_RDONLY));
-    if (-1 == m_fd.value()) {
+    if (-1 == m_fd.get()) {
         throwf<std::runtime_error>("open() failed ({})", get_error_string());
     }
 }
@@ -103,7 +103,7 @@ Subprocess::Stream::Stream(std::string const& filename, int flags, mode_t mode)
     assert(0 != (O_WRONLY & flags));
 
     m_fd.reset(open(filename.c_str(), flags, mode));
-    if (-1 == m_fd.value()) {
+    if (-1 == m_fd.get()) {
         throwf<std::runtime_error>("open() failed ({})", filename, get_error_string());
     }
 }
@@ -292,14 +292,14 @@ int Subprocess::run(std::vector<char const*> argv)
     case 0:
         event_loop.reset();
 
-        if (input_pipe.get<0>().value() >= 0) {
-            hverify(-1 != dup2(input_pipe.get<0>().value(), STDIN_FILENO));
+        if (input_pipe.get<0>().get() >= 0) {
+            hverify(-1 != dup2(input_pipe.get<0>().get(), STDIN_FILENO));
         }
-        if (output_pipe.get<1>().value() >= 0) {
-            hverify(-1 != dup2(output_pipe.get<1>().value(), STDOUT_FILENO));
+        if (output_pipe.get<1>().get() >= 0) {
+            hverify(-1 != dup2(output_pipe.get<1>().get(), STDOUT_FILENO));
         }
-        if (error_pipe.get<1>().value() >= 0) {
-            hverify(-1 != dup2(error_pipe.get<1>().value(), STDERR_FILENO));
+        if (error_pipe.get<1>().get() >= 0) {
+            hverify(-1 != dup2(error_pipe.get<1>().get(), STDERR_FILENO));
         }
 
         input_pipe.close();
@@ -327,7 +327,7 @@ int Subprocess::run(std::vector<char const*> argv)
         if (nullptr != m_input.m_buffer) {
             m_input.m_fd = std::move(input_pipe.get<1>());
             event_loop->add(
-                m_input.m_fd.value(),
+                m_input.m_fd.get(),
                 EventLoop::Write,
                 std::bind(&Subprocess::onInput, this, _1, _2)
             );
@@ -341,7 +341,7 @@ int Subprocess::run(std::vector<char const*> argv)
         if (nullptr != m_output.m_buffer) {
             m_output.m_fd = std::move(output_pipe.get<0>());
             event_loop->add(
-                m_output.m_fd.value(),
+                m_output.m_fd.get(),
                 EventLoop::Read,
                 std::bind(&Subprocess::onOutput, this, _1, _2)
             );
@@ -355,7 +355,7 @@ int Subprocess::run(std::vector<char const*> argv)
         if (nullptr != m_error.m_buffer) {
             m_error.m_fd = std::move(error_pipe.get<0>());
             event_loop->add(
-                m_error.m_fd.value(),
+                m_error.m_fd.get(),
                 EventLoop::Read,
                 std::bind(&Subprocess::onError, this, _1, _2)
             );
@@ -577,14 +577,14 @@ int Subprocess::wait()
         ? m_event_loop_private
         : m_event_loop_extern.lock();
     if (nullptr != event_loop) {
-        if (-1 != m_error.m_fd.value()) {
-            event_loop->remove(m_error.m_fd.value());
+        if (-1 != m_error.m_fd.get()) {
+            event_loop->remove(m_error.m_fd.get());
         }
-        if (-1 != m_output.m_fd.value()) {
-            event_loop->remove(m_output.m_fd.value());
+        if (-1 != m_output.m_fd.get()) {
+            event_loop->remove(m_output.m_fd.get());
         }
-        if (-1 != m_input.m_fd.value()) {
-            event_loop->remove(m_input.m_fd.value());
+        if (-1 != m_input.m_fd.get()) {
+            event_loop->remove(m_input.m_fd.get());
         }
     }
 

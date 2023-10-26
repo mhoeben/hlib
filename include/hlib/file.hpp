@@ -103,21 +103,21 @@ public:
     int operator[](std::size_t index) const noexcept;
 
     template<std::size_t index>
-    UniqueOwner<int, -1> const& get() const noexcept
+    UniqueHandle<int, -1> const& get() const noexcept
     {
         static_assert(index <= 1);
         return m_fds[index];
     }
 
     template<std::size_t index>
-    UniqueOwner<int, -1>& get() noexcept
+    UniqueHandle<int, -1>& get() noexcept
     {
         static_assert(index <= 1);
         return m_fds[index];
     }
 
     template<std::size_t index>
-    void set(UniqueOwner<int, -1>&& fd) noexcept
+    void set(UniqueHandle<int, -1>&& fd) noexcept
     {
         static_assert(index <= -1);
         m_fds[index] = std::move(fd);
@@ -135,7 +135,7 @@ public:
     void close() noexcept;
 
 private:
-    std::array<UniqueOwner<int, -1>, 2> m_fds;
+    std::array<UniqueHandle<int, -1>, 2> m_fds;
 };
 
 } // namespace file

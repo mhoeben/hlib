@@ -74,7 +74,7 @@ public:
 
 private:
     log::Domain const m_logger;
-    UniqueOwner<int, -1> m_fd;
+    UniqueHandle<int, -1> m_fd;
     file::Pipe m_pipe;
     bool m_interrupt{ false };
 
