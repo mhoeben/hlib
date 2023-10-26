@@ -124,22 +124,22 @@ public:
         m_buffer.resize(m_size);
     }
 
+    template<typename U>
+    bool operator ==(BufferAllocator<U> const& that) const noexcept
+    {
+        return m_buffer.data() == that.m_buffer.data();
+    }
+
+    template<typename U>
+    bool operator !=(BufferAllocator<U> const& that) const noexcept
+    {
+        return m_buffer.data() != that.m_buffer.data();
+    }
+
 private:
     Buffer& m_buffer;
     std::size_t m_size;
 };
-
-template <typename T, typename U>
-bool operator == (BufferAllocator<T> const& a, BufferAllocator<U> const& b)
-{
-    return a->data() == b->data();
-}
-
-template <typename T, typename U>
-bool operator != (BufferAllocator<T> const& a, BufferAllocator<U> const& b)
-{
-    return a->data() != b->data();
-}
 
 std::string to_string(Buffer const& buffer);
 
