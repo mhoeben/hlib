@@ -68,7 +68,7 @@ struct Duration
 
     template<typename T>
     typename std::enable_if<std::is_same<double, T>::value, T>::type
-    to()
+    to() const noexcept
     {
         return static_cast<double>(timespec.tv_sec)
              + static_cast<double>(timespec.tv_nsec) / static_cast<double>(1000000000L);
@@ -76,7 +76,7 @@ struct Duration
 
     template<typename T>
     typename std::enable_if<!std::is_same<double, T>::value, T>::type
-    to()
+    to() const noexcept
     {
         math::RatioValue<std::nano, int64_t> nsec(std::int64_t(timespec.tv_sec) * 1000000000LL + timespec.tv_nsec);
         return nsec.to<typename T::Ratio, typename T::Type>();

@@ -172,157 +172,152 @@ struct RatioValue final
     typedef R Ratio;
     typedef T Type;
 
-    static constexpr std::intmax_t num = R::num;
-    static constexpr std::intmax_t den = R::den;
-
-    T value{ 0 };
-
     constexpr RatioValue() = default;
 
-    constexpr RatioValue(T a_value)
-        : value{ a_value }
+    constexpr RatioValue(T value)
+        : m_value{ value }
     {
     }
 
     Type const& operator *() const noexcept
     {
-        return value;
+        return m_value;
     }
 
     Type& operator *()
     {
-        return value;
+        return m_value;
     }
 
     bool operator !() const noexcept
     {
-        return 0 != value;
+        return 0 != m_value;
     }
 
     bool operator == (RatioValue const& that) const noexcept
     {
-        return that.value == value;
+        return that.m_value == m_value;
     }
 
     bool operator != (RatioValue const& that) const noexcept
     {
-        return that.value != value;
+        return that.m_value != m_value;
     }
 
     bool operator <(RatioValue const& that) const noexcept
     {
-        return value < that.value;
+        return m_value < that.m_value;
     }
 
     bool operator <=(RatioValue const& that) const noexcept
     {
-        return value <= that.value;
+        return m_value <= that.m_value;
     }
 
     bool operator >(RatioValue const& that) const noexcept
     {
-        return value >= that.value;
+        return m_value >= that.m_value;
     }
 
     bool operator >=(RatioValue const& that) const noexcept
     {
-        return value >= that.value;
+        return m_value >= that.m_value;
     }
 
     RatioValue operator +() const noexcept
     {
-        return RatioValue(+value);
+        return RatioValue(+m_value);
     }
 
     RatioValue operator -() const noexcept
     {
-        return RatioValue(-value);
+        return RatioValue(-m_value);
     }
 
     RatioValue operator +(RatioValue const& that) const noexcept
     {
-        return RatioValue(value + that.value);
+        return RatioValue(m_value + that.m_value);
     }
 
     RatioValue operator -(RatioValue const& that) const noexcept
     {
-        return RatioValue(value - that.value);
+        return RatioValue(m_value - that.m_value);
     }
 
     RatioValue operator *(RatioValue const& that) const noexcept
     {
-        return RatioValue(value * that.value);
+        return RatioValue(m_value * that.m_value);
     }
 
     RatioValue operator /(RatioValue const& that) const noexcept
     {
-        return RatioValue(value / that.value);
+        return RatioValue(m_value / that.m_value);
     }
 
     RatioValue operator %(RatioValue const& that) const noexcept
     {
-        return RatioValue(value % that.value);
+        return RatioValue(m_value % that.m_value);
     }
 
     RatioValue& operator ++() noexcept
     {
-        return RatioValue(++value);
+        return RatioValue(++m_value);
     }
 
     RatioValue operator ++(int) noexcept
     {
-        return RatioValue(value++);
+        return RatioValue(m_value++);
     }
 
     RatioValue& operator --() noexcept
     {
-        return RatioValue(--value);
+        return RatioValue(--m_value);
     }
 
     RatioValue operator --(int) noexcept
     {
-        return RatioValue(value--);
+        return RatioValue(m_value--);
     }
 
     RatioValue& operator +=(RatioValue const& that) noexcept
     {
-        value += that.value;
+        m_value += that.m_value;
         return *this;
     }
 
     RatioValue& operator -=(RatioValue const& that) noexcept
     {
-        value -= that.value;
+        m_value -= that.m_value;
         return *this;
     }
 
     RatioValue& operator *=(RatioValue const& that) noexcept
     {
-        value *= that.value;
+        m_value *= that.m_value;
         return *this;
     }
 
     RatioValue& operator /=(RatioValue const& that) noexcept
     {
-        value /= that.value;
+        m_value /= that.m_value;
         return *this;
     }
 
     RatioValue& operator %=(RatioValue const& that) noexcept
     {
-        value %= that.value;
+        m_value %= that.m_value;
         return *this;
     }
 
     RatioValue operator *(T that) const noexcept
     {
-        return RatioValue(value * that);
+        return RatioValue(m_value * that);
     }
 
     RatioValue operator /(T that) const noexcept
     {
         assert(0 != that);
-        return RatioValue(value / that);
+        return RatioValue(m_value / that);
     }
 
     RatioValue& operator *=(T that) noexcept
@@ -339,14 +334,14 @@ struct RatioValue final
     RatioValue operator *(Fraction const& that) const noexcept
     {
         assert(0 != that.d);
-        return RatioValue((value * that.n) / that.d);
+        return RatioValue((m_value * that.n) / that.d);
     }
 
     template<typename Fraction>
     RatioValue operator /(Fraction const& that) const noexcept
     {
         assert(0 != that.n);
-        return RatioValue((value * that.d) / that.n);
+        return RatioValue((m_value * that.d) / that.n);
     }
 
     template<typename Fraction>
@@ -361,26 +356,34 @@ struct RatioValue final
         return *this = *this / that;
     }
 
+    T value() const noexcept
+    {
+        return m_value;
+    }
+
     template<typename Ratio, typename Type = T>
     typename std::enable_if<IsRatio<Ratio>::value, RatioValue<Ratio, Type>>::type
-    to() const
+    to() const noexcept
     {
         using Factor = std::ratio_divide<R, Ratio>;
-        return RatioValue<Ratio, Type>(static_cast<Type>(value) * static_cast<Type>(Factor::num) / static_cast<Type>(Factor::den));
+        return RatioValue<Ratio, Type>(static_cast<Type>(m_value) * static_cast<Type>(Factor::num) / static_cast<Type>(Factor::den));
     }
 
     template<typename TRatioValue>
     typename std::enable_if<!IsRatio<TRatioValue>::value, TRatioValue>::type
-    to() const
+    to() const noexcept
     {
         return to<typename TRatioValue::Ratio, typename TRatioValue::Type>();
     }
 
     template<typename TRatio, typename TType = T>
-    explicit operator RatioValue<TRatio, TType>() const
+    explicit operator RatioValue<TRatio, TType>() const noexcept
     {
         return to<TRatio, TType>();
     }
+
+private:
+    T m_value{ 0 };
 };
 
 } // namespace math

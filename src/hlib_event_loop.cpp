@@ -80,7 +80,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
         }
 
         epoll_event event;
-        switch (epoll_wait(m_fd.get(), &event, 1, timeout_ms.value)) {
+        switch (epoll_wait(m_fd.get(), &event, 1, timeout_ms.value())) {
         case -1:
             if (EINTR != errno) {
                 throwf<std::runtime_error>("epoll_wait() failed ({})", get_error_string());
