@@ -75,7 +75,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
                 timeout_ms = (expire - current).to<time::MSec>();
             }
             else {
-                timeout_ms = 0;
+                timeout_ms = time::MSec(0);
             }
         }
 
@@ -111,7 +111,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
             break;
 
         default:
-            assert(timeout_ms >= 0);
+            assert(timeout_ms >= time::MSec(0));
             return;
         }
     }

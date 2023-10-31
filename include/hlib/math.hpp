@@ -174,7 +174,7 @@ struct RatioValue final
 
     constexpr RatioValue() = default;
 
-    constexpr RatioValue(T value)
+    explicit constexpr RatioValue(T value)
         : m_value{ value }
     {
     }
