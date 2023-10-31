@@ -244,14 +244,9 @@ struct RatioValue final
         return RatioValue(m_value - that.m_value);
     }
 
-    RatioValue operator *(RatioValue const& that) const noexcept
+    T operator /(RatioValue const& that) const noexcept
     {
-        return RatioValue(m_value * that.m_value);
-    }
-
-    RatioValue operator /(RatioValue const& that) const noexcept
-    {
-        return RatioValue(m_value / that.m_value);
+        return m_value / that.m_value;
     }
 
     RatioValue operator %(RatioValue const& that) const noexcept
@@ -288,18 +283,6 @@ struct RatioValue final
     RatioValue& operator -=(RatioValue const& that) noexcept
     {
         m_value -= that.m_value;
-        return *this;
-    }
-
-    RatioValue& operator *=(RatioValue const& that) noexcept
-    {
-        m_value *= that.m_value;
-        return *this;
-    }
-
-    RatioValue& operator /=(RatioValue const& that) noexcept
-    {
-        m_value /= that.m_value;
         return *this;
     }
 
