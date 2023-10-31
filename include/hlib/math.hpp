@@ -313,28 +313,28 @@ struct RatioValue final
         return *this = *this / that;
     }
 
-    template<typename Fraction>
-    RatioValue operator *(Fraction const& that) const noexcept
+    template<typename N = int, typename D = N>
+    RatioValue operator *(Fraction<N, D> const& that) const noexcept
     {
         assert(0 != that.d);
         return RatioValue((m_value * that.n) / that.d);
     }
 
-    template<typename Fraction>
-    RatioValue operator /(Fraction const& that) const noexcept
+    template<typename N = int, typename D = N>
+    RatioValue operator /(Fraction<N, D> const& that) const noexcept
     {
         assert(0 != that.n);
         return RatioValue((m_value * that.d) / that.n);
     }
 
-    template<typename Fraction>
-    RatioValue& operator *=(Fraction const& that) const noexcept
+    template<typename N = int, typename D = N>
+    RatioValue& operator *=(Fraction<N, D> const& that) const noexcept
     {
         return *this = *this * that;
     }
 
-    template<typename Fraction>
-    RatioValue& operator /=(Fraction const& that) const noexcept
+    template<typename N = int, typename D = N>
+    RatioValue& operator /=(Fraction<N, D> const& that) const noexcept
     {
         return *this = *this / that;
     }
