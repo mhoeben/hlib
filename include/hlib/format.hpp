@@ -76,10 +76,15 @@ void append_to(fmt::basic_memory_buffer<T>& buffer, char const* string)
     buffer.append(string, string + strlen(string));
 }
 
-template<typename MEMORY_BUFFER>
-void append_to(MEMORY_BUFFER& buffer, std::string const& string)
+template<typename T>
+void append_to(fmt::basic_memory_buffer<T>& buffer, std::string const& string)
 {
     buffer.append(string.data(), string.data() + string.length());
+}
+
+inline void append_to(Buffer& buffer, std::string const& string)
+{
+    buffer.append(string);
 }
 
 template<typename T, typename... PARAMS>
