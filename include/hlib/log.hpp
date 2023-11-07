@@ -44,13 +44,14 @@ enum Level
     Trace
 };
 
-struct Domain
+struct Domain final
 {
     std::string name;
     Level level;
 
-    Domain(std::string a_name, Level a_level = Level::Notice) noexcept;
-    Domain(std::string a_name, std::string const& a_env_name) noexcept;
+    Domain(std::string a_name, Level a_level = Level::Notice);
+    Domain(std::string a_name, std::string const& a_env_name);
+    ~Domain();
 };
 
 typedef std::function<void(Domain const& domain, Level level, std::string const& message)> Callback;
@@ -84,6 +85,8 @@ extern FILE* file;
         hlib::log::callback(domain, hlib::log::Error, message); \
         throw exception(fmt::format("{}[ERRO]: {}", domain.name, message)); \
     } while (false)
+
+void set_level(std::string const& name, log::Level level) noexcept;
 
 } // namespace log
 

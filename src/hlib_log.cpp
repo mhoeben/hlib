@@ -24,9 +24,12 @@
 #include "hlib/log.hpp"
 #include "hlib/config.hpp"
 #include "hlib/format.hpp"
+#include "hlib/lock.hpp"
 #include "hlib/utility.hpp"
 #include <array>
 #include <iostream>
+#include <mutex>
+#include <unordered_set>
 
 using namespace hlib;
 
@@ -36,9 +39,12 @@ using namespace hlib;
 namespace
 {
 
-constexpr std::size_t kLevels = static_cast<std::size_t>(log::Trace) + 1;
+std::mutex mutex;
+std::unordered_set<log::Domain*> domains;
 
-std::array<std::string, kLevels> const kLevelStrings =
+constexpr std::size_t levels = static_cast<std::size_t>(log::Trace) + 1;
+
+std::array<std::string, levels> const level_strings =
 {
     "FATL",
     "ERRO",
@@ -62,29 +68,52 @@ void print(log::Domain const& domain, log::Level level, std::string const& messa
 //
 // Public
 //
-log::Domain::Domain(std::string a_name, Level a_level) noexcept
+log::Domain::Domain(std::string a_name, Level a_level)
     : name(std::move(a_name))
     , level(a_level)
 {
+    HLIB_LOCK_GUARD(lock, mutex);
+    domains.insert(this);
 }
 
-log::Domain::Domain(std::string a_name, std::string const& a_env_name) noexcept
+log::Domain::Domain(std::string a_name, std::string const& a_env_name)
     : name(std::move(a_name))
 {
     level = static_cast<Level>(get_env<std::int32_t>(
         a_env_name,
         Config::defaultLogLevel()
     ));
+
+    HLIB_LOCK_GUARD(lock, mutex);
+    domains.insert(this);
+}
+
+log::Domain::~Domain()
+{
+    HLIB_LOCK_GUARD(lock, mutex);
+    domains.erase(this);
 }
 
 log::Callback log::callback = std::bind(&print, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 FILE* log::file = stdout;
 
 //
-// Public (Stringify)
+// Public
 //
+void hlib::log::set_level(std::string const& name, log::Level level) noexcept
+{
+    HLIB_LOCK_GUARD(lock, mutex);
+
+    for (log::Domain* domain : domains) {
+        if (name == domain->name) {
+            domain->level = level;
+        }
+    }
+}
+
 std::string const& hlib::to_string(log::Level level) noexcept
 {
     assert(level >= log::Fatal && level <= log::Trace);
-    return kLevelStrings[level];
+    return level_strings[level];
 }
+
