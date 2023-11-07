@@ -339,7 +339,7 @@ struct RatioValue final
         return *this = *this / that;
     }
 
-    T value() const noexcept
+    T const& value() const noexcept
     {
         return m_value;
     }

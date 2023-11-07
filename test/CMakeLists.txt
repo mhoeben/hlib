@@ -64,6 +64,7 @@ add_executable(${PROJECT_NAME}
     src/subprocess.cpp
     src/test.cpp
     src/test.hpp
+    src/time.cpp
     src/type_traits.cpp
     src/uri.cpp
     src/web_socket.cpp

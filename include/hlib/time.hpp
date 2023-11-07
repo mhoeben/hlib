@@ -33,6 +33,11 @@ namespace hlib
 namespace time
 {
 
+typedef math::RatioValue<math::One, int64_t> Sec;
+typedef math::RatioValue<std::milli, int64_t> MSec;
+typedef math::RatioValue<std::micro, int64_t> USec;
+typedef math::RatioValue<std::nano, int64_t> NSec;
+
 struct Duration
 {
     std::timespec timespec;
@@ -41,6 +46,16 @@ struct Duration
     explicit Duration(std::timespec const& ts) noexcept;
     Duration(std::time_t secs, long nsecs) noexcept;
     Duration(double secs) noexcept;
+
+    template<typename R, typename T = int64_t>
+    Duration(math::RatioValue<R, T> const& value) noexcept
+    {
+        T const& ticks = value.value();
+        timespec.tv_sec = (ticks * R::num) / R::den;
+
+        constexpr int64_t factor = (1000000000LL * R::num) / R::den;
+        timespec.tv_nsec = (ticks * factor) % 1000000000ULL;
+    }
 
     virtual ~Duration() = default;
 
@@ -82,11 +97,6 @@ struct Duration
         return nsec.to<typename T::Ratio, typename T::Type>();
     }
 };
-
-typedef math::RatioValue<math::One, int64_t> Sec;
-typedef math::RatioValue<std::milli, int64_t> MSec;
-typedef math::RatioValue<std::micro, int64_t> USec;
-typedef math::RatioValue<std::nano, int64_t> NSec;
 
 struct Clock : std::timespec
 {
