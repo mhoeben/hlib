@@ -46,11 +46,13 @@ enum Level
 
 struct Domain final
 {
-    std::string name;
+    std::string const name;
     Level level;
 
+    std::string const env_name;
+
     Domain(std::string a_name, Level a_level = Level::Notice);
-    Domain(std::string a_name, std::string const& a_env_name);
+    Domain(std::string a_name, std::string a_env_name);
     ~Domain();
 };
 
@@ -86,7 +88,8 @@ extern FILE* file;
         throw exception(fmt::format("{}[ERRO]: {}", domain.name, message)); \
     } while (false)
 
-void set_level(std::string const& name, log::Level level) noexcept;
+void set_level_by_name(std::string const& name, log::Level level);
+void set_level_by_env_name(std::string const& env_name, log::Level level);
 
 } // namespace log
 
