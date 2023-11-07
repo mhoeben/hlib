@@ -40,6 +40,7 @@ struct Config
     static constexpr char const*    httpServerDefaultMimeType()     { return "application/octet-stream"; }
     static constexpr std::size_t    socketReceiveBufferSize()       { return 4096; }
     static constexpr bool           socketReceiveBufferGather()     { return false; }
+    static constexpr long           timerImmediateNSec()            { return 1000; }
     static constexpr std::size_t    wsMaxReceiveMessageSize()       { return 1024 * 1024; }
     static constexpr std::size_t    wsFragmentMessageThreshold()    { return 1024 * 1024; }
     static constexpr double         wsServerMaintenanceInterval()   { return 1.0; }

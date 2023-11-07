@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/timer.hpp"
+#include "hlib/config.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
@@ -90,7 +91,13 @@ Timer::~Timer()
 
 bool Timer::clear() noexcept
 {
-    return set({}, {});
+    itimerspec ts = {};
+
+    if (-1 == timerfd_settime(m_fd, 0, &ts, nullptr)) {
+        return false;
+    }
+
+    return true;
 }
 
 bool Timer::set(time::Duration const& expire, time::Duration const& interval) noexcept
@@ -98,6 +105,12 @@ bool Timer::set(time::Duration const& expire, time::Duration const& interval) no
     itimerspec ts = {};
     ts.it_value = expire.timespec;
     ts.it_interval = interval.timespec;
+
+    // Replace 0 expire with a small timer value so instead as to cancel
+    // the timer, it almost immediately expires.
+    if (0 == ts.it_value.tv_sec && 0 == ts.it_value.tv_nsec) {
+        ts.it_value.tv_nsec = ::Config::timerImmediateNSec();
+    }
 
     if (-1 == timerfd_settime(m_fd, 0, &ts, nullptr)) {
         return false;
