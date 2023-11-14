@@ -750,7 +750,8 @@ std::optional<std::vector<std::string>> ws::is_upgrade(http::Server::Transaction
 
     value = transaction.getRequestValue("Sec-WebSocket-Protocol");
     if (false == value.has_value()) {
-        return std::nullopt;
+        // Return an empty vector when the field was not found.
+        return std::vector<std::string>();
     }
 
     // Split subprotocols in vector.
@@ -782,15 +783,20 @@ void ws::upgrade(http::Server::Transaction& transaction, std::string subprotocol
         free_string
     );
 
-    transaction.respond(
-        http::StatusCode::SwitchingProtocols,
-        std::vector<http::HeaderField>{
-            { "Connection",             "upgrade" },
-            { "Upgrade",                "websocket" },
-            { "Sec-WebSocket-Accept",   accept.get() },
-            { "Sec-WebSocket-Protocol", std::move(subprotocol) }
-        }
-    );
+    // Response header fields.
+    std::vector<http::HeaderField> fields =
+    {
+        { "Connection",             "upgrade" },
+        { "Upgrade",                "websocket" },
+        { "Sec-WebSocket-Accept",   accept.get() }
+    };
+    // Conditionally add Sec-WebSocket-Protocol header.
+    if (false == subprotocol.empty()) {
+        fields.emplace_back("Sec-WebSocket-Protocol", std::move(subprotocol));
+    }
+
+    // Respond.
+    transaction.respond(http::StatusCode::SwitchingProtocols, fields);
 }
 
 //

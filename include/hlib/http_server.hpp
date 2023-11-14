@@ -133,6 +133,12 @@ struct HeaderField final
 {
     std::string name;
     std::string value;
+
+    HeaderField(std::string a_name, std::string a_value)
+        : name(std::move(a_name))
+        , value(std::move(a_value))
+    {
+    }
 };
 
 static constexpr std::size_t ChunkedTransferEncoding{ ~std::size_t(0) };

@@ -207,7 +207,7 @@ private:
 };
 
 std::optional<std::vector<std::string>> is_upgrade(http::Server::Transaction const& transaction);
-void upgrade(http::Server::Transaction& transaction, std::string subprotocol);
+void upgrade(http::Server::Transaction& transaction, std::string subprotocol = "");
 
 } // namespace ws
 
