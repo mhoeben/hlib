@@ -202,11 +202,11 @@ int GeneratorCPP17::generate(FILE* output, FILE* input, Side side)
         ++id;
     }
 
-    if (true != m_namespace.empty()) {
+    if (false == m_namespace.empty()) {
         // Trailer.
         fmt::print(m_output, "\n");
-        for (std::string const& string : m_namespace ) {
-            fmt::print(m_output, "}} // namespace {}\n", string);
+        for (auto it = m_namespace.rbegin(); it != m_namespace.rend(); ++it) {
+            fmt::print(m_output, "}} // namespace {}\n", *it);
         }
     }
 

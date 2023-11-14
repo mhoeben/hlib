@@ -453,7 +453,13 @@ void Server::Socket::setNoDelay(bool enable)
 
 void Server::Socket::setPingInterval(time::Duration interval)
 {
-    m_ping_timer.set(interval, interval);
+    if (time::Duration(0) == interval) {
+        m_ping_timer.clear();
+    }
+    else {
+        m_ping_timer.set(interval, interval);
+    }
+
     m_pong_last_timestamp = time::now();
 }
 
