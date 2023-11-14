@@ -322,3 +322,9 @@ TEST_CASE("String Join", "[string]")
     REQUIRE("(1 == one), (2 == two), (3 == three)" == join(map, ", ", [](auto pair) { return fmt::format("({} == {})", pair.first, pair.second); }));
 }
 
+TEST_CASE("String Replace", "[string]")
+{
+    REQUIRE("foo baz" == replace("foo bar", "bar", "baz"));
+    REQUIRE("baz bar" == replace("foo bar", "foo", "baz"));
+    REQUIRE("foobar" == replace("foo bar", " ", ""));
+}

@@ -549,3 +549,14 @@ std::string hlib::join(std::vector<std::string> const& vector, std::string const
     return fmt::format("{}", fmt::join(vector, separator));
 }
 
+std::string hlib::replace(std::string string, std::string const& literal, std::string const& value)
+{
+    std::string::size_type pos = string.find(literal);
+    if (std::string::npos == pos) {
+        return string;
+    }
+
+    string.replace(pos, literal.length(), value);
+    return string;
+}
+

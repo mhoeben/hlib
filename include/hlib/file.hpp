@@ -37,6 +37,9 @@ namespace hlib
 namespace file
 {
 
+std::filesystem::path get_home_directory(std::error_code& error_code) noexcept;
+std::filesystem::path get_home_directory();
+
 bool is_creatable(std::filesystem::path const& filepath) noexcept;
 bool is_readable(std::filesystem::path const& filepath) noexcept;
 bool is_writable(std::filesystem::path const& filepath) noexcept;

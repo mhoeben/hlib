@@ -31,6 +31,8 @@
 #include <system_error>
 #include <unistd.h>
 #include <unordered_map>
+#include <pwd.h>
+#include <unistd.h>
 
 using namespace hlib;
 using namespace hlib::file;
@@ -38,6 +40,30 @@ using namespace hlib::file;
 //
 // Public
 //
+std::filesystem::path hlib::file::get_home_directory(std::error_code& error_code) noexcept
+{
+    uid_t uid = getuid();
+    struct passwd* pw = getpwuid(uid);
+    if (nullptr == pw) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return std::filesystem::path();
+    }
+
+    return pw->pw_dir;
+}
+
+std::filesystem::path hlib::file::get_home_directory()
+{
+    std::error_code error_code;
+
+    std::filesystem::path path = get_home_directory(error_code);
+    if (error_code) {
+        throw std::system_error(error_code, "get_home_directory() failed");
+    }
+
+    return path;
+}
+
 bool file::is_creatable(std::filesystem::path const& filepath) noexcept
 {
     try

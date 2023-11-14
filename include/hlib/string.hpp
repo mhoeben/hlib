@@ -306,5 +306,7 @@ std::string join(Container const& container, std::string const& separator,
     return to_string(buffer);
 }
 
+std::string replace(std::string string, std::string const& literal, std::string const& value);
+
 } // namespace hlib
 
