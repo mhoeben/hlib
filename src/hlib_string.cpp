@@ -28,6 +28,15 @@
 #include <locale>
 #include <limits>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
+#define HWS_VISIBILITY_STATIC
+#define HWS_HAVE_OPENSSL
+#define HWS_IMPL
+#include "../third_party/hserv/include/hws.h"
+#pragma GCC diagnostic pop
+
 //
 // Public
 //
@@ -558,5 +567,58 @@ std::string hlib::replace(std::string string, std::string const& literal, std::s
 
     string.replace(pos, literal.length(), value);
     return string;
+}
+
+std::size_t hlib::base64_encode_get_length(std::size_t size) noexcept
+{
+    return hws_base64_encode_get_length(size);
+}
+
+void hlib::base64_encode(Buffer& buffer, void const* data, std::size_t size)
+{
+    // Get encoded length.
+    std::size_t length = hws_base64_encode_get_length(size);
+
+    // Extend buffer and append base64 encoded string to buffer.
+    length = hws_base64_encode(static_cast<char*>(buffer.extend(length)), data, size);
+
+    // Resize buffer size to the extended length.
+    buffer.resize(buffer.size() + length);
+}
+
+std::string hlib::base64_encode(void const* data, std::size_t size)
+{
+    Buffer buffer;
+    base64_encode(buffer, data, size);
+    return to_string(buffer);
+}
+
+std::string hlib::base64_encode(Buffer const& buffer)
+{
+    return base64_encode(buffer.data(), buffer.size());
+}
+
+std::size_t hlib::base64_decode_get_size(std::size_t length) noexcept
+{
+    return hws_base64_decode_get_size(length);
+}
+
+void hlib::base64_decode(Buffer& buffer, char const* data, std::size_t length)
+{
+    // Get decoded length.
+    std::size_t size = hws_base64_decode_get_size(length);
+
+    // Extend buffer and append decoded base64 data to buffer.
+    size = hws_base64_decode(buffer.extend(size), data, length);
+
+    // Resize buffer size to to extended size.
+    buffer.resize(buffer.size() + size);
+}
+
+hlib::Buffer hlib::base64_decode(std::string const& string)
+{
+    Buffer buffer;
+    base64_decode(buffer, string.data(), string.length());
+    return buffer;
 }
 
