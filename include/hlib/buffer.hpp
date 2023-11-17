@@ -90,6 +90,8 @@ public:
 
     void erase(std::size_t offset, std::size_t size) noexcept;
 
+    Buffer copy();
+
 private:
     hlib_buffer_t m_buffer{};
 };

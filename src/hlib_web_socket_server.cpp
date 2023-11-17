@@ -246,6 +246,8 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
             switch (m_receive_control->opcode) {
             case Opcode::Close:
               {
+                StatusCode const pre_close_code = m_close_code;
+
                 uint8_t const* ptr = static_cast<uint8_t*>(buffer);
                 if (size >= 2) {
                     std::uint16_t status_code = static_cast<uint16_t>(ptr[0]) << 8
@@ -256,6 +258,20 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
                         // Copy close reason.
                         m_close_reason.assign(ptr + 2, size - 2);
                     }
+                }
+
+                // Respond with close frame, when close code was not already set.
+                if (StatusCode::NoStatus == pre_close_code) {
+                    // RFC 6455: https://www.rfc-editor.org/rfc/rfc6455.html#page-36.
+                    // If an endpoint receives a Close frame and did not previously
+                    // send a Close frame, the endpoint MUST send a Close frame
+                    // in response. (When sending a Close frame in response, the
+                    // endpoint typically echos the status code it received.)
+                    //
+                    // TODO prune send queue and queue after last fragment of
+                    // fragmented frame being sent.
+                    //
+                    close(m_close_code, m_close_reason.copy());
                 }
                 break;
               }

@@ -249,6 +249,11 @@ void Buffer::erase(std::size_t offset, std::size_t size) noexcept
     hlib_buffer_erase(&m_buffer, offset, size);
 }
 
+Buffer Buffer::copy()
+{
+    return Buffer(m_buffer.data, m_buffer.size);
+}
+
 //
 // Utility
 //
