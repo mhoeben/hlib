@@ -26,6 +26,7 @@
 #include "hlib/math.hpp"
 #include <ctime>
 #include <cmath>
+#include <string>
 #include <type_traits>
 
 namespace hlib
@@ -101,8 +102,10 @@ struct Duration
 struct Clock : std::timespec
 {
     Clock() noexcept;
-    Clock(clockid_t clock_id) noexcept;
     explicit Clock(std::timespec const& ts) noexcept;
+    explicit Clock(std::time_t sec, long nsec) noexcept;
+    Clock(clockid_t clock_id, std::nothrow_t) noexcept;
+    Clock(clockid_t clock_id);
 
     Duration operator - (Clock const& rhs) const noexcept;
 
@@ -124,6 +127,8 @@ struct Clock : std::timespec
 };
 
 Clock now(clockid_t clock_id = CLOCK_MONOTONIC);
+
+std::string to_string(Duration duration);
 
 } // namespace time
 } // namespace hlib

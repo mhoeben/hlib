@@ -22,7 +22,8 @@
 // SOFTWARE.
 //
 #include "hlib/time.hpp"
-#include "hlib/base.hpp"
+#include "hlib/format.hpp"
+#include "hlib/error.hpp"
 
 using namespace hlib;
 
@@ -207,15 +208,28 @@ time::Clock::Clock() noexcept
     tv_nsec = 0;
 }
 
-time::Clock::Clock(clockid_t clock_id) noexcept
-{
-    hverify(0 == clock_gettime(clock_id, static_cast<std::timespec*>(this)));
-}
-
 time::Clock::Clock(std::timespec const& ts) noexcept
 {
     tv_sec = ts.tv_sec;
     tv_nsec = ts.tv_nsec;
+}
+
+time::Clock::Clock(std::time_t sec, long nsec) noexcept
+{
+    tv_sec = sec;
+    tv_nsec = nsec;
+}
+
+time::Clock::Clock(clockid_t clock_id, std::nothrow_t) noexcept
+{
+    hverify(0 == clock_gettime(clock_id, static_cast<std::timespec*>(this)));
+}
+
+time::Clock::Clock(clockid_t clock_id)
+{
+    if (-1 == clock_gettime(clock_id, static_cast<std::timespec*>(this))) {
+        throwf<std::runtime_error>("clock_gettime failed ({})", get_error_string());
+    }
 }
 
 time::Duration time::Clock::operator -(time::Clock const& rhs) const noexcept
@@ -292,5 +306,17 @@ bool time::Clock::operator >=(std::timespec const& rhs) const noexcept
 time::Clock hlib::time::now(clockid_t clock_id)
 {
     return Clock(clock_id);
+}
+
+std::string hlib::time::to_string(Duration duration)
+{
+    struct timespec const& ts = duration.timespec;
+
+    return fmt::format("{:2d}:{:02d}:{:02d}.{:03d}",
+        (ts.tv_sec / 3600),
+        (ts.tv_sec / 60) % 60,
+        (ts.tv_sec / 1) % 60,
+        (ts.tv_nsec / 1000000)
+    );
 }
 
