@@ -134,8 +134,12 @@ public:
 
 Clock now(clockid_t clock_id = CLOCK_MONOTONIC);
 
-std::string to_string(Duration duration);
-
 } // namespace time
+
+std::string to_string(time::Duration const& duration, bool milliseconds = false);
+
+std::string to_string_utc(time::Clock const& clock, bool milliseconds = false);
+std::string to_string_local(time::Clock const& clock, bool milliseconds = false);
+
 } // namespace hlib
 

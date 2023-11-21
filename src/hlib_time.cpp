@@ -22,7 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/time.hpp"
-#include "hlib/format.hpp"
+#include "hlib/format_extra.hpp"
 #include "hlib/error.hpp"
 
 using namespace hlib;
@@ -308,15 +308,65 @@ time::Clock hlib::time::now(clockid_t clock_id)
     return Clock(clock_id);
 }
 
-std::string hlib::time::to_string(Duration duration)
+std::string hlib::to_string(time::Duration const& duration, bool milliseconds)
 {
-    struct timespec const& ts = duration;
+    fmt::memory_buffer buffer;
 
-    return fmt::format("{:2d}:{:02d}:{:02d}.{:03d}",
-        (ts.tv_sec / 3600),
-        (ts.tv_sec / 60) % 60,
-        (ts.tv_sec / 1) % 60,
-        (ts.tv_nsec / 1000000)
+    format_to(buffer, "{:02d}:{:02d}:{:02d}",
+        (duration.tv_sec / 3600),
+        (duration.tv_sec / 60) % 60,
+        (duration.tv_sec / 1) % 60
     );
+
+    if (true == milliseconds) {
+        format_to(buffer, ".{:03d}", duration.tv_nsec / 1000000);
+    }
+
+    return fmt::to_string(buffer);
+}
+
+std::string hlib::to_string_utc(time::Clock const& clock, bool milliseconds)
+{
+    fmt::memory_buffer buffer;
+
+    format_to(buffer, "{:%Y-%m-%dT%H:%M:%S}", fmt::gmtime(clock.tv_sec));
+
+    if (true == milliseconds) {
+        format_to(buffer, "{:03d}", clock.tv_nsec / 1000000);
+    }
+
+    append_to(buffer, "Z");
+    return fmt::to_string(buffer);
+}
+
+std::string hlib::to_string_local(time::Clock const& clock, bool milliseconds)
+{
+    fmt::memory_buffer buffer;
+    struct tm time_info;
+    std::uint32_t offset;
+    char sign;
+
+    format_to(buffer, "{:%Y-%m-%dT%H:%M:%S}", fmt::gmtime(clock.tv_sec));
+
+    if (true == milliseconds) {
+        format_to(buffer, "{:03d}", clock.tv_nsec / 1000000);
+    }
+
+    // Get local time reentrant.
+    localtime_r(&clock.tv_sec, &time_info);
+
+    // Determine sign and absolute offset.
+    if (time_info.tm_gmtoff >= 0) {
+        sign = '+';
+        offset = time_info.tm_gmtoff / 60;
+    }
+    else {
+        sign = '-';
+        offset = -(time_info.tm_gmtoff / 60);
+    }
+
+    // Add timezone offset to GMT.
+    format_to(buffer, "{}{:02d}:{:02d}", sign, offset / 60, offset % 60);
+    return fmt::to_string(buffer);
 }
 
