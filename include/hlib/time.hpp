@@ -39,10 +39,13 @@ typedef math::RatioValue<std::milli, int64_t> MSec;
 typedef math::RatioValue<std::micro, int64_t> USec;
 typedef math::RatioValue<std::nano, int64_t> NSec;
 
-struct Duration
-{
-    std::timespec timespec;
+struct Clock;
 
+class Duration final : public std::timespec
+{
+    Duration(Clock const& that) = delete;
+
+public:
     Duration() noexcept;
     explicit Duration(std::timespec const& ts) noexcept;
     Duration(std::time_t secs, long nsecs) noexcept;
@@ -52,78 +55,81 @@ struct Duration
     Duration(math::RatioValue<R, T> const& value) noexcept
     {
         T const& ticks = value.value();
-        timespec.tv_sec = (ticks * R::num) / R::den;
+        tv_sec = (ticks * R::num) / R::den;
 
         constexpr int64_t factor = (1000000000LL * R::num) / R::den;
-        timespec.tv_nsec = (ticks * factor) % 1000000000ULL;
+        tv_nsec = (ticks * factor) % 1000000000ULL;
     }
 
     virtual ~Duration() = default;
 
-    Duration operator +(Duration const& rhs) const noexcept;
-    Duration operator -(Duration const& rhs) const noexcept;
+    Duration operator +(Duration const& that) const noexcept;
+    Duration operator -(Duration const& that) const noexcept;
 
-    Duration& operator +=(Duration const& rhs) noexcept;
-    Duration& operator -=(Duration const& rhs) noexcept;
+    Duration& operator +=(Duration const& that) noexcept;
+    Duration& operator -=(Duration const& that) noexcept;
 
-    Duration operator *(double rhs) const noexcept; 
-    Duration operator /(double rhs) const;
+    Duration operator *(double that) const noexcept; 
+    Duration operator /(double that) const;
 
-    Duration& operator *=(double rhs) noexcept;
-    Duration& operator /=(double rhs);
+    Duration& operator *=(double that) noexcept;
+    Duration& operator /=(double that);
 
     bool operator !() const noexcept;
-    bool operator ==(Duration const& rhs) const noexcept;
-    bool operator !=(Duration const& rhs) const noexcept;
+    bool operator ==(Duration const& that) const noexcept;
+    bool operator !=(Duration const& that) const noexcept;
 
-    bool operator <(Duration const& rhs) const noexcept;
-    bool operator >(Duration const& rhs) const noexcept;
+    bool operator <(Duration const& that) const noexcept;
+    bool operator >(Duration const& that) const noexcept;
 
-    bool operator <=(Duration const& rhs) const noexcept;
-    bool operator >=(Duration const& rhs) const noexcept;
+    bool operator <=(Duration const& that) const noexcept;
+    bool operator >=(Duration const& that) const noexcept;
 
     template<typename T>
     typename std::enable_if<std::is_same<double, T>::value, T>::type
     to() const noexcept
     {
-        return static_cast<double>(timespec.tv_sec)
-             + static_cast<double>(timespec.tv_nsec) / static_cast<double>(1000000000L);
+        return static_cast<double>(tv_sec)
+             + static_cast<double>(tv_nsec) / static_cast<double>(1000000000L);
     }
 
     template<typename T>
     typename std::enable_if<!std::is_same<double, T>::value, T>::type
     to() const noexcept
     {
-        math::RatioValue<std::nano, int64_t> nsec(std::int64_t(timespec.tv_sec) * 1000000000LL + timespec.tv_nsec);
+        math::RatioValue<std::nano, int64_t> nsec(std::int64_t(tv_sec) * 1000000000LL + tv_nsec);
         return nsec.to<typename T::Ratio, typename T::Type>();
     }
 };
 
-struct Clock : std::timespec
+class Clock final : public std::timespec
 {
+    Clock(Duration const&) noexcept = delete;
+
+public:
     Clock() noexcept;
     explicit Clock(std::timespec const& ts) noexcept;
     explicit Clock(std::time_t sec, long nsec) noexcept;
     Clock(clockid_t clock_id, std::nothrow_t) noexcept;
     Clock(clockid_t clock_id);
 
-    Duration operator - (Clock const& rhs) const noexcept;
+    Duration operator - (Clock const& that) const noexcept;
 
-    Clock operator + (Duration const& rhs) const noexcept;
-    Clock operator - (Duration const& rhs) const noexcept;
+    Clock operator + (Duration const& that) const noexcept;
+    Clock operator - (Duration const& that) const noexcept;
 
-    Clock& operator += (Duration const& rhs) noexcept;
-    Clock& operator -= (Duration const& rhs) noexcept;
+    Clock& operator += (Duration const& that) noexcept;
+    Clock& operator -= (Duration const& that) noexcept;
 
     bool operator !() const noexcept;
-    bool operator ==(std::timespec const& rhs) const noexcept;
-    bool operator !=(std::timespec const& rhs) const noexcept;
+    bool operator ==(std::timespec const& that) const noexcept;
+    bool operator !=(std::timespec const& that) const noexcept;
 
-    bool operator <(std::timespec const& rhs) const noexcept;
-    bool operator >(std::timespec const& rhs) const noexcept;
+    bool operator <(std::timespec const& that) const noexcept;
+    bool operator >(std::timespec const& that) const noexcept;
 
-    bool operator <=(std::timespec const& rhs) const noexcept;
-    bool operator >=(std::timespec const& rhs) const noexcept;
+    bool operator <=(std::timespec const& that) const noexcept;
+    bool operator >=(std::timespec const& that) const noexcept;
 };
 
 Clock now(clockid_t clock_id = CLOCK_MONOTONIC);

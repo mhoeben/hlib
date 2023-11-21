@@ -31,15 +31,15 @@ TEST_CASE("Duration", "[time]")
     time::Duration d;
 
     d = time::Duration(time::Sec(1));
-    REQUIRE(1 == d.timespec.tv_sec);
-    REQUIRE(0 == d.timespec.tv_nsec);
+    REQUIRE(1 == d.tv_sec);
+    REQUIRE(0 == d.tv_nsec);
 
     d = time::Duration(time::MSec(1234));
-    REQUIRE(1 == d.timespec.tv_sec);
-    REQUIRE(234000000 == d.timespec.tv_nsec);
+    REQUIRE(1 == d.tv_sec);
+    REQUIRE(234000000 == d.tv_nsec);
 
     d = time::Duration(math::RatioValue<std::kilo>(1234));
-    REQUIRE(1234000 == d.timespec.tv_sec);
-    REQUIRE(0 == d.timespec.tv_nsec);
+    REQUIRE(1234000 == d.tv_sec);
+    REQUIRE(0 == d.tv_nsec);
 }
 

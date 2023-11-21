@@ -103,8 +103,8 @@ bool Timer::clear() noexcept
 bool Timer::set(time::Duration const& expire, time::Duration const& interval) noexcept
 {
     itimerspec ts = {};
-    ts.it_value = expire.timespec;
-    ts.it_interval = interval.timespec;
+    ts.it_value = expire;
+    ts.it_interval = interval;
 
     // Replace 0 expire with a small timer value so instead as to cancel
     // the timer, it almost immediately expires.
