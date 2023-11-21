@@ -285,8 +285,10 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
               }
 
             case Opcode::Pong:
-                // Update pong timestamp.
-                m_pong_last_timestamp = time::now();
+                // Update pong timestamp when a pong timeout is configured.
+                if (m_pong_timeout > 0.0) {
+                    m_pong_last_timestamp = time::now();
+                }
 
                 // Callback?
                 if (nullptr != m_on_pong) {
