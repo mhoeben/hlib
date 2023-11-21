@@ -88,7 +88,7 @@ bool hlib::clear_signal_handler(Signal signal)
     }
 
     // Defuse signal action.
-    if (-1 != sigaction(static_cast<int>(signal), &it->second.old_action, nullptr)) {
+    if (-1 == sigaction(static_cast<int>(signal), &it->second.old_action, nullptr)) {
         return false;
     }
 
