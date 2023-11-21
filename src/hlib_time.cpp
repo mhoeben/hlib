@@ -308,6 +308,16 @@ time::Clock hlib::time::now(clockid_t clock_id)
     return Clock(clock_id);
 }
 
+time::Clock hlib::time::now_utc(clockid_t clock_id)
+{
+    assert(
+        CLOCK_REALTIME == clock_id ||
+        CLOCK_REALTIME_ALARM == clock_id ||
+        CLOCK_REALTIME_COARSE == clock_id
+    );
+    return Clock(clock_id);
+}
+
 std::string hlib::to_string(time::Duration const& duration, bool milliseconds)
 {
     fmt::memory_buffer buffer;
@@ -332,7 +342,7 @@ std::string hlib::to_string_utc(time::Clock const& clock, bool milliseconds)
     format_to(buffer, "{:%Y-%m-%dT%H:%M:%S}", fmt::gmtime(clock.tv_sec));
 
     if (true == milliseconds) {
-        format_to(buffer, "{:03d}", clock.tv_nsec / 1000000);
+        format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
     }
 
     append_to(buffer, "Z");
@@ -349,7 +359,7 @@ std::string hlib::to_string_local(time::Clock const& clock, bool milliseconds)
     format_to(buffer, "{:%Y-%m-%dT%H:%M:%S}", fmt::gmtime(clock.tv_sec));
 
     if (true == milliseconds) {
-        format_to(buffer, "{:03d}", clock.tv_nsec / 1000000);
+        format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
     }
 
     // Get local time reentrant.

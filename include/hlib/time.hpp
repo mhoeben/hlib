@@ -133,6 +133,7 @@ public:
 };
 
 Clock now(clockid_t clock_id = CLOCK_MONOTONIC);
+Clock now_utc(clockid_t clock_id = CLOCK_REALTIME);
 
 } // namespace time
 
