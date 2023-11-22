@@ -25,8 +25,12 @@
 
 #include "hlib/base.hpp"
 #include <functional>
+#include <condition_variable>
 #include <cstdio>
+#include <list>
+#include <memory>
 #include <string>
+#include <thread>
 
 namespace hlib
 {
@@ -56,35 +60,68 @@ struct Domain final
     ~Domain();
 };
 
-typedef std::function<void(Domain const& domain, Level level, std::string const& message)> Callback;
-extern Callback callback;
+class Writer
+{
+    HLIB_NOT_COPYABLE(Writer);
+    HLIB_NOT_MOVABLE(Writer);
 
-extern FILE* file;
+public:
+    static Writer& get() noexcept;
+    static void set(std::shared_ptr<Writer> writer);
 
-#define HLOGF(domain, ...) do {                                             hlib::log::callback(domain, hlib::log::Fatal,   fmt::format(__VA_ARGS__));   } while (false)
-#define HLOGE(domain, ...) do { if (hlib::log::Error   <= (domain).level) { hlib::log::callback(domain, hlib::log::Error,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGW(domain, ...) do { if (hlib::log::Warning <= (domain).level) { hlib::log::callback(domain, hlib::log::Warning, fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGN(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { hlib::log::callback(domain, hlib::log::Notice,  fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGI(domain, ...) do { if (hlib::log::Info    <= (domain).level) { hlib::log::callback(domain, hlib::log::Info,    fmt::format(__VA_ARGS__)); } } while (false)
+public:
+    Writer(bool threaded = false);
+    virtual ~Writer();
+
+    void setFile(FILE* file);
+
+    void write(std::string string);
+    virtual void write(Domain const& domain, Level level, std::string const& string);
+
+private:
+    static std::shared_ptr<Writer> m_writer;
+
+    std::mutex m_mutex;
+    std::condition_variable m_condition;
+    std::thread m_thread;
+
+    bool m_exit{ false };
+    std::list<std::string> m_queue;
+    FILE* m_file{ stdout };
+
+    void print(std::string const& string);
+    void worker();
+    void close();
+};
+
+inline void write(Domain const& domain, Level level, std::string const& string)
+{
+    Writer::get().write(domain, level, string);
+}
+
+#define HLOGF(domain, ...) do {                                             hlib::log::write(domain, hlib::log::Fatal,   fmt::format(__VA_ARGS__));   } while (false)
+#define HLOGE(domain, ...) do { if (hlib::log::Error   <= (domain).level) { hlib::log::write(domain, hlib::log::Error,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGW(domain, ...) do { if (hlib::log::Warning <= (domain).level) { hlib::log::write(domain, hlib::log::Warning, fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGN(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { hlib::log::write(domain, hlib::log::Notice,  fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGI(domain, ...) do { if (hlib::log::Info    <= (domain).level) { hlib::log::write(domain, hlib::log::Info,    fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGD(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { hlib::log::write(domain, hlib::log::Debug,   fmt::format(__VA_ARGS__)); } } while (false)
 #ifndef NDEBUG
-#define HLOGD(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { hlib::log::callback(domain, hlib::log::Debug,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGT(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { hlib::log::callback(domain, hlib::log::Trace,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGT(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { hlib::log::write(domain, hlib::log::Trace,   fmt::format(__VA_ARGS__)); } } while (false)
 #else
-#define HLOGD(domain, ...) do { } while (false)
 #define HLOGT(domain, ...) do { } while (false)
 #endif
 
 #define HLOGF_THROW(domain, exception, ...) \
     do { \
         std::string message = fmt::format(__VA_ARGS__); \
-        hlib::log::callback(domain, hlib::log::Fatal, message); \
+        hlib::log::write(domain, hlib::log::Fatal, message); \
         throw exception(fmt::format("{}[FATL]: {}", domain.name, message)); \
     } while (false)
 
 #define HLOGE_THROW(domain, exception, ...) \
     do { \
         std::string message = fmt::format(__VA_ARGS__); \
-        hlib::log::callback(domain, hlib::log::Error, message); \
+        hlib::log::write(domain, hlib::log::Error, message); \
         throw exception(fmt::format("{}[ERRO]: {}", domain.name, message)); \
     } while (false)
 

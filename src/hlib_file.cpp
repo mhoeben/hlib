@@ -35,12 +35,11 @@
 #include <unistd.h>
 
 using namespace hlib;
-using namespace hlib::file;
 
 //
 // Public
 //
-std::filesystem::path hlib::file::get_home_directory(std::error_code& error_code) noexcept
+std::filesystem::path file::get_home_directory(std::error_code& error_code) noexcept
 {
     uid_t uid = getuid();
     struct passwd* pw = getpwuid(uid);
@@ -52,7 +51,7 @@ std::filesystem::path hlib::file::get_home_directory(std::error_code& error_code
     return pw->pw_dir;
 }
 
-std::filesystem::path hlib::file::get_home_directory()
+std::filesystem::path file::get_home_directory()
 {
     std::error_code error_code;
 
@@ -532,45 +531,45 @@ void file::fd_close(int fd) noexcept
 //
 // Public (Pipe)
 //
-Pipe::Pipe() noexcept
+file::Pipe::Pipe() noexcept
     : m_fds { &fd_close, &fd_close }
 {
 }
 
-Pipe::Pipe(bool open, std::nothrow_t) noexcept
+file::Pipe::Pipe(std::error_code& error_code) noexcept
     : Pipe()
 {
-    if (true == open) {
-        Pipe::open(std::nothrow);
-    }
+    Pipe::open(error_code);
 }
 
-Pipe::Pipe(bool open)
+file::Pipe::Pipe(bool open)
     : Pipe()
 {
-    if (true == open) {
-        Pipe::open();
+    if (false == open) {
+        return;
     }
+    Pipe::open();
 }
 
-Pipe::~Pipe()
+file::Pipe::~Pipe()
 {
     close();
 }
 
-int Pipe::operator[](std::size_t index) const noexcept
+int file::Pipe::operator[](std::size_t index) const noexcept
 {
     assert(index <= 1);
     return m_fds[index].get();
 }
 
-bool Pipe::open(std::nothrow_t) noexcept
+bool file::Pipe::open(std::error_code& error_code) noexcept
 {
     std::array<int, 2> fds{ -1, -1 };
 
     close();
 
     if (-1 == ::pipe(fds.data())) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
         return false;
     }
 
@@ -579,14 +578,16 @@ bool Pipe::open(std::nothrow_t) noexcept
     return true;
 }
 
-void Pipe::open()
+void file::Pipe::open()
 {
-    if (false == open(std::nothrow)) {
-        throwf<std::runtime_error>("pipe() failed ({})", get_error_string());
+    std::error_code error_code;
+
+    if (false == open(error_code)) {
+        throwf<std::runtime_error>("pipe() failed ({})", error_code.message());
     }
 }
 
-void Pipe::close() noexcept
+void file::Pipe::close() noexcept
 {
     m_fds[1].reset();
     m_fds[0].reset();

@@ -57,14 +57,6 @@ std::array<std::string, levels> const level_strings =
     "TRAC"
 };
 
-void print(log::Domain const& domain, log::Level level, std::string const& message)
-{
-    if (nullptr == log::file) {
-        return;
-    }
-    fmt::print(log::file, "{:<12}[{}]: {}\n", domain.name, to_string(level), message);
-}
-
 void register_domain(log::Domain& domain)
 {
     HLIB_LOCK_GUARD(lock, mutex);
@@ -87,7 +79,7 @@ void deregister_domain(log::Domain& domain)
 } // namespace
 
 //
-// Public
+// Public (Domain)
 //
 log::Domain::Domain(std::string a_name, Level a_level)
     : name(std::move(a_name))
@@ -113,8 +105,129 @@ log::Domain::~Domain()
     deregister_domain(*this);
 }
 
-log::Callback log::callback = std::bind(&print, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-FILE* log::file = stdout;
+//
+// Implementation (Writer)
+//
+std::shared_ptr<log::Writer> log::Writer::m_writer = std::make_shared<log::Writer>();
+
+void log::Writer::print(std::string const& string)
+{
+    if (nullptr == m_file) {
+        return;
+    }
+
+    fwrite(string.data(), string.length(), 1, m_file);
+    fflush(m_file);
+}
+
+void log::Writer::worker()
+{
+    HLIB_UNIQUE_LOCK(lock, m_mutex);
+
+    do {
+        // Wait for condition variable.
+        m_condition.wait(lock);
+
+        // Empty queue in one operation.
+        std::list<std::string> strings = std::move(m_queue);
+
+        // Unlock while writing queued strings.
+        lock.unlock();
+
+        // Print all strings all strings.
+        for (auto const& string : strings) {
+            print(string);
+        }
+
+        // Re-acquire lock for wait.
+        lock.lock();
+    }
+    while (false == m_exit);
+}
+
+void log::Writer::close()
+{
+    // Close file?
+    if (nullptr == m_file || stdout == m_file || stderr == m_file) {
+        return;
+    }
+
+    fclose(m_file);
+    m_file = nullptr;
+}
+
+//
+// Public (Writer)
+//
+log::Writer& log::Writer::get() noexcept
+{
+    assert(nullptr != m_writer);
+    return *m_writer;
+}
+
+void log::Writer::set(std::shared_ptr<Writer> writer)
+{
+    m_writer = std::move(writer);
+}
+
+log::Writer::Writer(bool threaded)
+{
+    if (false == threaded) {
+        return;
+    }
+
+    m_thread = std::thread(std::bind(&Writer::worker, this));
+}
+
+log::Writer::~Writer()
+{
+    if (true == m_thread.joinable()) {
+        // Set exit flag.
+        {
+            HLIB_LOCK_GUARD(lock, m_mutex);
+            m_exit = true;
+        }
+
+        // Notify worker.
+        m_condition.notify_one();
+
+        // Wait for thread to stop.
+        m_thread.join();
+    }
+
+    close();
+}
+
+void log::Writer::setFile(FILE* file)
+{
+    close();
+
+    m_file = file;
+}
+
+void log::Writer::write(std::string string)
+{
+    // Threaded operation?
+    if (true == m_thread.joinable()) {
+        HLIB_UNIQUE_LOCK(lock, m_mutex);
+        {
+            m_queue.emplace_back(std::move(string));
+        }
+        lock.unlock();
+
+        // Notify worker.
+        m_condition.notify_one();
+    }
+    else {
+        // Output string on current thread.
+        print(string);
+    }
+}
+
+void log::Writer::write(Domain const& domain, Level level, std::string const& string)
+{
+    write(fmt::format("{:<12}[{}]: {}\n", domain.name, to_string(level), string));
+}
 
 //
 // Public

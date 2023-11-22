@@ -99,7 +99,7 @@ class Pipe final
 
 public:
     Pipe() noexcept;
-    Pipe(bool open, std::nothrow_t) noexcept;
+    Pipe(std::error_code& error_code) noexcept;
     Pipe(bool open);
     ~Pipe();
 
@@ -126,7 +126,7 @@ public:
         m_fds[index] = std::move(fd);
     }
 
-    bool open(std::nothrow_t) noexcept;
+    bool open(std::error_code& error_code) noexcept;
     void open();
 
     template<std::size_t index>
