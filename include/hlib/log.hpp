@@ -23,7 +23,7 @@
 //
 #pragma once
 
-#include "hlib/base.hpp"
+#include "hlib/file.hpp"
 #include <functional>
 #include <condition_variable>
 #include <cstdio>
@@ -68,12 +68,11 @@ class Writer
 public:
     static Writer& get() noexcept;
     static void set(std::shared_ptr<Writer> writer);
+    static void set(file::Handle file, bool threaded = false);
 
 public:
-    Writer(bool threaded = false);
+    Writer(file::Handle file = file::Handle(), bool threaded = false);
     virtual ~Writer();
-
-    void setFile(FILE* file);
 
     void write(std::string string);
     virtual void write(Domain const& domain, Level level, std::string const& string);
@@ -87,11 +86,10 @@ private:
 
     bool m_exit{ false };
     std::list<std::string> m_queue;
-    FILE* m_file{ stdout };
+    file::Handle m_file;
 
     void print(std::string const& string);
     void worker();
-    void close();
 };
 
 inline void write(Domain const& domain, Level level, std::string const& string)

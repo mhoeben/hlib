@@ -112,12 +112,15 @@ std::shared_ptr<log::Writer> log::Writer::m_writer = std::make_shared<log::Write
 
 void log::Writer::print(std::string const& string)
 {
-    if (nullptr == m_file) {
-        return;
+    FILE* file = m_file;
+
+    // Output to stdout when no file was configured.
+    if (nullptr == file) {
+        file = stdout;
     }
 
-    fwrite(string.data(), string.length(), 1, m_file);
-    fflush(m_file);
+    fwrite(string.data(), string.length(), 1, file);
+    fflush(file);
 }
 
 void log::Writer::worker()
@@ -145,17 +148,6 @@ void log::Writer::worker()
     while (false == m_exit);
 }
 
-void log::Writer::close()
-{
-    // Close file?
-    if (nullptr == m_file || stdout == m_file || stderr == m_file) {
-        return;
-    }
-
-    fclose(m_file);
-    m_file = nullptr;
-}
-
 //
 // Public (Writer)
 //
@@ -170,7 +162,13 @@ void log::Writer::set(std::shared_ptr<Writer> writer)
     m_writer = std::move(writer);
 }
 
-log::Writer::Writer(bool threaded)
+void log::Writer::set(file::Handle file, bool threaded)
+{
+    set(std::make_shared<Writer>(std::move(file), threaded));
+}
+
+log::Writer::Writer(file::Handle file, bool threaded)
+    : m_file(std::move(file))
 {
     if (false == threaded) {
         return;
@@ -194,15 +192,6 @@ log::Writer::~Writer()
         // Wait for thread to stop.
         m_thread.join();
     }
-
-    close();
-}
-
-void log::Writer::setFile(FILE* file)
-{
-    close();
-
-    m_file = file;
 }
 
 void log::Writer::write(std::string string)

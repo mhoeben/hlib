@@ -529,6 +529,79 @@ void file::fd_close(int fd) noexcept
 }
 
 //
+// Public (File)
+//
+file::Handle::Handle() noexcept
+    : m_handle(&fclose)
+{
+}
+
+file::Handle::Handle(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept
+    : Handle()
+{
+    open(filepath, mode, error_code);
+}
+
+file::Handle::Handle(std::string const& filepath, std::string const& mode)
+    : Handle()
+{
+    open(filepath, mode);
+}
+
+file::Handle::Handle(Handle&& that) noexcept
+    : m_handle(std::move(that.m_handle))
+{
+}
+
+file::Handle& file::Handle::operator =(Handle&& that) noexcept
+{
+    m_handle = std::move(that.m_handle);
+    return *this;
+}
+
+file::Handle::operator FILE*() const noexcept
+{
+    return m_handle.get();
+}
+
+bool file::Handle::open(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept
+{
+    close();
+
+    m_handle.reset(fopen(filepath.c_str(), mode.c_str()));
+    if (nullptr == m_handle.get()) {
+        error_code = std::make_error_code(static_cast<std::errc>(errno));
+        return false;
+    }
+
+    return true;
+}
+
+void file::Handle::open(std::string const& filepath, std::string const& mode)
+{
+    std::error_code error_code;
+
+    if (false == open(filepath, mode, error_code)) {
+        throwf<std::runtime_error>("fopen() failed ({})", error_code.message());
+    }
+}
+
+void file::Handle::close() noexcept
+{
+    if (nullptr == m_handle.get()) {
+        return;
+    }
+
+    m_handle.reset();
+    return;
+}
+
+FILE* file::Handle::release() noexcept
+{
+    return m_handle.release();
+}
+
+//
 // Public (Pipe)
 //
 file::Pipe::Pipe() noexcept

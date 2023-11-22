@@ -92,6 +92,29 @@ bool fd_set_non_blocking(int fd, bool enable) noexcept;
 
 void fd_close(int fd) noexcept;
 
+class Handle final
+{
+    HLIB_NOT_COPYABLE(Handle);
+
+public:
+    Handle() noexcept;
+    Handle(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept;
+    Handle(std::string const& filepath, std::string const& mode);
+    Handle(Handle&& that) noexcept;
+
+    Handle& operator =(Handle&& that) noexcept;
+
+    operator FILE*() const noexcept;
+
+    bool open(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept;
+    void open(std::string const& filepath, std::string const& mode);
+    void close() noexcept;
+    FILE* release() noexcept;
+
+private:
+    UniqueHandle<FILE*, nullptr, decltype(fclose)> m_handle;
+};
+
 class Pipe final
 {
     HLIB_NOT_COPYABLE(Pipe);
