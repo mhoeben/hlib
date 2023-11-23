@@ -259,6 +259,11 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
                         m_close_reason.assign(ptr + 2, size - 2);
                     }
                 }
+                else {
+                    // Assume normal closure.
+                    m_close_code = StatusCode::Normal;
+                    m_close_reason.clear();
+                }
 
                 // Respond with close frame, when close code was not already set.
                 if (StatusCode::NoStatus == pre_close_code) {
