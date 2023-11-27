@@ -139,8 +139,12 @@ Clock now_utc(clockid_t clock_id = CLOCK_REALTIME);
 
 std::string to_string(time::Duration const& duration, bool milliseconds = false);
 
+std::string to_string_utc_date(time::Clock const& clock);
+std::string to_string_utc_time(time::Clock const& clock, bool milliseconds = false);
 std::string to_string_utc(time::Clock const& clock, bool milliseconds = false);
-std::string to_string_local(time::Clock const& clock, bool milliseconds = false);
+
+std::string to_string_utc_local_time(time::Clock const& clock, bool milliseconds = false);
+std::string to_string_utc_local(time::Clock const& clock, bool milliseconds = false);
 
 } // namespace hlib
 

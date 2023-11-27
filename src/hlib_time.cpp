@@ -335,6 +335,25 @@ std::string hlib::to_string(time::Duration const& duration, bool milliseconds)
     return fmt::to_string(buffer);
 }
 
+std::string hlib::to_string_utc_date(time::Clock const& clock)
+{
+    return fmt::format("{:%Y-%m-%d}", fmt::gmtime(clock.tv_sec));
+}
+
+std::string hlib::to_string_utc_time(time::Clock const& clock, bool milliseconds)
+{
+    fmt::memory_buffer buffer;
+
+    format_to(buffer, "{:%H:%M:%S}", fmt::gmtime(clock.tv_sec));
+
+    if (true == milliseconds) {
+        format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
+    }
+
+    append_to(buffer, "Z");
+    return fmt::to_string(buffer);
+}
+
 std::string hlib::to_string_utc(time::Clock const& clock, bool milliseconds)
 {
     fmt::memory_buffer buffer;
@@ -349,14 +368,14 @@ std::string hlib::to_string_utc(time::Clock const& clock, bool milliseconds)
     return fmt::to_string(buffer);
 }
 
-std::string hlib::to_string_local(time::Clock const& clock, bool milliseconds)
+std::string hlib::to_string_utc_local_time(time::Clock const& clock, bool milliseconds)
 {
     fmt::memory_buffer buffer;
     struct tm time_info;
     std::uint32_t offset;
     char sign;
 
-    format_to(buffer, "{:%Y-%m-%dT%H:%M:%S}", fmt::gmtime(clock.tv_sec));
+    format_to(buffer, "{:%H:%M:%S}", fmt::gmtime(clock.tv_sec));
 
     if (true == milliseconds) {
         format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
@@ -378,5 +397,10 @@ std::string hlib::to_string_local(time::Clock const& clock, bool milliseconds)
     // Add timezone offset to GMT.
     format_to(buffer, "{}{:02d}:{:02d}", sign, offset / 60, offset % 60);
     return fmt::to_string(buffer);
+}
+
+std::string hlib::to_string_utc_local(time::Clock const& clock, bool milliseconds)
+{
+    return fmt::format("{:%Y-%m-%d}{}", fmt::gmtime(clock.tv_sec), to_string_utc_local_time(clock, milliseconds));
 }
 
