@@ -82,7 +82,22 @@ enum class StatusCode : uint16_t
     TLSHandshakeFailed = 1015     // MUST NOT be send.
 };
 
-typedef std::variant<std::monostate, std::string, Buffer> Message;
+struct Message
+{
+    typedef std::variant<std::monostate, std::string, Buffer> Data;
+    typedef std::shared_ptr<void> User;
+
+    Data data;
+    User user;
+
+    Message() = default;
+
+    Message(std::string string) noexcept;
+    Message(Buffer buffer) noexcept;
+    Message(Data data) noexcept;
+    Message(User user) noexcept;
+};
+
 
 class Server final
 {

@@ -452,6 +452,15 @@ bool hlib::starts_with(std::string const& string, std::string const& substring)
     return 0 == memcmp(string.data(), substring.data(), substring.length());
 }
 
+bool hlib::starts_with(std::string const& string, char character)
+{
+    if (true == string.empty()) {
+        return false;
+    }
+
+    return string.front() == character;
+}
+
 bool hlib::ends_with(std::string const& string, std::string const& substring)
 {
     if (string.length() < substring.length()) {
@@ -462,9 +471,23 @@ bool hlib::ends_with(std::string const& string, std::string const& substring)
     return 0 == memcmp(string.data() + offset, substring.data(), substring.length());
 }
 
+bool hlib::ends_with(std::string const& string, char character)
+{
+    if (true == string.empty()) {
+        return false;
+    }
+
+    return string.back() == character;
+}
+
 bool hlib::contains(std::string const& string, std::string const& substring)
 {
     return std::string::npos != string.find(substring);
+}
+
+bool hlib::contains(std::string const& string, char character)
+{
+    return std::string::npos != string.find(character);
 }
 
 std::string hlib::to_upper(std::string string)

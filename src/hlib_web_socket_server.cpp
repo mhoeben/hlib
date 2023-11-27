@@ -44,7 +44,6 @@
 #pragma GCC diagnostic pop
 
 using namespace hlib;
-using namespace hlib::ws;
 
 namespace
 {
@@ -60,13 +59,13 @@ Overloaded(Ts...) -> Overloaded<Ts...>;
 //
 // Public (Frame)
 //
-Server::Socket::Frame::Frame(Opcode a_opcode)
+ws::Server::Socket::Frame::Frame(Opcode a_opcode)
     : opcode{ a_opcode }
     , fin{ true }
 {
 }
 
-Server::Socket::Frame::Frame(Opcode a_opcode, bool a_fin, Message a_message)
+ws::Server::Socket::Frame::Frame(Opcode a_opcode, bool a_fin, Message a_message)
     : opcode{ a_opcode }
     , fin{ a_fin }
     , message(std::move(a_message))
@@ -76,7 +75,7 @@ Server::Socket::Frame::Frame(Opcode a_opcode, bool a_fin, Message a_message)
 //
 // Implementation (Socket)
 //
-Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, http::Socket a_http_socket)
+ws::Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, http::Socket a_http_socket)
     : server(a_server)
     , id{ a_id }
     , m_hws(a_hws)
@@ -119,7 +118,7 @@ Server::Socket::Socket(Server& a_server, Socket::Id a_id, struct hws_s* a_hws, h
     a_http_socket.ssl = nullptr;
 }
 
-void Server::Socket::restart_locked()
+void ws::Server::Socket::restart_locked()
 {
     if (m_send_queue.size() < 1) {
         return;
@@ -128,12 +127,12 @@ void Server::Socket::restart_locked()
     hverify(-1 != hws_socket_interrupt(m_socket));
 }
 
-void Server::Socket::onPingTimer()
+void ws::Server::Socket::onPingTimer()
 {
     ping();
 }
 
-int Server::Socket::onInterrupt()
+int ws::Server::Socket::onInterrupt()
 {
     try {
         HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
@@ -152,7 +151,7 @@ int Server::Socket::onInterrupt()
             {
                 return hws_socket_send(m_hws, m_socket, static_cast<hws_opcode_t>(frame.opcode), message.data(), message.size(), frame.fin);
             }
-        }, frame.message);
+        }, frame.message.data);
         return 0;
     }
     catch (...) {
@@ -161,7 +160,7 @@ int Server::Socket::onInterrupt()
     }
 }
 
-int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
+int ws::Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
 {
     try {
         Buffer* buffer = nullptr;
@@ -177,7 +176,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
             m_receive_queue.emplace_back(opcode, fin, Buffer(size));
 
             // Get pointer to buffer.
-            buffer = &std::get<Buffer>(m_receive_queue.back().message);
+            buffer = &std::get<Buffer>(m_receive_queue.back().message.data);
             break;
 
         case Opcode::Text:
@@ -191,7 +190,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
             m_receive_queue.emplace_back(opcode, fin, Buffer(size));
 
             // Get pointer to buffer.
-            buffer = &std::get<Buffer>(m_receive_queue.back().message);
+            buffer = &std::get<Buffer>(m_receive_queue.back().message.data);
             break;
 
         case Opcode::Ping:
@@ -208,7 +207,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
             m_receive_control = Frame(opcode, fin, Buffer(size));
 
             // Get pointer to buffer.
-            buffer = &std::get<Buffer>(m_receive_control->message);
+            buffer = &std::get<Buffer>(m_receive_control->message.data);
             break;
 
         default:
@@ -218,7 +217,7 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
 
         size_t queued_size = 0;
         for (Frame& frame : m_receive_queue) {
-            queued_size += std::get<Buffer>(frame.message).size();
+            queued_size += std::get<Buffer>(frame.message.data).size();
         }
 
         if (m_max_receive_message_size > 0 && queued_size + size > m_max_receive_message_size) {
@@ -234,13 +233,13 @@ int Server::Socket::onReceiveHeader(Opcode opcode, std::size_t size, bool fin)
     }
 }
 
-int Server::Socket::onReceived(void* buffer, std::size_t size)
+int ws::Server::Socket::onReceived(void* buffer, std::size_t size)
 {
     try {
         // Received a control frame?
         if (true == m_receive_control.has_value()) {
             // Set control frame buffer's size.
-            std::get<Buffer>(m_receive_control->message).resize(size);
+            std::get<Buffer>(m_receive_control->message.data).resize(size);
 
             // Selectively handle control frame.
             switch (m_receive_control->opcode) {
@@ -313,7 +312,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
         assert(false == m_receive_queue.empty());
 
         // Set frame buffer's size.
-        std::get<Buffer>(m_receive_queue.back().message).resize(size);
+        std::get<Buffer>(m_receive_queue.back().message.data).resize(size);
 
         // Continue receiving frames until the fin bit is set.
         if (false == m_receive_queue.back().fin) {
@@ -325,28 +324,28 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
             Frame& front = m_receive_queue.front();
 
             if (1 == m_receive_queue.size()) {
-                assert(true == std::holds_alternative<Buffer>(front.message));
+                assert(true == std::holds_alternative<Buffer>(front.message.data));
 
                 // Convert to text message?
                 if (Opcode::Text == front.opcode) {
                     // Convert buffer to a string.
-                    front.message = to_string(std::get<Buffer>(front.message));
+                    front.message.data = to_string(std::get<Buffer>(front.message.data));
                 }
             }
             else {
                 // Determine total, unfragmented message length.
                 std::size_t total = 0;
                 for (Frame const& frame : m_receive_queue) {
-                    total += std::get<Buffer>(frame.message).size();
+                    total += std::get<Buffer>(frame.message.data).size();
                 }
 
                 // Reserve memory in front frame's buffer.
-                Buffer& front_buffer = std::get<Buffer>(front.message);
+                Buffer& front_buffer = std::get<Buffer>(front.message.data);
                 front_buffer.reserve(total);
 
                 // Append subsequent frame's buffers to front buffer.
                 for (std::size_t i = 1; i < m_receive_queue.size(); ++i) {
-                    Buffer& fragment = std::get<Buffer>(m_receive_queue[i].message);
+                    Buffer& fragment = std::get<Buffer>(m_receive_queue[i].message.data);
                     front_buffer.append(fragment.data(), fragment.size());
                 }
             }
@@ -365,7 +364,7 @@ int Server::Socket::onReceived(void* buffer, std::size_t size)
     }
 }
 
-int Server::Socket::onSent(void const* /* buffer */, std::size_t /* size */)
+int ws::Server::Socket::onSent(void const* /* buffer */, std::size_t /* size */)
 {
     try {
         HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
@@ -385,7 +384,7 @@ int Server::Socket::onSent(void const* /* buffer */, std::size_t /* size */)
     }
 }
 
-void Server::Socket::onClosed(bool clean)
+void ws::Server::Socket::onClosed(bool clean)
 {
     assert(HWS_STATE_CLOSED == hws_socket_get_state(m_socket));
 
@@ -417,22 +416,22 @@ void Server::Socket::onClosed(bool clean)
 //
 // Public (Socket)
 //
-State Server::Socket::state() const noexcept
+ws::State ws::Server::Socket::state() const noexcept
 {
     return static_cast<State>(hws_socket_get_state(m_socket));
 }
 
-StatusCode Server::Socket::closeCode() const noexcept
+ws::StatusCode ws::Server::Socket::closeCode() const noexcept
 {
     return m_close_code;
 }
 
-std::string Server::Socket::closeReason() const
+std::string ws::Server::Socket::closeReason() const
 {
     return to_string(m_close_reason);
 }
 
-SockAddr Server::Socket::getPeerAddress() const
+SockAddr ws::Server::Socket::getPeerAddress() const
 {
     sockaddr_storage storage{};
     socklen_t length = sizeof(storage);
@@ -441,40 +440,40 @@ SockAddr Server::Socket::getPeerAddress() const
     return SockAddr(storage);
 }
 
-void Server::Socket::setPongCallback(OnPong callback)
+void ws::Server::Socket::setPongCallback(OnPong callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_pong = std::move(callback);
 }
 
-void Server::Socket::setMessageCallback(OnMessage callback)
+void ws::Server::Socket::setMessageCallback(OnMessage callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_message = std::move(callback);
 }
 
-void Server::Socket::setErrorCallback(OnError callback)
+void ws::Server::Socket::setErrorCallback(OnError callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_error = std::move(callback);
 }
 
-void Server::Socket::setCloseCallback(OnClose callback)
+void ws::Server::Socket::setCloseCallback(OnClose callback)
 {
     assert(true == callback_from(server.m_event_loop));
 
     m_on_close = std::move(callback);
 }
 
-void Server::Socket::setNoDelay(bool enable)
+void ws::Server::Socket::setNoDelay(bool enable)
 {
     hverify(-1 != hws_socket_set_nodelay(m_socket, enable));
 }
 
-void Server::Socket::setPingInterval(time::Duration interval)
+void ws::Server::Socket::setPingInterval(time::Duration interval)
 {
     if (time::Duration(0) == interval) {
         m_ping_timer.clear();
@@ -486,23 +485,23 @@ void Server::Socket::setPingInterval(time::Duration interval)
     m_pong_last_timestamp = time::now();
 }
 
-void Server::Socket::setPongTimeout(time::Duration timeout)
+void ws::Server::Socket::setPongTimeout(time::Duration timeout)
 {
     m_pong_timeout = timeout;
     m_pong_last_timestamp = time::now();
 }
 
-void Server::Socket::setMaxReceiveMessageSize(std::size_t size)
+void ws::Server::Socket::setMaxReceiveMessageSize(std::size_t size)
 {
     m_max_receive_message_size = size;
 }
 
-void Server::Socket::setFragmentMessageThreshold(std::size_t size)
+void ws::Server::Socket::setFragmentMessageThreshold(std::size_t size)
 {
     m_fragment_message_threshold = size;
 }
 
-void Server::Socket::ping()
+void ws::Server::Socket::ping()
 {
     HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
@@ -513,7 +512,7 @@ void Server::Socket::ping()
     restart_locked();
 }
 
-void Server::Socket::receive(bool enable)
+void ws::Server::Socket::receive(bool enable)
 {
     if (true == enable) {
         hws_socket_receive_enable(m_socket);
@@ -523,17 +522,17 @@ void Server::Socket::receive(bool enable)
     }
 }
 
-void Server::Socket::send(Message message)
+void ws::Server::Socket::send(Message message)
 {
-    assert(false == std::holds_alternative<std::monostate>(message));
+    assert(false == std::holds_alternative<std::monostate>(message.data));
 
     HLIB_LOCK_GUARD(lock, m_send_queue_mutex);
 
-    Opcode opcode = std::holds_alternative<std::string>(message) ? Opcode::Text : Opcode::Binary;
+    Opcode opcode = std::holds_alternative<std::string>(message.data) ? Opcode::Text : Opcode::Binary;
     std::size_t size = std::visit(Overloaded{
         [](std::monostate&) noexcept { return std::size_t(0); },
         [](auto& msg) noexcept { return msg.size(); }
-    }, message);
+    }, message.data);
 
     if (size < m_fragment_message_threshold) {
         // Forward message unfragmented.
@@ -562,7 +561,7 @@ void Server::Socket::send(Message message)
                     {
                         return Message(Buffer(binary.get(offset), fragment_size));
                     }
-                }, message)
+                }, message.data)
             );
 
             opcode = Opcode::Continuation;
@@ -575,7 +574,7 @@ void Server::Socket::send(Message message)
     restart_locked();
 }
 
-void Server::Socket::close(StatusCode code, Buffer reason)
+void ws::Server::Socket::close(StatusCode code, Buffer reason)
 {
     assert(StatusCode::NoStatus != code);
     assert(StatusCode::Abnormal != code);
@@ -601,7 +600,7 @@ void Server::Socket::close(StatusCode code, Buffer reason)
 //
 // Implementation (Server)
 //
-void Server::onPoll(int fd, std::uint32_t events)
+void ws::Server::onPoll(int fd, std::uint32_t events)
 {
     assert(hws_get_fd(m_hws) == fd); (void)fd;
     assert(EventLoop::Read == events); (void)events;
@@ -611,7 +610,7 @@ void Server::onPoll(int fd, std::uint32_t events)
     }
 }
 
-void Server::onSocketsTimer()
+void ws::Server::onSocketsTimer()
 {
     HLIB_LOCK_GUARD(lock, m_sockets_mutex);
 
@@ -659,26 +658,26 @@ void Server::onSocketsTimer()
 //
 // Public (Server)
 //
-Server::Server(log::Domain logger, std::weak_ptr<EventLoop> event_loop)
+ws::Server::Server(log::Domain logger, std::weak_ptr<EventLoop> event_loop)
     : m_logger(std::move(logger))
     , m_event_loop(event_loop)
     , m_sockets_timer(std::move(event_loop), std::bind(&Server::onSocketsTimer, this))
 {
 }
 
-Server::~Server()
+ws::Server::~Server()
 {
     stop();
 
     hws_destroy(m_hws);
 }
 
-std::shared_ptr<EventLoop> Server::getEventLoop() const
+std::shared_ptr<EventLoop> ws::Server::getEventLoop() const
 {
     return m_event_loop.lock();
 }
 
-std::optional<std::reference_wrapper<Server::Socket>> Server::getSocket(Socket::Id id) const
+std::optional<std::reference_wrapper<ws::Server::Socket>> ws::Server::getSocket(Socket::Id id) const
 {
     HLIB_LOCK_GUARD(lock, m_sockets_mutex);
 
@@ -690,7 +689,7 @@ std::optional<std::reference_wrapper<Server::Socket>> Server::getSocket(Socket::
     return *it->second;
 }
 
-void Server::start()
+void ws::Server::start()
 {
     using namespace std::placeholders;
 
@@ -713,7 +712,7 @@ void Server::start()
     );
 }
 
-void Server::stop()
+void ws::Server::stop()
 {
     m_sockets_timer.clear();
 
@@ -726,7 +725,7 @@ void Server::stop()
     }));
 }
 
-Server::Socket& Server::add(http::Socket http_socket)
+ws::Server::Socket& ws::Server::add(http::Socket http_socket)
 {
     assert(true == iequals("websocket", http_socket.protocol));
 
@@ -739,10 +738,33 @@ Server::Socket& Server::add(http::Socket http_socket)
     return *m_sockets[socket_id];
 }
 
-void Server::remove(Socket::Id socket_id)
+void ws::Server::remove(Socket::Id socket_id)
 {
     HLIB_LOCK_GUARD(lock, m_sockets_mutex);
     m_sockets.erase(socket_id);
+}
+
+//
+// Public (Message)
+//
+ws::Message::Message(std::string string) noexcept
+    : data(std::move(string))
+{
+}
+
+ws::Message::Message(Buffer buffer) noexcept
+    : data(std::move(buffer))
+{
+}
+
+ws::Message::Message(Data a_data) noexcept
+    : data(std::move(a_data))
+{
+}
+
+ws::Message::Message(User a_user) noexcept
+    : user(std::move(a_user))
+{
 }
 
 //
@@ -822,17 +844,14 @@ void ws::upgrade(http::Server::Transaction& transaction, std::string subprotocol
     transaction.respond(http::StatusCode::SwitchingProtocols, fields);
 }
 
-//
-// Public (Utility
-//
-std::string const& hlib::to_string(State state)
+std::string const& hlib::to_string(ws::State state)
 {
-    static std::unordered_map<State, std::string> const table =
+    static std::unordered_map<ws::State, std::string> const table =
     {
-        { State::Connecting,    "Connecting" },
-        { State::Open,          "Open" },
-        { State::Closing,       "Closing" },
-        { State::Closed,        "Closed" }
+        { ws::State::Connecting,    "Connecting" },
+        { ws::State::Open,          "Open" },
+        { ws::State::Closing,       "Closing" },
+        { ws::State::Closed,        "Closed" }
     };
     static std::string const invalid("Invalid");
 
@@ -840,16 +859,16 @@ std::string const& hlib::to_string(State state)
     return table.end() != it ? it->second : invalid;
 }
 
-std::string const& hlib::to_string(Opcode opcode)
+std::string const& hlib::to_string(ws::Opcode opcode)
 {
-    static std::unordered_map<Opcode, std::string> const table =
+    static std::unordered_map<ws::Opcode, std::string> const table =
     {
-        { Opcode::Continuation, "Continuation" },
-        { Opcode::Text,         "Text" },
-        { Opcode::Binary,       "Binary" },
-        { Opcode::Close,        "Close" },
-        { Opcode::Ping,         "Ping" },
-        { Opcode::Pong,         "Pong" }
+        { ws::Opcode::Continuation, "Continuation" },
+        { ws::Opcode::Text,         "Text" },
+        { ws::Opcode::Binary,       "Binary" },
+        { ws::Opcode::Close,        "Close" },
+        { ws::Opcode::Ping,         "Ping" },
+        { ws::Opcode::Pong,         "Pong" }
     };
     static std::string const invalid("Invalid");
 
@@ -859,28 +878,27 @@ std::string const& hlib::to_string(Opcode opcode)
 
 std::string const& hlib::to_string(ws::StatusCode status_code)
 {
-    static std::unordered_map<StatusCode, std::string> const table =
+    static std::unordered_map<ws::StatusCode, std::string> const table =
     {
-        { StatusCode::Normal,               "Normal" },
-        { StatusCode::GoingAway,            "Going Away" },
-        { StatusCode::ProtocolError,        "Protocol Error" },
-        { StatusCode::Unsupported,          "Unsupported" },
-        { StatusCode::Reserved,             "Reserved" },
-        { StatusCode::NoStatus,             "No Status" },
-        { StatusCode::Abnormal,             "Abnormal Termination" },
-        { StatusCode::UnsupportedPayload,   "Unsupported Payload" },
-        { StatusCode::PolicyViolation,      "Policy Violation" },
-        { StatusCode::TooLarge,             "Message Too Large" },
-        { StatusCode::MandatoryExtension,   "Mandatory Extension" },
-        { StatusCode::ServerError,          "Server Error" },
-        { StatusCode::ServiceRestart,       "Service Restart" },
-        { StatusCode::TryAgain,             "Try Again" },
-        { StatusCode::BadGateway,           "Bad Gateway" },
-        { StatusCode::TLSHandshakeFailed,   "TLS Handshake Failed" }
+        { ws::StatusCode::Normal,               "Normal" },
+        { ws::StatusCode::GoingAway,            "Going Away" },
+        { ws::StatusCode::ProtocolError,        "Protocol Error" },
+        { ws::StatusCode::Unsupported,          "Unsupported" },
+        { ws::StatusCode::Reserved,             "Reserved" },
+        { ws::StatusCode::NoStatus,             "No Status" },
+        { ws::StatusCode::Abnormal,             "Abnormal Termination" },
+        { ws::StatusCode::UnsupportedPayload,   "Unsupported Payload" },
+        { ws::StatusCode::PolicyViolation,      "Policy Violation" },
+        { ws::StatusCode::TooLarge,             "Message Too Large" },
+        { ws::StatusCode::MandatoryExtension,   "Mandatory Extension" },
+        { ws::StatusCode::ServerError,          "Server Error" },
+        { ws::StatusCode::ServiceRestart,       "Service Restart" },
+        { ws::StatusCode::TryAgain,             "Try Again" },
+        { ws::StatusCode::BadGateway,           "Bad Gateway" },
+        { ws::StatusCode::TLSHandshakeFailed,   "TLS Handshake Failed" }
     };
     static std::string const invalid("Invalid");
 
     auto it = table.find(status_code);
     return table.end() != it ? it->second : invalid;
 }
-

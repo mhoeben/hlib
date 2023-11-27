@@ -135,6 +135,8 @@ public:
 Clock now(clockid_t clock_id = CLOCK_MONOTONIC);
 Clock now_utc(clockid_t clock_id = CLOCK_REALTIME);
 
+Clock to_clock_utc(std::string const& iso8601);
+
 } // namespace time
 
 std::string to_string(time::Duration const& duration, bool milliseconds = false);

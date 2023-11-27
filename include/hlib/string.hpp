@@ -273,8 +273,13 @@ string_to(std::string const& value)
 bool iequals(std::string const &lhs, std::string const& rhs);
 
 bool starts_with(std::string const& string, std::string const& substring);
+bool starts_with(std::string const& string, char character);
+
 bool ends_with(std::string const& string, std::string const& substring);
+bool ends_with(std::string const& string, char character);
+
 bool contains(std::string const& string, std::string const& substring);
+bool contains(std::string const& string, char character);
 
 std::string to_upper(std::string string);
 std::string to_lower(std::string string);

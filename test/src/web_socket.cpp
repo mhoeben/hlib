@@ -57,7 +57,7 @@ TEST_CASE("WebSocket", "[websocket]")
         ws::Server::Socket& socket = ws_server.add(transaction.upgraded());
 
         socket.setMessageCallback([&](ws::Message& message) {
-            REQUIRE("Hello World" == std::get<std::string>(message));
+            REQUIRE("Hello World" == std::get<std::string>(message.data));
             socket.close();
         });
 

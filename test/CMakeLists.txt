@@ -38,7 +38,7 @@ function(generate LANGUAGE OUTPUT_FILE)
     )
 endfunction()
 
-generate(cpp11 ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp)
+generate(cpp17 ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp)
 generate(c99 ${CMAKE_CURRENT_BINARY_DIR}/codegen.h)
 
 add_executable(${PROJECT_NAME}

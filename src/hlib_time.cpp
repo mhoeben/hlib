@@ -22,8 +22,9 @@
 // SOFTWARE.
 //
 #include "hlib/time.hpp"
-#include "hlib/format_extra.hpp"
 #include "hlib/error.hpp"
+#include "hlib/format_extra.hpp"
+#include "hlib/string.hpp"
 
 using namespace hlib;
 
@@ -303,12 +304,12 @@ bool time::Clock::operator >=(std::timespec const& that) const noexcept
 //
 // Public
 //
-time::Clock hlib::time::now(clockid_t clock_id)
+time::Clock time::now(clockid_t clock_id)
 {
     return Clock(clock_id);
 }
 
-time::Clock hlib::time::now_utc(clockid_t clock_id)
+time::Clock time::now_utc(clockid_t clock_id)
 {
     assert(
         CLOCK_REALTIME == clock_id ||
@@ -316,6 +317,54 @@ time::Clock hlib::time::now_utc(clockid_t clock_id)
         CLOCK_REALTIME_COARSE == clock_id
     );
     return Clock(clock_id);
+}
+
+time::Clock time::to_clock_utc(std::string const& iso8601)
+{
+    std::tm tm_time{};
+    std::timespec timespec;
+
+    auto parse = [&](char const* format)
+    {
+        char* r = strptime(iso8601.c_str(), format, &tm_time);
+        if (nullptr == r || 0 != *r) {
+            throw std::logic_error("Invalid ISO8601 string");
+        }
+    };
+
+    // Date only?
+    if (false == contains(iso8601, 'T')) {
+        parse("%Y-%m-%d");
+        timespec.tv_sec = timegm(&tm_time);
+        timespec.tv_nsec = 0;
+    }
+    // Without millisecond part?
+    else if (false == contains(iso8601, '.')) {
+        parse("%Y-%m-%dT%H:%M:%S%z");
+        timespec.tv_sec = timegm(&tm_time);
+        timespec.tv_nsec = 0;
+    }
+    else {
+        char* r = strptime(iso8601.c_str(), "%Y-%m-%dT%H:%M:%S", &tm_time);
+        if (nullptr == r || '.' != *r) {
+            throw std::logic_error("Invalid ISO8601 string");
+        }
+
+        int milliseconds;
+        if (1 != sscanf(r, ".%03d", &milliseconds)) {
+            throw std::logic_error("Invalid ISO8601 string");
+        }
+
+        r = strptime(r + 4, "%z", &tm_time);
+        if (nullptr == r || 0 != *r) {
+            throw std::logic_error("Invalid ISO8601 string");
+        }
+
+        timespec.tv_sec = timegm(&tm_time);
+        timespec.tv_nsec = milliseconds * 1000000;
+    }
+
+    return Clock(timespec);
 }
 
 std::string hlib::to_string(time::Duration const& duration, bool milliseconds)
@@ -401,6 +450,6 @@ std::string hlib::to_string_utc_local_time(time::Clock const& clock, bool millis
 
 std::string hlib::to_string_utc_local(time::Clock const& clock, bool milliseconds)
 {
-    return fmt::format("{:%Y-%m-%d}{}", fmt::gmtime(clock.tv_sec), to_string_utc_local_time(clock, milliseconds));
+    return fmt::format("{:%Y-%m-%d}T{}", fmt::gmtime(clock.tv_sec), to_string_utc_local_time(clock, milliseconds));
 }
 
