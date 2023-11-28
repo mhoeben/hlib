@@ -24,74 +24,10 @@
 #include "hlib/sock_addr.hpp"
 #include "hlib/error.hpp"
 #include "hlib/format.hpp"
-#include "hlib/pegtl.hpp"
+#include "hlib/string.hpp"
 #include <arpa/inet.h>
 
 using namespace hlib;
-
-//
-// Implementation
-//
-namespace grammar
-{
-
-struct Result
-{
-    sa_family_t family{ AF_UNSPEC };
-    std::string address;
-    int port{ 0 };
-};
-
-using namespace hlib::pegtl;
-
-struct address_ipv4         : plus<sor<digit, one<'.'>>> {};
-struct address_ipv6         : plus<sor<xdigit, one<':'>, one<'.'>>> {};
-struct port                 : rep_min_max<1, 5, digit> {};
-
-struct address              : sor<address_ipv4, address_ipv6> {};
-struct address_and_port_1   : seq<address_ipv4, one<':'>, port> {};
-struct address_and_port_2   : seq<one<'['>, address, one<']'>, opt<seq<one<':'>, port>>> {};
-
-struct address_and_port     : must<sor<address_and_port_1, address_and_port_2, address>, eof> {};
-
-template<typename RULE>
-struct action
-{
-};
-
-template<>
-struct action<address_ipv4>
-{
-    template<typename INPUT>
-    static void apply(INPUT const& input, Result& result)
-    {
-        result.family = AF_INET;
-        result.address = input.string();
-    }
-};
-
-template<>
-struct action<address_ipv6>
-{
-    template<typename INPUT>
-    static void apply(INPUT const& input, Result& result)
-    {
-        result.family = AF_INET6;
-        result.address = input.string();
-    }
-};
-
-template<>
-struct action<port>
-{
-    template<typename INPUT>
-    static void apply(INPUT const& input, Result& result)
-    {
-        result.port = std::stoi(input.string());
-    }
-};
-
-} // namespace
 
 //
 // Public
@@ -340,6 +276,8 @@ void SockAddr::setPort(uint16_t port)
 
 bool SockAddr::parse(std::string const& string, std::nothrow_t) noexcept
 {
+    std::optional<std::uint16_t> port;
+
     auto to_unix = [&]()
     {
         if (string.length() + 1 > sizeof(sockaddr_un::sun_path)) {
@@ -357,49 +295,62 @@ bool SockAddr::parse(std::string const& string, std::nothrow_t) noexcept
 
     m_family = AF_UNSPEC;
 
-    try {
-        grammar::Result result;
+    // An IPv4 address with optional port has 3 '.' characters.
+    if (3 == count(string, '.')) {
+        in_addr addr;
 
-        pegtl::memory_input<> input(string, "");
-        pegtl::parse<grammar::address_and_port, grammar::action>(input, result);
+        // Find optional port.
+        std::string::size_type pos = string.rfind(':');
 
-        switch (result.family) {
-        case AF_INET:
-          {
-            in_addr addr;
-
-            if (1 != inet_pton(AF_INET, result.address.c_str(), &addr)) {
-                return to_unix();
-            }
-
-            m_inet.sin_family = AF_INET;
-            m_inet.sin_addr = addr;
-            m_inet.sin_port = htons(result.port);
-            break;
-          }
-        case AF_INET6:
-          {
-            in6_addr addr;
-
-            if (1 != inet_pton(AF_INET6, result.address.c_str(), &addr)) {
-                return to_unix();
-            }
-
-            m_inet6.sin6_family = AF_INET6;
-            m_inet6.sin6_addr = addr;
-            m_inet6.sin6_port = htons(result.port);
-            break;
-          }
-        default:
-            assert(false);
-            break;
+        // Parse IPv4 address.
+        if (1 != inet_pton(AF_INET, string.substr(0, pos).c_str(), &addr)) {
+            return to_unix();
         }
-    }
-    catch (pegtl::parse_error const& e) {
-        return to_unix();
-    }
+        m_inet.sin_family = AF_INET;
+        m_inet.sin_addr = addr;
+        m_inet.sin_port = 0;
 
-    return true;
+        // Port available?
+        if (std::string::npos != pos) {
+            port = stoui16(string.substr(pos + 1), 10, std::nothrow);
+            if (std::nullopt == port) {
+                return to_unix();
+            }
+            m_inet.sin_port = htons(port.value());
+        }
+        return true;
+    }
+    // Else try to parse it as a IPv6 address with optional port.
+    else {
+        in6_addr addr;
+
+        std::string::size_type start = starts_with(string, '[');
+        std::string::size_type end = string.rfind("]:");
+
+        // String either has "[<ipv6>]:port" format or just "<ipv6>".
+        if ((1 == start && std::string::npos == end)
+         || (0 == start && std::string::npos != end)) {
+            return to_unix();
+        }
+
+        // Parse IPv6 address.
+        if (1 != inet_pton(AF_INET6, string.substr(start, end).c_str(), &addr)) {
+            return to_unix();
+        }
+        m_inet6.sin6_family = AF_INET6;
+        m_inet6.sin6_addr = addr;
+        m_inet6.sin6_port = 0;
+
+        // Port available?
+        if (std::string::npos != end) {
+            port = stoui16(string.substr(end + 2), 10, std::nothrow);
+            if (std::nullopt == port) {
+                return to_unix();
+            }
+            m_inet6.sin6_port = htons(port.value());
+        }
+        return true;
+    }
 }
 
 void SockAddr::parse(std::string const& string)

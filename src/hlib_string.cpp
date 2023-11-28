@@ -490,6 +490,40 @@ bool hlib::contains(std::string const& string, char character)
     return std::string::npos != string.find(character);
 }
 
+std::size_t hlib::count(std::string const& string, std::string const& substring)
+{
+    std::size_t count = 0;
+    std::string::size_type pos = 0;
+
+    do {
+        pos = string.find(substring, pos);
+        if (std::string::npos == pos) {
+            return count;
+        }
+
+        pos += substring.length();
+        ++count;
+    }
+    while (true);
+}
+
+std::size_t hlib::count(std::string const& string, char character)
+{
+    std::size_t count = 0;
+    std::string::size_type pos = 0;
+
+    do {
+        pos = string.find(character, pos);
+        if (std::string::npos == pos) {
+            return count;
+        }
+
+        ++pos;
+        ++count;
+    }
+    while (true);
+}
+
 std::string hlib::to_upper(std::string string)
 {
     std::locale locale;

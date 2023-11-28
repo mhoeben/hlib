@@ -30,6 +30,8 @@ TEST_CASE("SockAddr", "[sockaddr]")
 {
     REQUIRE(true == SockAddr().empty());
 
+    REQUIRE("0.0.0.0"       == to_string(SockAddr("0.0.0.0")));
+    REQUIRE("0.0.0.0:8443"  == to_string(SockAddr("0.0.0.0:8443")));
     REQUIRE("127.0.0.1"     == to_string(SockAddr("127.0.0.1")));
     REQUIRE("127.0.0.1:80"  == to_string(SockAddr("127.0.0.1:80")));
 

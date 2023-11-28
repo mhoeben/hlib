@@ -248,6 +248,15 @@ TEST_CASE("String C++20", "[string]")
     REQUIRE(false == contains("foo", "foobar"));
     REQUIRE(false == contains("bar", "foobar"));
     REQUIRE(false == contains("", "foobar"));
+
+    REQUIRE(0 == count("foobar", "baz"));
+    REQUIRE(1 == count("foobar", "bar"));
+    REQUIRE(2 == count("foobarfoo", "foo"));
+    REQUIRE(1 == count("foobarfoo", "bar"));
+
+    REQUIRE(0 == count("foobar", 'x'));
+    REQUIRE(1 == count("foobar", 'a'));
+    REQUIRE(2 == count("foobar", 'o'));
 }
 
 TEST_CASE("String Strip", "[string]")

@@ -281,6 +281,9 @@ bool ends_with(std::string const& string, char character);
 bool contains(std::string const& string, std::string const& substring);
 bool contains(std::string const& string, char character);
 
+std::size_t count(std::string const& string, std::string const& substring);
+std::size_t count(std::string const& string, char character);
+
 std::string to_upper(std::string string);
 std::string to_lower(std::string string);
 
