@@ -58,7 +58,7 @@ add_executable(${PROJECT_NAME}
     src/json.cpp
     src/math.cpp
     src/result.cpp
-    src/sockaddr.cpp
+    src/sock_addr.cpp
     src/socket.cpp
     src/string.cpp
     src/subprocess.cpp

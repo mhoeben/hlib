@@ -28,18 +28,29 @@ using namespace hlib;
 
 TEST_CASE("SockAddr", "[sockaddr]")
 {
+    auto test = [](sa_family_t family, std::string const& address, std::uint16_t port, std::string const& string)
+    {
+        SockAddr sa(string);
+
+        REQUIRE(family == sa.family());
+        REQUIRE(address == sa.address());
+        REQUIRE(port == sa.port());
+        REQUIRE(string == to_string(sa));
+    };
+
     REQUIRE(true == SockAddr().empty());
 
-    REQUIRE("0.0.0.0"       == to_string(SockAddr("0.0.0.0")));
-    REQUIRE("0.0.0.0:8443"  == to_string(SockAddr("0.0.0.0:8443")));
-    REQUIRE("127.0.0.1"     == to_string(SockAddr("127.0.0.1")));
-    REQUIRE("127.0.0.1:80"  == to_string(SockAddr("127.0.0.1:80")));
+    test(AF_INET, "0.0.0.0",                        0, "0.0.0.0");
+    test(AF_INET, "0.0.0.0",                     8443, "0.0.0.0:8443");
+    test(AF_INET, "127.0.0.1",                      0, "127.0.0.1");
+    test(AF_INET, "127.0.0.1",                     80, "127.0.0.1:80");
 
-    REQUIRE("::1"                               == to_string(SockAddr("::1")));
-    REQUIRE("[::1]:80"                          == to_string(SockAddr("[::1]:80")));
-    REQUIRE("fe80::1b39:432b:a559:b42c"         == to_string(SockAddr("fe80::1b39:432b:a559:b42c")));
-    REQUIRE("[fe80::1b39:432b:a559:b42c]:80"    == to_string(SockAddr("[fe80::1b39:432b:a559:b42c]:80")));
-    REQUIRE("::ffff:192.168.1.251"              == to_string(SockAddr("::ffff:192.168.1.251")));
-    REQUIRE("[::ffff:192.168.1.251]:80"         == to_string(SockAddr("[::ffff:192.168.1.251]:80")));
+    test(AF_INET6, "::",                            0, "::");
+    test(AF_INET6, "::1",                           0, "::1");
+    test(AF_INET6, "::1",                          80, "[::1]:80");
+    test(AF_INET6, "fe80::1b39:432b:a559:b42c",     0, "fe80::1b39:432b:a559:b42c");
+    test(AF_INET6, "fe80::1b39:432b:a559:b42c",    80, "[fe80::1b39:432b:a559:b42c]:80");
+    test(AF_INET6, "::ffff:192.168.1.251",          0, "::ffff:192.168.1.251");
+    test(AF_INET6, "::ffff:192.168.1.251",         80, "[::ffff:192.168.1.251]:80");
 }
 

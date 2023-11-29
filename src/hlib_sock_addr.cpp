@@ -71,9 +71,9 @@ SockAddr::SockAddr(sockaddr_storage const& that) noexcept
     m_storage = that;
 }
 
-SockAddr::SockAddr(std::string const& that)
+SockAddr::SockAddr(std::string const& that, Mask mask)
 {
-    parse(that);
+    parse(that, mask);
 }
 
 SockAddr& SockAddr::operator = (SockAddr&& that) noexcept
@@ -249,7 +249,7 @@ SockAddr::operator sockaddr_un*() noexcept
     return &m_unix;
 }
 
-bool SockAddr::setPort(uint16_t port, std::nothrow_t) noexcept
+bool SockAddr::setPort(std::uint16_t port, std::nothrow_t) noexcept
 {
     switch (m_family) {
     case AF_INET:
@@ -267,19 +267,35 @@ bool SockAddr::setPort(uint16_t port, std::nothrow_t) noexcept
     return true;
 }
 
-void SockAddr::setPort(uint16_t port)
+void SockAddr::setPort(std::uint16_t port)
 {
     if (false == setPort(port, std::nothrow)) {
         throw std::runtime_error("Not a network address");
     }
 }
 
-bool SockAddr::parse(std::string const& string, std::nothrow_t) noexcept
+void SockAddr::clear() noexcept
 {
+    memset(&m_storage, 0, sizeof(m_storage));
+}
+
+bool SockAddr::parse(std::string const& string, Mask mask, std::nothrow_t) noexcept
+{
+    (void)mask;
+
+    std::string address;
     std::optional<std::uint16_t> port;
 
     auto to_unix = [&]()
     {
+        // Unix domain address allowed?
+        if (0 == (Unix & mask)) {
+            clear();
+            return false;
+        }
+
+        // A unix domain address string can be virtually anything. The only
+        // reason for failure is when it does not fit.
         if (string.length() + 1 > sizeof(sockaddr_un::sun_path)) {
             return false;
         }
@@ -295,46 +311,30 @@ bool SockAddr::parse(std::string const& string, std::nothrow_t) noexcept
 
     m_family = AF_UNSPEC;
 
-    // An IPv4 address with optional port has 3 '.' characters.
-    if (3 == count(string, '.')) {
-        in_addr addr;
-
-        // Find optional port.
-        std::string::size_type pos = string.rfind(':');
-
-        // Parse IPv4 address.
-        if (1 != inet_pton(AF_INET, string.substr(0, pos).c_str(), &addr)) {
-            return to_unix();
+    // An IPv6 address has always at least 2 ':' characters.
+    if (count(string, ':') >= 2) {
+        // IPv6 allowed?
+        if (0 == (IPv6 & mask)) {
+            clear();
+            return false;
         }
-        m_inet.sin_family = AF_INET;
-        m_inet.sin_addr = addr;
-        m_inet.sin_port = 0;
 
-        // Port available?
-        if (std::string::npos != pos) {
-            port = stoui16(string.substr(pos + 1), 10, std::nothrow);
-            if (std::nullopt == port) {
-                return to_unix();
-            }
-            m_inet.sin_port = htons(port.value());
-        }
-        return true;
-    }
-    // Else try to parse it as a IPv6 address with optional port.
-    else {
         in6_addr addr;
-
-        std::string::size_type start = starts_with(string, '[');
-        std::string::size_type end = string.rfind("]:");
+        std::string::size_type const start = starts_with(string, '[');
+        std::string::size_type const end = string.rfind("]:");
 
         // String either has "[<ipv6>]:port" format or just "<ipv6>".
-        if ((1 == start && std::string::npos == end)
+        if ((start > end)
+         || (1 == start && std::string::npos == end)
          || (0 == start && std::string::npos != end)) {
             return to_unix();
         }
 
+        // Get address.
+        address = string.substr(start, end - 1);
+
         // Parse IPv6 address.
-        if (1 != inet_pton(AF_INET6, string.substr(start, end).c_str(), &addr)) {
+        if (1 != inet_pton(AF_INET6, address.c_str(), &addr)) {
             return to_unix();
         }
         m_inet6.sin6_family = AF_INET6;
@@ -351,12 +351,53 @@ bool SockAddr::parse(std::string const& string, std::nothrow_t) noexcept
         }
         return true;
     }
+    else if (3 == count(string, '.')) {
+        // IPv4 allowed?
+        if (0 == (IPv4 & mask)) {
+            clear();
+            return false;
+        }
+
+        in_addr addr;
+
+        // Find optional port.
+        std::string::size_type pos = string.rfind(':');
+
+        // Get address.
+        address = string.substr(0, pos);
+
+        // Parse IPv4 address.
+        if (1 != inet_pton(AF_INET, address.c_str(), &addr)) {
+            return to_unix();
+        }
+        m_inet.sin_family = AF_INET;
+        m_inet.sin_addr = addr;
+        m_inet.sin_port = 0;
+
+        // Port available?
+        if (std::string::npos != pos) {
+            port = stoui16(string.substr(pos + 1), 10, std::nothrow);
+            if (std::nullopt == port) {
+                return to_unix();
+            }
+            m_inet.sin_port = htons(port.value());
+        }
+        return true;
+    }
+    else {
+        return to_unix();
+    }
 }
 
-void SockAddr::parse(std::string const& string)
+void SockAddr::parse(std::string const& string, Mask mask)
 {
-    if (false == parse(string, std::nothrow)) {
-        throw std::runtime_error("String too long");
+    if (false == parse(string, mask, std::nothrow)) {
+        if (string.length() + 1 > sizeof(sockaddr_un::sun_path)) {
+            throw std::runtime_error("String too long");
+        }
+        else {
+            throw std::runtime_error("Invalid address string");
+        }
     }
 }
 

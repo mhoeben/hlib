@@ -35,6 +35,13 @@ namespace hlib
 class SockAddr final
 {
 public:
+    typedef std::uint32_t Mask;
+    static constexpr Mask IPv4{ 1 << AF_INET };
+    static constexpr Mask IPv6{ 1 << AF_INET6 };
+    static constexpr Mask Unix{ 1 << AF_UNIX };
+    static constexpr Mask All{ ~Mask(0) };
+
+public:
     SockAddr() noexcept;
 
     explicit SockAddr(SockAddr const& that) noexcept;
@@ -45,7 +52,7 @@ public:
     explicit SockAddr(sockaddr_un const& that) noexcept;
     explicit SockAddr(sockaddr_storage const& that) noexcept;
 
-     SockAddr(std::string const& that);
+    SockAddr(std::string const& that, Mask mask = All);
 
     SockAddr& operator = (SockAddr&& that) noexcept;
 
@@ -78,11 +85,13 @@ public:
     explicit operator sockaddr_un const*() noexcept;
     explicit operator sockaddr_un*() noexcept;
 
-    bool setPort(uint16_t port, std::nothrow_t) noexcept;
-    void setPort(uint16_t port);
+    bool setPort(std::uint16_t port, std::nothrow_t) noexcept;
+    void setPort(std::uint16_t port);
 
-    bool parse(std::string const& string, std::nothrow_t) noexcept;
-    void parse(std::string const& string);
+    void clear() noexcept;
+
+    bool parse(std::string const& string, Mask mask, std::nothrow_t) noexcept;
+    void parse(std::string const& string, Mask mask = All);
 
 private:
     union
