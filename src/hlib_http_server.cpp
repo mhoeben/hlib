@@ -560,8 +560,6 @@ void Server::start(Config const& config)
 
     // Set security.
     if (true == config.secure) {
-        hserv_config.secure = true;
-
         assert(false == config.certificate_file.empty());
         assert(false == config.private_key_file.empty());
 
@@ -575,7 +573,7 @@ void Server::start(Config const& config)
     // Create hserv server.
     m_hserv = hserv_create(&hserv_config);
     if (nullptr == m_hserv) {
-        throwf<std::runtime_error>("Failed to create HTTP server ({})", get_error_string());
+        throwf<std::runtime_error>("Failed to create HTTP server ({})", hserv_config.error_string);
     }
 
     // Add hserv's poll fd to event loop.

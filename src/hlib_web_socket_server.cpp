@@ -693,8 +693,14 @@ void ws::Server::start()
 {
     using namespace std::placeholders;
 
+    hws_config_t config{};
+    config.user_data = this;
+
     // Create hws server.
-    m_hws = hws_create(this);
+    m_hws = hws_create(&config);
+    if (nullptr == m_hws) {
+        throwf<std::runtime_error>("hws_create failed ({})", config.error_string);
+    }
 
     // Add hws's poll fd to event loop.
     hverify(true == with_weak_ptr_locked(m_event_loop, [this](EventLoop& event_loop) {
