@@ -41,7 +41,6 @@ add_subdirectory(third_party/fmt fmt)
 
 set(PEGTL_BUILD_TESTS OFF CACHE BOOL "PEGTL: Build test programs" FORCE)
 set(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "PEGTL: Build example programs" FORCE)
-add_subdirectory(third_party/pegtl pegtl)
 
 add_subdirectory(tools/codegen codegen)
 
@@ -179,7 +178,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
     include
     third_party/fmt/include
-    third_party/pegtl/include
     ${OPENSSL_INCLUDE_DIR}
 )
 

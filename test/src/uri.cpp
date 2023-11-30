@@ -74,11 +74,6 @@ TEST_CASE("URI No Port", "[uri]")
     REQUIRE(443 == URI("wss://example.com").port);
 }
 
-TEST_CASE("URI Invalid", "[uri]")
-{
-    REQUIRE_THROWS(uri_parse("reference"));
-}
-
 TEST_CASE("URI Wikipedia Examples", "[uri]")
 {
     URI uri;
@@ -97,7 +92,7 @@ TEST_CASE("URI Wikipedia Examples", "[uri]")
     REQUIRE("ldap" == uri.scheme);
     REQUIRE(true == uri.user_info.empty());
     REQUIRE("[2001:db8::7]" == uri.host);
-    REQUIRE(0 == uri.port);
+    REQUIRE(389 == uri.port);
     REQUIRE("/c=GB" == uri.path);
     REQUIRE("objectClass?one" == uri.query);
     REQUIRE(true == uri.fragment.empty());

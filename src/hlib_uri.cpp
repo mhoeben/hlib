@@ -24,119 +24,78 @@
 #include "hlib/uri.hpp"
 #include "hlib/base.hpp"
 #include "hlib/format.hpp"
-#include "hlib/pegtl.hpp"
 #include "hlib/string.hpp"
-#include "tao/pegtl/contrib/uri.hpp"
+#include <regex>
 #include <unordered_map>
 
 using namespace hlib;
 
 //
-// Implementation
-//
-namespace
-{
-
-template<std::string URI::*Field>
-struct bind
-{
-    template<typename INPUT>
-    static void apply(INPUT const& input, URI& uri)
-    {
-       uri.*Field = input.string();
-    }
-};
-
-
-struct bind_user_info
-{
-    template<typename INPUT>
-    static void apply(INPUT const& input, URI& uri)
-    {
-        uri.user_info = input.string();
-    }
-};
-
-struct bind_port
-{
-    template<typename INPUT>
-    static void apply(INPUT const& input, URI& uri)
-    {
-        uri.port = string_to<std::uint16_t>(input.string());
-    }
-};
-
-template< typename Rule > struct action {};
-
-template<> struct action<pegtl::uri::scheme>        : bind<&URI::scheme> {};
-template<> struct action<pegtl::uri::opt_userinfo>  : bind_user_info {};
-template<> struct action<pegtl::uri::host>          : bind<&URI::host> {};
-template<> struct action<pegtl::uri::port>          : bind_port {};
-template<> struct action<pegtl::uri::path_noscheme> : bind<&URI::path> {};
-template<> struct action<pegtl::uri::path_rootless> : bind<&URI::path> {};
-template<> struct action<pegtl::uri::path_absolute> : bind<&URI::path> {};
-template<> struct action<pegtl::uri::path_abempty>  : bind<&URI::path> {};
-template<> struct action<pegtl::uri::query>         : bind<&URI::query> {};
-template<> struct action<pegtl::uri::fragment>      : bind<&URI::fragment> {};
-
-} // namespace
-
-//
 // Public
 //
-URI::URI(std::string const& that, Syntax syntax)
+URI::URI(std::string const& that)
 {
-    *this = uri_parse(that, syntax);
+    *this = uri_parse(that);
 }
 
-URI hlib::uri_parse(std::string const& string, URI::Syntax syntax)
+URI hlib::uri_parse(std::string const& string)
 {
+    // See https://datatracker.ietf.org/doc/html/rfc3986#appendix-B.
+    static std::regex const uri_regex(
+        R"(^(([^:\/?#]+):)?(//([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?)",
+        std::regex::extended
+    );
+
     URI uri;
+    std::string::size_type pos;
 
-    switch (syntax) {
-    case URI::Syntax::URI:
-      {
-        using grammar = pegtl::must<pegtl::uri::URI>;
+    std::smatch matches;
+    if (false == std::regex_match(string, matches, uri_regex)) {
+        throw std::invalid_argument("string argument not a valid URI");
+    }
+    assert(10 == matches.size());
 
-        pegtl::memory_input<> input(string, "uri");
-        pegtl::parse<grammar, action>(input, uri);
-        break;
-      }
+    // Get scheme match.
+    uri.scheme = matches[2].str();
 
-    case URI::Syntax::Reference:
-      {
-        using grammar = pegtl::must<pegtl::uri::URI_reference>;
+    // Get authority match.
+    std::string authority = matches[4];
 
-        pegtl::memory_input<> input(string, "uri-reference");
-        pegtl::parse<grammar, action>(input, uri);
-        break;
-      }
-
-    case URI::Syntax::Absolute:
-      {
-        using grammar = pegtl::must<pegtl::uri::absolute_URI>;
-
-        pegtl::memory_input<> input(string, "absolute-uri");
-        pegtl::parse<grammar, action>(input, uri);
-        break;
-      }
-
-    default:
-        throw std::invalid_argument("Invalid URI syntax argument");
+    // User-info (username[:password]@) present?
+    pos = authority.find('@');
+    if (std::string::npos != pos) {
+        uri.user_info = authority.substr(0, pos);
+        authority = authority.substr(pos + 1);
     }
 
-    if (false == uri.user_info.empty()) {
-        uri.user_info.pop_back();
+    // Port present?
+    pos = authority.rfind(':');
+    if (std::string::npos != pos) {
+        // Parse characters after ':', if it is parsable as uint16_t, it is a port.
+        std::optional<std::uint16_t> port = stoui16(authority.substr(pos + 1), 10, std::nothrow);
+        if (std::nullopt != port) {
+            uri.port = port.value();
+            authority = authority.substr(0, pos);
+        }
     }
 
+    // Remaining authority string is host.
+    uri.host = std::move(authority);
+
+    // Default port?
     if (0 == uri.port) {
         uri.port = uri_get_default_port_for_scheme(uri.scheme);
     }
 
+    // Get path match.
+    uri.path = matches[5].str();
     if (true == uri.path.empty()) {
         uri.path = "/";
     }
 
+    // Get query and fragment matches.
+    uri.query = matches[7].str();
+    uri.fragment = matches[9];
     return uri;
 }
 
@@ -215,8 +174,17 @@ std::uint16_t hlib::uri_get_default_port_for_scheme(std::string const& scheme)
 {
     static std::unordered_map<std::string, std::uint16_t> const table =
     {
+        { "ftp",    22 },
+        { "gopher", 70 },
         { "http",   80 },
         { "https",  443 },
+        { "imap",   143 },
+        { "ldap",   389 },
+        { "nfs",    2049 },
+        { "nntp",   119 },
+        { "pop",    110 },
+        { "smtp",   25 },
+        { "telnet", 23 },
         { "ws",     80 },
         { "wss",    443 }
     };

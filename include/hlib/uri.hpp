@@ -31,13 +31,6 @@ namespace hlib
 
 struct URI
 {
-    enum class Syntax
-    {
-        URI,
-        Reference,
-        Absolute
-    };
-
     std::string scheme;
     std::string user_info;
     std::string host;
@@ -47,10 +40,10 @@ struct URI
     std::string fragment;
 
     URI() = default;
-    URI(std::string const &that, Syntax syntax = Syntax::URI);
+    URI(std::string const &that);
 };
 
-URI uri_parse(std::string const& string, URI::Syntax syntax = URI::Syntax::URI);
+URI uri_parse(std::string const& string);
 
 std::string to_string(URI const& uri);
 
