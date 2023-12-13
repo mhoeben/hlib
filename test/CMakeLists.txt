@@ -89,15 +89,15 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wmissing-include-dirs
     -Wredundant-decls
     -Wshadow
-    -Wstrict-overflow=5
+    -Wstrict-overflow=2
     -Wswitch-default
     -Wundef
     -Wno-variadic-macros
     -Wformat-nonliteral
 
     $<$<COMPILE_LANGUAGE:CXX>:
-        # -Wctor-dtor-privacy
-        # -Wsign-promo
+        # -Wctor-dtor-privacy Incompatible with catch2.
+        # -Wsign-promo        Incompatible with catch2.
     >
 
     $<$<CONFIG:Debug>:>

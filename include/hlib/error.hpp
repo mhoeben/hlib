@@ -45,17 +45,17 @@ public:
 
 public:
     Error() = default;
-    Error(std::error_code code);
-    Error(std::string string);
-
-    explicit Error(int error);
+    Error(std::error_code const& code);
+    Error(std::error_code&& code) noexcept;
+    Error(std::errc code);
+    Error(std::string const& string);
+    Error(std::string&& string) noexcept;
 
     Error& operator =(std::error_code const& code);
-    Error& operator =(std::error_code&& code);
+    Error& operator =(std::error_code&& code) noexcept;
+    Error& operator =(std::errc code);
     Error& operator =(std::string const& string);
-    Error& operator =(std::string&& string);
-
-    Error& operator =(int error);
+    Error& operator =(std::string&& string) noexcept;
 
     bool operator == (Error const& that) const noexcept;
     bool operator != (Error const& that) const noexcept;

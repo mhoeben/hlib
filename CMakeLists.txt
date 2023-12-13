@@ -38,10 +38,6 @@ find_package(OpenSSL REQUIRED)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(third_party/fmt fmt)
-
-set(PEGTL_BUILD_TESTS OFF CACHE BOOL "PEGTL: Build test programs" FORCE)
-set(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "PEGTL: Build example programs" FORCE)
-
 add_subdirectory(tools/codegen codegen)
 
 add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
@@ -137,7 +133,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wmissing-include-dirs
     -Wredundant-decls
     -Wshadow
-    #-Wstrict-overflow=5
+    -Wstrict-overflow=2
     -Wswitch-default
     -Wundef
     -Wno-variadic-macros
@@ -187,7 +183,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     ${OPENSSL_LIBRARIES}
 )
 
-if (ENABLE_TESTS)
+if (HLIB_ENABLE_TESTS)
     add_subdirectory(test)
 endif()
 

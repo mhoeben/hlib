@@ -452,4 +452,3 @@ std::string hlib::to_string_utc_local(time::Clock const& clock, bool millisecond
 {
     return fmt::format("{:%Y-%m-%d}T{}", fmt::gmtime(clock.tv_sec), to_string_utc_local_time(clock, milliseconds));
 }
-

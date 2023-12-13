@@ -24,6 +24,7 @@
 #pragma once
 
 #include "hlib/error.hpp"
+#include <assert.h>
 
 namespace hlib
 {

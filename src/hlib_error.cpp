@@ -31,18 +31,28 @@ using namespace hlib;
 //
 // Public (Error)
 //
-Error::Error(std::error_code code)
+Error::Error(std::error_code const& code)
+    : m_value(code)
+{
+}
+
+Error::Error(std::error_code&& code) noexcept
     : m_value(std::move(code))
 {
 }
 
-Error::Error(std::string string)
-    : m_value(std::move(string))
+Error::Error(std::errc code)
+    : Error(std::make_error_code(code))
 {
 }
 
-Error::Error(int error)
-    : m_value(std::make_error_code(static_cast<std::errc>(error)))
+Error::Error(std::string const& string)
+    : m_value(string)
+{
+}
+
+Error::Error(std::string&& string) noexcept
+    : m_value(std::move(string))
 {
 }
 
@@ -52,9 +62,15 @@ Error& Error::operator =(std::error_code const& code)
     return *this;
 }
 
-Error& Error::operator =(std::error_code&& code)
+Error& Error::operator =(std::error_code&& code) noexcept
 {
     m_value = std::move(code);
+    return *this;
+}
+
+Error& Error::operator =(std::errc code)
+{
+    m_value = std::make_error_code(code);
     return *this;
 }
 
@@ -64,15 +80,9 @@ Error& Error::operator =(std::string const& string)
     return *this;
 }
 
-Error& Error::operator =(std::string&& string)
+Error& Error::operator =(std::string&& string) noexcept
 {
     m_value = std::move(string);
-    return *this;
-}
-
-Error& Error::operator =(int error)
-{
-    m_value = std::make_error_code(static_cast<std::errc>(error));
     return *this;
 }
 
