@@ -319,6 +319,8 @@ time::Clock time::now_utc(clockid_t clock_id)
     return Clock(clock_id);
 }
 
+time::Clock const infinity(0x7fffffff, 0);
+
 time::Clock time::to_clock_utc(std::string const& iso8601)
 {
     std::tm tm_time{};

@@ -24,6 +24,7 @@
 #pragma once
 
 #include <errno.h>
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <variant>
@@ -31,7 +32,7 @@
 namespace hlib
 {
 
-class Error final
+class Error final : public std::exception
 {
 public:
     enum Index
@@ -77,6 +78,8 @@ public:
     std::string& string();
 
     void clear() noexcept;
+
+    char const* what() const noexcept override;
 
 private:
     Value m_value;

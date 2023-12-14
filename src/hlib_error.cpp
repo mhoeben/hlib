@@ -156,6 +156,15 @@ void Error::clear() noexcept
     m_value = Value();
 }
 
+char const* Error::what() const noexcept
+{
+    if (String == index()) {
+        return std::get<String>(m_value).c_str();
+    }
+
+    return "";
+}
+
 //
 // Public
 //
