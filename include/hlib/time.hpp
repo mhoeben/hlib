@@ -100,6 +100,16 @@ public:
         math::RatioValue<std::nano, int64_t> nsec(std::int64_t(tv_sec) * 1000000000LL + tv_nsec);
         return nsec.to<typename T::Ratio, typename T::Type>();
     }
+
+    friend bool operator ==(double lhs, Duration const& rhs)
+    {
+        return Duration(lhs) == rhs;
+    }
+
+    friend bool operator !=(double lhs, Duration const& rhs)
+    {
+        return Duration(lhs) != rhs;
+    }
 };
 
 class Clock final : public std::timespec
