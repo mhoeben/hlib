@@ -125,6 +125,22 @@ bool contains(T const& container, typename T::value_type const& value)
 }
 
 template<typename T>
+typename T::mapped_type& replace(T& container, typename T::key_type const& key, typename T::mapped_type value)
+{
+    static_assert(true == is_associative<T>::value);
+
+    auto it = container.find(key);
+    if (container.end() == it) {
+        container.emplace_hint(it, key, std::move(value));
+    }
+    else {
+        it->second = std::move(value);
+    }
+
+    return it->second;
+}
+
+template<typename T>
 T make_union(T const& lhs, T const& rhs)
 {
     std::set<typename T::value_type> set;

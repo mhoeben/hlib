@@ -178,6 +178,19 @@ TEST_CASE("Container Contains", "[container]")
     REQUIRE(false == container::contains(u_multiset_int, 4));
 }
 
+TEST_CASE("Container Replace", "[container]")
+{
+    std::unordered_map<std::string, std::string> u_map
+    {
+        { "foo", "FOO" },
+        { "bar", "BAR" },
+        { "baz", "BAZ" }
+    };
+
+    REQUIRE("xyz" == container::replace(u_map, "bar", "xyz"));
+    REQUIRE("xyz" == u_map.at("bar"));
+}
+
 TEST_CASE("Container Make Union", "[container]")
 {
     auto test_make_union = [](auto expected, auto lhs, auto rhs)
