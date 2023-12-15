@@ -31,8 +31,6 @@ using namespace hlib;
 
 HLIB_TEST_CASE("foo,bar")
 {
-    throw std::runtime_error("foo");
-    HLIB_REQUIRE("1" == std::string("2"));
 }
 
 //

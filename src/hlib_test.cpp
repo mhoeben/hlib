@@ -84,6 +84,7 @@ void test::Suite::run(std::string tag, Case* test_case)
         fmt::print(stderr, "{}:{}: uncaught exception in test case with tags [{}]\n", test_case->file, test_case->line, join(test_case->tags, ", "));
     }
 
+    ++statistics.assertions_failed;
     ++statistics.cases_failed;
 }
 
@@ -160,7 +161,9 @@ std::string test::to_string(Assertion assertion)
 {
     static const std::unordered_map<Assertion, std::string> table =
     {
-        { Assertion::Require,       "REQUIRE" }
+        { Assertion::Require,           "HLIB_REQUIRE" },
+        { Assertion::RequireNothrow,    "HLIB_REQUIRE_NOTHROW" },
+        { Assertion::RequireThrows,     "HLIB_REQUIRE_THROWS" }
     };
 
     return container::find_or_default(table, assertion, "");
@@ -184,13 +187,21 @@ std::string test::to_string(Operation operation)
 
 std::string test::to_string(Expression const& expression)
 {
-    return fmt::format("{}({}) => ({} {} {})",
-        to_string(expression.assertion),
-        expression.string,
-        expression.lhs,
-        to_string(expression.operation),
-        expression.rhs
-    );
+    switch (expression.assertion) {
+    case Assertion::Require:
+        return fmt::format("{}({}) => ({} {} {})",
+            to_string(expression.assertion),
+            expression.string,
+            expression.lhs,
+            to_string(expression.operation),
+            expression.rhs
+        );
+    default:
+        return fmt::format("{}({})",
+            to_string(expression.assertion),
+            expression.string
+        );
+    }
 }
 
 int test::main(int argc, char* argv[])
@@ -201,5 +212,6 @@ int test::main(int argc, char* argv[])
         tags.push_back(argv[i]);
     }
 
+    Suite::get().run(tags);
     return 0;
 }

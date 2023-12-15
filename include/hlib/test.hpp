@@ -95,7 +95,9 @@ private:
 
 enum class Assertion
 {
-    Require
+    Require,
+    RequireNothrow,
+    RequireThrows
 };
 
 enum class Operation
@@ -117,6 +119,9 @@ std::string stringify(T const& value)
     }
     else if constexpr (true == std::is_convertible_v<T, std::string>) {
         return std::string("\"") + value + "\"";
+    }
+    else if constexpr (true == std::is_same_v<T, bool>) {
+        return value ? "true" : "false";
     }
     else {
         return std::to_string(value);
@@ -146,49 +151,50 @@ struct Expression
         {}
 };
 
-template<typename LHS>
-class Evaluator final
+class Decomposition final
 {
-public:
-    LHS lhs;
-    Expression& expression;
-
-#define HLIB_TEST_EVALUATOR_OPERATOR(op, operation_value) \
-    template<class RHS> \
-    Expression operator op(RHS&& rhs) && \
-    { \
-        expression.result = (lhs op rhs); \
-        expression.operation = operation_value; \
-        evaluate(rhs); \
-        return std::move(expression); \
-    }
-
-    HLIB_TEST_EVALUATOR_OPERATOR(==, Operation::Equal)
-    HLIB_TEST_EVALUATOR_OPERATOR(!=, Operation::NotEqual)
-    HLIB_TEST_EVALUATOR_OPERATOR(<,  Operation::Less)
-    HLIB_TEST_EVALUATOR_OPERATOR(<=, Operation::LessEqual)
-    HLIB_TEST_EVALUATOR_OPERATOR(>,  Operation::Greater)
-    HLIB_TEST_EVALUATOR_OPERATOR(>=, Operation::GreaterEqual)
+    HLIB_NOT_COPYABLE(Decomposition);
+    HLIB_NOT_MOVABLE(Decomposition);
 
 private:
-    template<typename RHS>
-    void evaluate(RHS const& rhs)
+    template<typename LHS>
+    class Evaluator final
     {
-        ++Suite::get().statistics.assertions;
+    public:
+        LHS lhs;
+        Expression& expression;
 
-        if (true == expression.result) {
-            return;
+    #define HLIB_TEST_EVALUATOR_OPERATOR(op, operation_value) \
+        template<class RHS> \
+        Expression operator op(RHS&& rhs) && \
+        { \
+            expression.result = (lhs op rhs); \
+            expression.operation = operation_value; \
+            evaluate(rhs); \
+            return std::move(expression); \
         }
 
-        expression.lhs = stringify(lhs);
-        expression.rhs = stringify(rhs);
+        HLIB_TEST_EVALUATOR_OPERATOR(==, Operation::Equal)
+        HLIB_TEST_EVALUATOR_OPERATOR(!=, Operation::NotEqual)
+        HLIB_TEST_EVALUATOR_OPERATOR(<,  Operation::Less)
+        HLIB_TEST_EVALUATOR_OPERATOR(<=, Operation::LessEqual)
+        HLIB_TEST_EVALUATOR_OPERATOR(>,  Operation::Greater)
+        HLIB_TEST_EVALUATOR_OPERATOR(>=, Operation::GreaterEqual)
 
-        ++Suite::get().statistics.assertions_failed;
-    }
-};
+    private:
+        template<typename RHS>
+        void evaluate(RHS const& rhs)
+        {
+            if (true == expression.result) {
+                return;
+            }
 
-struct Decomposition
-{
+            expression.lhs = stringify(lhs);
+            expression.rhs = stringify(rhs);
+        }
+    };
+
+public:
     Expression expression;
 
     Decomposition(Assertion assertion, char const* string, char const* file, int line)
@@ -223,18 +229,44 @@ private:
 
 #define HLIB_TEST_WARNINGS_DISABLE_PARENTHESES _Pragma("GCC diagnostic ignored \"-Wparentheses\"")
 
+#define HLIB_TEST_ASSERTION_BEGIN ++hlib::test::Suite::get().statistics.assertions;
+#define HLIB_TEST_ASSERTION_END
+
 #define HLIB_TEST_DECOMPOSE(assertion, expression) \
     ((hlib::test::Decomposition(assertion, #expression, __FILE__, __LINE__)) ->* expression)
 
 #define HLIB_REQUIRE(expression) \
     do { \
+        HLIB_TEST_ASSERTION_BEGIN \
         HLIB_TEST_WARNINGS_PUSH \
         HLIB_TEST_WARNINGS_DISABLE_PARENTHESES \
         hlib::test::Expression expr = HLIB_TEST_DECOMPOSE(hlib::test::Assertion::Require, expression); \
         if (false == expr.result) { throw hlib::test::AssertionFailed(std::move(expr)); } \
         HLIB_TEST_WARNINGS_POP \
+        HLIB_TEST_ASSERTION_END \
     } \
-    while ((void)0, (false) &&static_cast<bool const&>(!!(expression)))
+    while ((void)0, (false) && static_cast<bool const&>(!!(expression)))
+
+#define HLIB_REQUIRE_NOTHROW(expression) \
+    do { \
+        HLIB_TEST_ASSERTION_BEGIN \
+        hlib::test::Expression expr(hlib::test::Assertion::RequireNothrow, #expression, __FILE__, __LINE__); \
+        try { static_cast<void>(expression); expr.result = true; } \
+        catch (...) { throw hlib::test::AssertionFailed(std::move(expr)); } \
+        HLIB_TEST_ASSERTION_END \
+    } \
+    while (false)
+
+#define HLIB_REQUIRE_THROWS(expression) \
+    do { \
+        HLIB_TEST_ASSERTION_BEGIN \
+        hlib::test::Expression expr(hlib::test::Assertion::RequireNothrow, #expression, __FILE__, __LINE__); \
+        try { static_cast<void>(expression); } \
+        catch (...) { expr.result = true; } \
+        if (false == expr.result) { throw hlib::test::AssertionFailed(std::move(expr)); } \
+        HLIB_TEST_ASSERTION_END \
+    } \
+    while (false)
 
 std::string to_string(Assertion assertion);
 std::string to_string(Operation operation);
