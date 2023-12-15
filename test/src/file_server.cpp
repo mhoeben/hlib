@@ -31,9 +31,9 @@
 
 using namespace hlib;
 
-TEST_CASE("File Server", "[file,http]")
+TEST_CASE("File Server", "[file][http]")
 {
-    REQUIRE(true == test::is_curl_installed());
+    REQUIRE(true == is_curl_installed());
 
     auto event_loop = std::make_shared<EventLoop>();
     http::Server server({ "SERVER" }, event_loop);

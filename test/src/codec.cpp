@@ -101,7 +101,7 @@ TEST_CASE("Binary Codec", "[codec]")
     test_codec("binary");
 }
 
-TEST_CASE("JSON Codec", "[codec,json]")
+TEST_CASE("JSON Codec", "[codec][json]")
 {
     test_codec("json");
 }

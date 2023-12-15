@@ -21,7 +21,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifndef HLIB_C_BASE_H
+#define HLIB_C_BASE_H
 
 #include <assert.h>
 #include <stdbool.h>
@@ -30,8 +36,10 @@
 
 #ifdef HLIB_C_VISIBILITY_STATIC
 #define HLIB_C_VISIBILITY static
+#define HLIB_C_VISIBILITY_IMPL static
 #else
 #define HLIB_C_VISIBILITY extern
+#define HLIB_C_VISIBILITY_IMPL
 #endif
 
 #ifndef NDEBUG
@@ -50,5 +58,11 @@
     #endif
 #else
     #error "Unsupported compiler."
+#endif
+
+#endif // HLIB_C_BASE_H
+
+#ifdef __cplusplus
+}
 #endif
 

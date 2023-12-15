@@ -26,10 +26,5 @@
 #include "catch2/catch_test_macros.hpp"
 #include "hlib/base.hpp"
 
-namespace test
-{
-
 bool is_curl_installed();
 bool is_uwsc_installed();
-
-} // namespace test

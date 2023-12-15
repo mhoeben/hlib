@@ -225,7 +225,7 @@ void decode_PrimitiveArrays(char const* kind, void const* data, size_t size)
 
 } // namespace c99
 
-TEST_CASE("Codegen CPP11 Binary", "[codec,codegen]")
+TEST_CASE("Codegen CPP11 Binary", "[codec][codegen]")
 {
     Buffer buffer;
 
@@ -236,7 +236,7 @@ TEST_CASE("Codegen CPP11 Binary", "[codec,codegen]")
              cpp11::decode_PrimitiveArrays("binary", buffer.data(), buffer.size());
 }
 
-TEST_CASE("Codegen C99 Binary", "[codec,codegen]")
+TEST_CASE("Codegen C99 Binary", "[codec][codegen]")
 {
     hlib_buffer_t* buffer = nullptr;
 
@@ -249,7 +249,7 @@ TEST_CASE("Codegen C99 Binary", "[codec,codegen]")
     hlib_buffer_destroy(buffer);
 }
 
-TEST_CASE("Codegen CPP11-G99 Binary", "[codec,codegen]")
+TEST_CASE("Codegen CPP11-G99 Binary", "[codec][codegen]")
 {
     Buffer buffer;
 
@@ -260,7 +260,7 @@ TEST_CASE("Codegen CPP11-G99 Binary", "[codec,codegen]")
              c99::decode_PrimitiveArrays("binary", buffer.data(), buffer.size());
 }
 
-TEST_CASE("Codegen C99-CPP11 Binary", "[codec,codegen]")
+TEST_CASE("Codegen C99-CPP11 Binary", "[codec][codegen]")
 {
     hlib_buffer_t* buffer = nullptr;
 
@@ -273,7 +273,7 @@ TEST_CASE("Codegen C99-CPP11 Binary", "[codec,codegen]")
     hlib_buffer_destroy(buffer);
 }
 
-TEST_CASE("Codegen CPP11 JSON", "[codec,codegen,json]")
+TEST_CASE("Codegen CPP11 JSON", "[codec][codegen][json]")
 {
     Buffer buffer;
 

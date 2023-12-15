@@ -141,6 +141,35 @@ typename T::mapped_type& replace(T& container, typename T::key_type const& key, 
 }
 
 template<typename T>
+typename T::mapped_type const& find_or_default(T const& container, typename T::key_type const& key, typename T::mapped_type const& default_value)
+{
+    static_assert(true == is_associative<T>::value);
+
+    auto it = container.find(key);
+    return container.end() != it ? it->second : default_value;
+}
+
+template<typename T, typename F>
+T& for_each(T& container, F function)
+{
+    for (auto& value : container) {
+        function(value);
+    }
+
+    return container;
+}
+
+template<typename T, typename F>
+T for_each(T&& container, F function)
+{
+    for (auto& value : container) {
+        function(value);
+    }
+
+    return container;
+}
+
+template<typename T>
 T make_union(T const& lhs, T const& rhs)
 {
     std::set<typename T::value_type> set;

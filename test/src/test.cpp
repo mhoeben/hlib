@@ -27,22 +27,31 @@
 
 using namespace hlib;
 
+#include "hlib/test.hpp"
+
+HLIB_TEST_CASE("foo,bar")
+{
+    throw std::runtime_error("foo");
+    HLIB_REQUIRE("1" == std::string("2"));
+}
+
 //
 // Scratch tests.
 //
 TEST_CASE("Test")
 {
+    test::Suite::get().run();
 }
 
 //
 // Public
 //
-bool test::is_curl_installed()
+bool is_curl_installed()
 {
     return 0 == Subprocess("curl", { "--version" }).returnCode();
 }
 
-bool test::is_uwsc_installed()
+bool is_uwsc_installed()
 {
     return 0 == Subprocess("uwsc", { "--version" }).returnCode();
 }

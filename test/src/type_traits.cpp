@@ -34,7 +34,7 @@
 
 using namespace hlib;
 
-TEST_CASE("IsAssociative", "[type_traits]")
+TEST_CASE("IsAssociative", "[types]")
 {
     REQUIRE(false == is_associative<std::array<int, 1>>::value);
     REQUIRE(false == is_associative<std::forward_list<int>>::value);

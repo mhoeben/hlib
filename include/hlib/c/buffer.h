@@ -143,12 +143,12 @@ static int hlib_buffer_vappendf(hlib_buffer_t* buffer, char const* format, va_li
 //
 // Public
 //
-void hlib_buffer_init(hlib_buffer_t* buffer)
+HLIB_C_VISIBILITY_IMPL void hlib_buffer_init(hlib_buffer_t* buffer)
 {
     memset(buffer, 0, sizeof(*buffer));
 }
 
-void hlib_buffer_free(hlib_buffer_t* buffer)
+HLIB_C_VISIBILITY_IMPL void hlib_buffer_free(hlib_buffer_t* buffer)
 {
     if (NULL != buffer->data) {
         free(buffer->data);
@@ -156,7 +156,7 @@ void hlib_buffer_free(hlib_buffer_t* buffer)
     memset(buffer, 0, sizeof(*buffer));
 }
 
-hlib_buffer_t* hlib_buffer_create(void)
+HLIB_C_VISIBILITY_IMPL hlib_buffer_t* hlib_buffer_create(void)
 {
     hlib_buffer_t* buffer = (hlib_buffer_t*)malloc(sizeof(hlib_buffer_t));
     if (NULL == buffer) {
@@ -167,7 +167,7 @@ hlib_buffer_t* hlib_buffer_create(void)
     return buffer;
 }
 
-void hlib_buffer_destroy(hlib_buffer_t* buffer)
+HLIB_C_VISIBILITY_IMPL void hlib_buffer_destroy(hlib_buffer_t* buffer)
 {
     if (NULL == buffer) {
         return;
@@ -177,25 +177,25 @@ void hlib_buffer_destroy(hlib_buffer_t* buffer)
     free(buffer);
 }
 
-int hlib_buffer_copy(hlib_buffer_t* buffer, hlib_buffer_t const* that)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_copy(hlib_buffer_t* buffer, hlib_buffer_t const* that)
 {
     hlib_buffer_clear(buffer);
     return hlib_buffer_append(buffer, that->data, that->size);
 }
 
-void hlib_buffer_move(hlib_buffer_t* buffer, hlib_buffer_t* that)
+HLIB_C_VISIBILITY_IMPL void hlib_buffer_move(hlib_buffer_t* buffer, hlib_buffer_t* that)
 {
     hlib_buffer_free(buffer);
     memcpy(buffer, that, sizeof(*that));
     memset(that, 0, sizeof(*that));
 }
 
-void hlib_buffer_clear(hlib_buffer_t* buffer)
+HLIB_C_VISIBILITY_IMPL void hlib_buffer_clear(hlib_buffer_t* buffer)
 {
     buffer->size = 0;
 }
 
-int hlib_buffer_shrink(hlib_buffer_t* buffer)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_shrink(hlib_buffer_t* buffer)
 {
     assert(buffer->size <= buffer->capacity);
 
@@ -211,7 +211,7 @@ int hlib_buffer_shrink(hlib_buffer_t* buffer)
     return 0;
 }
 
-void* hlib_buffer_reserve(hlib_buffer_t* buffer, size_t capacity)
+HLIB_C_VISIBILITY_IMPL void* hlib_buffer_reserve(hlib_buffer_t* buffer, size_t capacity)
 {
     assert(buffer->size <= buffer->capacity);
 
@@ -222,7 +222,7 @@ void* hlib_buffer_reserve(hlib_buffer_t* buffer, size_t capacity)
     return buffer->data;
 }
 
-void* hlib_buffer_resize(hlib_buffer_t* buffer, size_t size)
+HLIB_C_VISIBILITY_IMPL void* hlib_buffer_resize(hlib_buffer_t* buffer, size_t size)
 {
     assert(buffer->size <= buffer->capacity);
 
@@ -234,7 +234,7 @@ void* hlib_buffer_resize(hlib_buffer_t* buffer, size_t size)
     return buffer->data;
 }
 
-void* hlib_buffer_extend(hlib_buffer_t* buffer, size_t capacity)
+HLIB_C_VISIBILITY_IMPL void* hlib_buffer_extend(hlib_buffer_t* buffer, size_t capacity)
 {
     assert(buffer->size <= buffer->capacity);
 
@@ -245,18 +245,18 @@ void* hlib_buffer_extend(hlib_buffer_t* buffer, size_t capacity)
     return ((char*)buffer->data) + buffer->size;
 }
 
-int hlib_buffer_assign(hlib_buffer_t* buffer, void const* data, size_t size)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_assign(hlib_buffer_t* buffer, void const* data, size_t size)
 {
     buffer->size = 0;
     return hlib_buffer_append(buffer, data, size);
 }
 
-int hlib_buffer_append(hlib_buffer_t* buffer, void const* data, size_t size)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_append(hlib_buffer_t* buffer, void const* data, size_t size)
 {
     return hlib_buffer_insert(buffer, buffer->size, data, size);
 }
 
-int hlib_buffer_insert(hlib_buffer_t* buffer, size_t offset, void const* data, size_t size)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_insert(hlib_buffer_t* buffer, size_t offset, void const* data, size_t size)
 {
     assert(offset <= buffer->size);
     assert(buffer->size <= buffer->capacity);
@@ -282,7 +282,7 @@ int hlib_buffer_insert(hlib_buffer_t* buffer, size_t offset, void const* data, s
     return 0;
 }
 
-void hlib_buffer_erase(hlib_buffer_t* buffer, size_t offset, size_t size)
+HLIB_C_VISIBILITY_IMPL void hlib_buffer_erase(hlib_buffer_t* buffer, size_t offset, size_t size)
 {
     assert(offset + size <= buffer->size);
     assert(buffer->size <= buffer->capacity);
@@ -293,12 +293,12 @@ void hlib_buffer_erase(hlib_buffer_t* buffer, size_t offset, size_t size)
     buffer->size -= size;
 }
 
-int hlib_buffer_strcpy(hlib_buffer_t* buffer, char const* string)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_strcpy(hlib_buffer_t* buffer, char const* string)
 {
     return hlib_buffer_assign(buffer, string, strlen(string) + 1);
 }
 
-int hlib_buffer_strncpy(hlib_buffer_t* buffer, char const* string, size_t max)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_strncpy(hlib_buffer_t* buffer, char const* string, size_t max)
 {
     size_t length = strnlen(string, max);
 
@@ -312,7 +312,7 @@ int hlib_buffer_strncpy(hlib_buffer_t* buffer, char const* string, size_t max)
     return 0;
 }
 
-int hlib_buffer_printf(hlib_buffer_t* buffer, char const* format, ...)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_printf(hlib_buffer_t* buffer, char const* format, ...)
 {
     assert(NULL != format);
 
@@ -327,7 +327,7 @@ int hlib_buffer_printf(hlib_buffer_t* buffer, char const* format, ...)
     return r;
 }
 
-int hlib_buffer_appendf(hlib_buffer_t* buffer, char const* format, ...)
+HLIB_C_VISIBILITY_IMPL int hlib_buffer_appendf(hlib_buffer_t* buffer, char const* format, ...)
 {
     assert(NULL != format);
 

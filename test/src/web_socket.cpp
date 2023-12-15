@@ -31,7 +31,7 @@ using namespace hlib;
 
 TEST_CASE("WebSocket", "[websocket]")
 {
-    REQUIRE(true == test::is_uwsc_installed());
+    REQUIRE(true == is_uwsc_installed());
 
     auto event_loop = std::make_shared<EventLoop>();
 

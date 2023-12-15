@@ -65,6 +65,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/socket.hpp
     include/hlib/string.hpp
     include/hlib/subprocess.hpp
+    include/hlib/test.hpp
     include/hlib/time.hpp
     include/hlib/timer.hpp
     include/hlib/type_traits.hpp
@@ -106,6 +107,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_socket.cpp
     src/hlib_string.cpp
     src/hlib_subprocess.cpp
+    src/hlib_test.cpp
     src/hlib_time.cpp
     src/hlib_timer.cpp
     src/hlib_uri.cpp

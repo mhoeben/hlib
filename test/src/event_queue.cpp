@@ -29,7 +29,7 @@
 
 using namespace hlib;
 
-TEST_CASE("EventQueue", "events")
+TEST_CASE("EventQueue", "[events]")
 {
     auto event_loop = std::make_shared<EventLoop>();
     EventQueue event_queue(event_loop);

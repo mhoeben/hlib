@@ -81,7 +81,7 @@ TEST_CASE("Buffer Empty", "[buffer]")
     REQUIRE_NOTHROW(nullptr == buffer.resize(0));
 }
 
-TEST_CASE("Buffer Iterator", "[buffer,format]")
+TEST_CASE("Buffer Iterator", "[buffer][format]")
 {
     Buffer buffer;
     buffer.append("foo", 3);

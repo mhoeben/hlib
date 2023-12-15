@@ -27,7 +27,7 @@
 
 using namespace hlib;
 
-TEST_CASE("EventLoop", "events")
+TEST_CASE("EventLoop", "[events]")
 {
     EventLoop event_loop;
 
