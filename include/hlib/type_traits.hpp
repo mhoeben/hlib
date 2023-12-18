@@ -28,6 +28,12 @@
 namespace hlib
 {
 
+template<bool v, typename T>
+struct bool_type
+{ 
+    static constexpr bool value = v; 
+};
+
 template <typename Container, typename = void>
 struct is_associative : std::false_type {};
 
