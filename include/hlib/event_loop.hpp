@@ -79,12 +79,9 @@ private:
     bool m_interrupt{ false };
 
     std::mutex m_mutex;
-    std::condition_variable m_condition_variable;
 
     std::thread::id m_thread_id;
-    std::unordered_map<int, Callback> m_callbacks;
-
-    int m_callback_fd{ -1 };
+    std::unordered_map<int, std::shared_ptr<Callback>> m_callbacks;
 
     void dispatch(time::Duration const* timeout);
 };

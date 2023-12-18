@@ -59,7 +59,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
     }
 
     HLIB_UNIQUE_LOCK_DEFERRED(lock, m_mutex);
-    Callback callback;
+    std::shared_ptr<Callback> callback;
 
     m_interrupt = false;
 
@@ -95,19 +95,11 @@ void EventLoop::dispatch(time::Duration const* timeout)
                     break;
                 }
 
-                m_callback_fd = event.data.fd;
                 callback = it->second;
             }
             lock.unlock();
 
-            callback(event.data.fd, event.events);
-
-            lock.lock();
-            {
-                m_callback_fd = -1;
-                m_condition_variable.notify_all();
-            }
-            lock.unlock();
+            (*callback)(event.data.fd, event.events);
             break;
 
         default:
@@ -177,7 +169,7 @@ void EventLoop::add(int fd, std::uint32_t events, Callback callback)
     assert(m_callbacks.end() == m_callbacks.find(fd));
 
     try {
-        m_callbacks.emplace(fd, std::move(callback));
+        m_callbacks.emplace(fd, std::make_shared<Callback>(std::move(callback)));
 
         epoll_event event{};
         event.events = events;
@@ -226,7 +218,7 @@ void EventLoop::change(int fd, Callback callback)
     auto it = m_callbacks.find(fd);
     assert(m_callbacks.end() != it);
 
-    it->second = std::move(callback);
+    it->second = std::make_shared<Callback>(std::move(callback));
 }
 
 void EventLoop::remove(int fd)
@@ -236,13 +228,6 @@ void EventLoop::remove(int fd)
     HLOGT(m_logger, "fd: {:3}, events: {:#04x} (removing)", fd, 0);
 
     HLIB_UNIQUE_LOCK(lock, m_mutex);
-
-    if (std::this_thread::get_id() != m_thread_id) {
-        // Wait for event loop to finish calling back?
-        if (m_callback_fd == fd) {
-            m_condition_variable.wait(lock, [&] { return fd == m_callback_fd; });
-        }
-    }
 
     assert(m_callbacks.end() != m_callbacks.find(fd));
 
