@@ -159,7 +159,7 @@ public:
         return *this;
     }
 
-    operator bool() const noexcept
+    explicit operator bool() const noexcept
     {
         return success();
     }
@@ -167,6 +167,16 @@ public:
     bool operator !() const noexcept
     {
         return failure();
+    }
+
+    T& operator *()
+    {
+        return std::get<Success>(m_value);
+    }
+
+    T& operator ->()
+    {
+        return std::get<Success>(m_value);
     }
 
     Index index() const noexcept
