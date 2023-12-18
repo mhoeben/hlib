@@ -71,7 +71,6 @@ void EventLoop::dispatch(time::Duration const* timeout)
         if (nullptr != timeout) {
             time::Clock const current = time::now();
             if (current < expire) {
-                //timeout_ms = time::duration_to<time::MilliSeconds>(expire - current);
                 timeout_ms = (expire - current).to<time::MSec>();
             }
             else {
