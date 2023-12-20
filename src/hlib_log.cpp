@@ -40,9 +40,18 @@ using namespace hlib;
 namespace
 {
 
-std::mutex mutex;
-std::unordered_set<log::Domain*> domains;
-std::unordered_map<std::string, log::Level> overrides;
+struct Domains
+{
+    std::mutex mutex;
+    std::unordered_set<log::Domain*> registered;
+    std::unordered_map<std::string, log::Level> overrides;
+
+    static Domains& get()
+    {
+        static Domains singleton;
+        return singleton;
+    };
+};
 
 constexpr std::size_t levels = static_cast<std::size_t>(log::Trace) + 1;
 
@@ -59,21 +68,21 @@ std::array<std::string, levels> const level_strings =
 
 void register_domain(log::Domain& domain)
 {
-    HLIB_LOCK_GUARD(lock, mutex);
+    HLIB_LOCK_GUARD(lock, Domains::get().mutex);
 
-    domains.insert(&domain);
+    Domains::get().registered.insert(&domain);
 
-    auto it = overrides.find(domain.name);
-    if (overrides.end() != it) {
+    auto it = Domains::get().overrides.find(domain.name);
+    if (Domains::get().overrides.end() != it) {
         domain.level = it->second;
     }
 }
 
 void deregister_domain(log::Domain& domain)
 {
-    HLIB_LOCK_GUARD(lock, mutex);
+    HLIB_LOCK_GUARD(lock, Domains::get().mutex);
 
-    domains.erase(&domain);
+    Domains::get().registered.erase(&domain);
 }
 
 } // namespace
@@ -223,13 +232,13 @@ void log::Writer::write(Domain const& domain, Level level, std::string const& st
 //
 void hlib::log::set_level_by_name(std::string const& name, log::Level level)
 {
-    HLIB_LOCK_GUARD(lock, mutex);
+    HLIB_LOCK_GUARD(lock, Domains::get().mutex);
 
     // Register the overridden log level.
-    overrides[name] = level;
+    Domains::get().overrides[name] = level;
 
     // Update domains specified by name.
-    for (log::Domain* domain : domains) {
+    for (log::Domain* domain : Domains::get().registered) {
         if (name == domain->name) {
             domain->level = level;
         }
@@ -238,7 +247,7 @@ void hlib::log::set_level_by_name(std::string const& name, log::Level level)
 
 void hlib::log::set_level_by_env_name(std::string const& env_name, log::Level level)
 {
-    HLIB_LOCK_GUARD(lock, mutex);
+    HLIB_LOCK_GUARD(lock, Domains::get().mutex);
 
     // Set the environment variable.
     if (-1 == setenv(env_name.c_str(), std::to_string(static_cast<int>(level)).c_str(), 1)) {
@@ -246,7 +255,7 @@ void hlib::log::set_level_by_env_name(std::string const& env_name, log::Level le
     }
 
     // Update domains specified by environment name.
-    for (log::Domain* domain : domains) {
+    for (log::Domain* domain : Domains::get().registered) {
         if (env_name == domain->env_name) {
             domain->level = level;
         }

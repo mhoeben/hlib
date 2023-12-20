@@ -97,14 +97,19 @@ inline void write(Domain const& domain, Level level, std::string const& string)
     Writer::get().write(domain, level, string);
 }
 
-#define HLOGF(domain, ...) do {                                             hlib::log::write(domain, hlib::log::Fatal,   fmt::format(__VA_ARGS__));   } while (false)
-#define HLOGE(domain, ...) do { if (hlib::log::Error   <= (domain).level) { hlib::log::write(domain, hlib::log::Error,   fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGW(domain, ...) do { if (hlib::log::Warning <= (domain).level) { hlib::log::write(domain, hlib::log::Warning, fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGN(domain, ...) do { if (hlib::log::Notice  <= (domain).level) { hlib::log::write(domain, hlib::log::Notice,  fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGI(domain, ...) do { if (hlib::log::Info    <= (domain).level) { hlib::log::write(domain, hlib::log::Info,    fmt::format(__VA_ARGS__)); } } while (false)
-#define HLOGD(domain, ...) do { if (hlib::log::Debug   <= (domain).level) { hlib::log::write(domain, hlib::log::Debug,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOG(a_domain, a_level, ...)  \
+    do { if (a_level <= (a_domain).level) { \
+        hlib::log::write(a_domain, a_level, fmt::format(__VA_ARGS__)); \
+    } } while (false)
+
+#define HLOGF(domain, ...) HLOG(domain, hlib::log::Fatal,   __VA_ARGS__)
+#define HLOGE(domain, ...) HLOG(domain, hlib::log::Error,   __VA_ARGS__)
+#define HLOGW(domain, ...) HLOG(domain, hlib::log::Warning, __VA_ARGS__)
+#define HLOGN(domain, ...) HLOG(domain, hlib::log::Notice,  __VA_ARGS__)
+#define HLOGI(domain, ...) HLOG(domain, hlib::log::Info,    __VA_ARGS__)
+#define HLOGD(domain, ...) HLOG(domain, hlib::log::Debug,   __VA_ARGS__)
 #ifndef NDEBUG
-#define HLOGT(domain, ...) do { if (hlib::log::Trace   <= (domain).level) { hlib::log::write(domain, hlib::log::Trace,   fmt::format(__VA_ARGS__)); } } while (false)
+#define HLOGT(domain, ...) HLOG(domain, hlib::log::Trace,   __VA_ARGS__)
 #else
 #define HLOGT(domain, ...) do { } while (false)
 #endif
