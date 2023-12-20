@@ -112,7 +112,7 @@ public:
     FILE* release() noexcept;
 
 private:
-    UniqueHandle<FILE*, nullptr, decltype(fclose)> m_handle;
+    UniqueHandle<FILE*, nullptr> m_handle;
 };
 
 class Pipe final

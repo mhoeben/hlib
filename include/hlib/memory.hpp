@@ -44,7 +44,7 @@ bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, Lambda lambda)
     return true;
 }
 
-template<typename T, T invalid_handle = 0, typename Destructor=void(T)>
+template<typename T, T invalid_handle = 0>
 class UniqueHandle final
 {
     static_assert(true == std::is_trivial<T>::value, "T must be a trivial type");
@@ -53,6 +53,7 @@ class UniqueHandle final
 
 public:
     typedef T Type;
+    typedef std::function<void(T)> Destructor;
 
 public:
     UniqueHandle(Destructor destructor) noexcept
@@ -157,7 +158,7 @@ public:
 
 private:
     T m_handle{ invalid_handle };
-    std::function<Destructor> m_destructor;
+    Destructor m_destructor;
 };
 
 } // namespace hlib

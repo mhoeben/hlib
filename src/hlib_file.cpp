@@ -605,7 +605,7 @@ FILE* file::Handle::release() noexcept
 // Public (Pipe)
 //
 file::Pipe::Pipe() noexcept
-    : m_fds { &fd_close, &fd_close }
+    : m_fds { UniqueHandle<int, -1>(&fd_close), UniqueHandle<int, -1>(&fd_close) }
 {
 }
 
