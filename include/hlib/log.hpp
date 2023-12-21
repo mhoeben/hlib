@@ -131,14 +131,14 @@ inline void write(Domain const& domain, Level level, std::string const& string)
     do { \
         std::string message = fmt::format(__VA_ARGS__); \
         hlib::log::write(domain, hlib::log::Fatal, message); \
-        throw exception(fmt::format("{}[FATL]: {}", domain.name, message)); \
+        throw exception(fmt::format("{}[FATL]: {}", domain.name(), message)); \
     } while (false)
 
 #define HLOGE_THROW(domain, exception, ...) \
     do { \
         std::string message = fmt::format(__VA_ARGS__); \
         hlib::log::write(domain, hlib::log::Error, message); \
-        throw exception(fmt::format("{}[ERRO]: {}", domain.name, message)); \
+        throw exception(fmt::format("{}[ERRO]: {}", domain.name(), message)); \
     } while (false)
 
 void set_level_by_name(std::string const& name, log::Level level);
