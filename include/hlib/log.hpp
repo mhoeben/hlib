@@ -48,16 +48,29 @@ enum Level
     Trace
 };
 
-struct Domain final
+class Domain final
 {
-    std::string const name;
-    Level level;
-
-    std::string const env_name;
-
-    Domain(std::string a_name, Level a_level = Level::Notice);
-    Domain(std::string a_name, std::string a_env_name);
+public:
+    Domain();
+    Domain(std::string name, Level level = Level::Notice);
+    Domain(std::string name, std::string env_name);
+    Domain(Domain const& that);
+    Domain(Domain&& that);
     ~Domain();
+
+    Domain& operator =(Domain const& that);
+    Domain& operator =(Domain&& that);
+
+    std::string const& name() const noexcept;
+    Level level() const noexcept;
+    std::string const& envName() const noexcept;
+
+    void setLevel(Level level) noexcept;
+
+private:
+    std::string m_name;
+    Level m_level;
+    std::string m_env_name;
 };
 
 class Writer
@@ -98,7 +111,7 @@ inline void write(Domain const& domain, Level level, std::string const& string)
 }
 
 #define HLOG(a_domain, a_level, ...)  \
-    do { if (a_level <= (a_domain).level) { \
+    do { if (a_level <= (a_domain).level()) { \
         hlib::log::write(a_domain, a_level, fmt::format(__VA_ARGS__)); \
     } } while (false)
 

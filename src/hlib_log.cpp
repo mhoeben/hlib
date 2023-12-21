@@ -72,9 +72,9 @@ void register_domain(log::Domain& domain)
 
     Domains::get().registered.insert(&domain);
 
-    auto it = Domains::get().overrides.find(domain.name);
+    auto it = Domains::get().overrides.find(domain.name());
     if (Domains::get().overrides.end() != it) {
-        domain.level = it->second;
+        domain.setLevel(it->second);
     }
 }
 
@@ -90,21 +90,45 @@ void deregister_domain(log::Domain& domain)
 //
 // Public (Domain)
 //
-log::Domain::Domain(std::string a_name, Level a_level)
-    : name(std::move(a_name))
-    , level(a_level)
+log::Domain::Domain()
+    : m_level(static_cast<Level>(Config::defaultLogLevel()))
+{
+}
+
+log::Domain::Domain(std::string name, Level level)
+    : m_name(std::move(name))
+    , m_level(level)
 {
     register_domain(*this);
 }
 
-log::Domain::Domain(std::string a_name, std::string a_env_name)
-    : name(std::move(a_name))
-    , env_name(std::move(a_env_name))
+log::Domain::Domain(std::string name, std::string env_name)
+    : m_name(std::move(name))
+    , m_env_name(std::move(env_name))
 {
-    level = static_cast<Level>(get_env<std::int32_t>(
-        env_name,
+    m_level = static_cast<Level>(get_env<std::int32_t>(
+        m_env_name,
         Config::defaultLogLevel()
     ));
+
+    register_domain(*this);
+}
+
+log::Domain::Domain(Domain const& that)
+    : m_name(that.m_name)
+    , m_level(that.m_level)
+    , m_env_name(that.m_env_name)
+{
+    register_domain(*this);
+}
+
+log::Domain::Domain(Domain&& that)
+{
+    deregister_domain(that);
+
+    m_name = std::move(that.m_name);
+    m_level = that.m_level;
+    m_env_name = std::move(that.m_env_name);
 
     register_domain(*this);
 }
@@ -112,6 +136,51 @@ log::Domain::Domain(std::string a_name, std::string a_env_name)
 log::Domain::~Domain()
 {
     deregister_domain(*this);
+}
+
+log::Domain& log::Domain::operator =(Domain const& that)
+{
+    deregister_domain(*this);
+
+    m_name = that.m_name;
+    m_level = that.m_level;
+    m_env_name = that.m_env_name;
+
+    register_domain(*this);
+    return *this;
+}
+
+log::Domain& log::Domain::operator =(Domain&& that)
+{
+    deregister_domain(that);
+    deregister_domain(*this);
+
+    m_name = std::move(that.m_name);
+    m_level = that.m_level;
+    m_env_name = std::move(that.m_env_name);
+
+    register_domain(*this);
+    return *this;
+}
+
+std::string const& log::Domain::name() const noexcept
+{
+    return m_name;
+}
+
+log::Level log::Domain::level() const noexcept
+{
+    return m_level;
+}
+
+std::string const& log::Domain::envName() const noexcept
+{
+    return m_env_name;
+}
+
+void log::Domain::setLevel(Level level) noexcept
+{
+    m_level = level;
 }
 
 //
@@ -224,7 +293,7 @@ void log::Writer::write(std::string string)
 
 void log::Writer::write(Domain const& domain, Level level, std::string const& string)
 {
-    write(fmt::format("{:<12}[{}]: {}\n", domain.name, to_string(level), string));
+    write(fmt::format("{:<12}[{}]: {}\n", domain.name(), to_string(level), string));
 }
 
 //
@@ -239,8 +308,8 @@ void hlib::log::set_level_by_name(std::string const& name, log::Level level)
 
     // Update domains specified by name.
     for (log::Domain* domain : Domains::get().registered) {
-        if (name == domain->name) {
-            domain->level = level;
+        if (domain->name() == name) {
+            domain->setLevel(level);
         }
     }
 }
@@ -256,8 +325,8 @@ void hlib::log::set_level_by_env_name(std::string const& env_name, log::Level le
 
     // Update domains specified by environment name.
     for (log::Domain* domain : Domains::get().registered) {
-        if (env_name == domain->env_name) {
-            domain->level = level;
+        if (domain->envName() == env_name) {
+            domain->setLevel(level);
         }
     }
 }
