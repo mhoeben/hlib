@@ -76,6 +76,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
 
     include/hlib/c/base.h
     include/hlib/c/buffer.h
+    include/hlib/c/circular_buffer.h
     include/hlib/c/codec.h
     include/hlib/c/codec_binary.h
     include/hlib/c/endian.h
@@ -85,6 +86,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_base.cpp
     src/hlib_buffer.cpp
     src/hlib_c_impl.cpp
+    src/hlib_circular_buffer.cpp
     src/hlib_codec.cpp
     src/hlib_codec_binary.cpp
     src/hlib_codec_binary.hpp

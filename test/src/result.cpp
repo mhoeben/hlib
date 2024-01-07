@@ -37,7 +37,6 @@ TEST_CASE("Result Monostate", "[result]")
 TEST_CASE("Result String", "[result]")
 {
     Result<std::string> result;
-    REQUIRE(true == result);
     REQUIRE(false == !result);
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());

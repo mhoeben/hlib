@@ -43,6 +43,7 @@ generate(c99 ${CMAKE_CURRENT_BINARY_DIR}/codegen.h)
 
 add_executable(${PROJECT_NAME}
     src/buffer.cpp
+    src/circular_buffer.cpp
     src/codec.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/codegen.h

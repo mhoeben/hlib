@@ -28,6 +28,10 @@
 #include "hlib/c/buffer.h"
 #undef HLIB_C_BUFFER_IMPL
 
+#define HLIB_C_CIRCULAR_BUFFER_IMPL
+#include "hlib/c/circular_buffer.h"
+#undef HLIB_C_CIRCULAR_BUFFER_IMPL
+
 #define HLIB_C_CODEC_IMPL
 #include "hlib/c/codec.h"
 #undef HLIB_C_CODEC_IMPL
