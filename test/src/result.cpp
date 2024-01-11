@@ -41,8 +41,7 @@ TEST_CASE("Result String", "[result]")
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
     REQUIRE("" == result.value());
-    REQUIRE_THROWS(result.errorCode());
-    REQUIRE_THROWS(result.errorString());
+    REQUIRE_THROWS(result.error());
 
     std::string const string = "success";
 
@@ -50,33 +49,18 @@ TEST_CASE("Result String", "[result]")
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
     REQUIRE(string == result.value());
-    REQUIRE_THROWS(result.errorCode());
-    REQUIRE_THROWS(result.errorString());
+    REQUIRE_THROWS(result.error());
 
     result = "more success";
     REQUIRE("more success" == result.value());
 
     std::error_code const error_code = std::make_error_code(std::errc::invalid_argument);
 
-    result = Error(error_code);
+    result = std::system_error(error_code);
     REQUIRE(false == result.success());
     REQUIRE(true == result.failure());
     REQUIRE_THROWS(result.value());
-    REQUIRE(error_code == result.errorCode());
-
-    std::string const error_string = "error string";
-
-    result = Error(error_string);
-    REQUIRE(false == result.success());
-    REQUIRE(true == result.failure());
-    REQUIRE_THROWS(result.value());
-    REQUIRE_THROWS(result.errorCode());
-    REQUIRE(error_string == result.errorString());
-
-    Error error = to<Error>(result);
-    REQUIRE(false == error.success());
-    REQUIRE(true == error.failure());
-    REQUIRE(error_string == error.string());
+    REQUIRE(error_code == result.error().code());
 }
 
 TEST_CASE("Result Integer", "[result]")
@@ -85,14 +69,12 @@ TEST_CASE("Result Integer", "[result]")
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
     REQUIRE(0 == result.value());
-    REQUIRE_THROWS(result.errorCode());
-    REQUIRE_THROWS(result.errorString());
+    REQUIRE_THROWS(result.error());
 
     result = 1311;
     REQUIRE(true == result.success());
     REQUIRE(false == result.failure());
     REQUIRE(1311 == result.value());
-    REQUIRE_THROWS(result.errorCode());
-    REQUIRE_THROWS(result.errorString());
+    REQUIRE_THROWS(result.error());
 }
 

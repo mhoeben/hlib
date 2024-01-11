@@ -229,7 +229,7 @@ time::Clock::Clock(clockid_t clock_id, std::nothrow_t) noexcept
 time::Clock::Clock(clockid_t clock_id)
 {
     if (-1 == clock_gettime(clock_id, static_cast<std::timespec*>(this))) {
-        throwf<std::runtime_error>("clock_gettime failed ({})", get_error_string());
+        throw make_system_error(errno, "clock_gettime() failed");
     }
 }
 

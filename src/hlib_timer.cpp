@@ -41,7 +41,7 @@ void Timer::onExpire(int fd, std::uint32_t /* events */)
     std::uint64_t data;
     ssize_t r = read(fd, &data, sizeof(data));
     if (-1 == r) {
-        throwf<std::runtime_error>("read() failed ({})", get_error_string());
+        throw make_system_error(errno, "read() failed");
     }
     assert(sizeof(data) == r);
 

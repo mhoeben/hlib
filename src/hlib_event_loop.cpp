@@ -82,7 +82,7 @@ void EventLoop::dispatch(time::Duration const* timeout)
         switch (epoll_wait(m_fd.get(), &event, 1, timeout_ms.value())) {
         case -1:
             if (EINTR != errno) {
-                throwf<std::runtime_error>("epoll_wait() failed ({})", get_error_string());
+                throw make_system_error(errno, "epoll_wait() failed");
             }
             break;
 
@@ -118,14 +118,14 @@ EventLoop::EventLoop(log::Domain logger)
     , m_fd(epoll_create1(0), file::fd_close)
 {
     if (-1 == m_fd.get()) {
-        throwf<std::runtime_error>("epoll_create() failed ({})", get_error_string());
+        throw make_system_error(errno, "epoll_create() failed");
     }
     m_pipe.open();
 
     int flags = fcntl(m_pipe[0], F_GETFL, 0);
     if (-1 == flags
      || -1 == fcntl(m_pipe[0], F_SETFL, flags|O_NONBLOCK)) {
-        throwf<std::runtime_error>("fcntl() failed ({})", get_error_string());
+        throw make_system_error(errno, "fcntl() failed");
     }
 
     add(m_pipe[0], Read, [this](int fd, std::uint32_t events) {
@@ -174,7 +174,7 @@ void EventLoop::add(int fd, std::uint32_t events, Callback callback)
         event.events = events;
         event.data.fd = fd;
         if (-1 == epoll_ctl(m_fd.get(), EPOLL_CTL_ADD, fd, &event)) {
-            throwf<std::runtime_error>("epoll_ctl() failed ({})", get_error_string());
+            throw make_system_error(errno, "epoll_ctl() failed");
         }
     }
     catch (...) {
@@ -183,7 +183,7 @@ void EventLoop::add(int fd, std::uint32_t events, Callback callback)
     }
 }
 
-bool EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcept
+Result<> EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcept
 {
     assert(-1 != fd);
 
@@ -193,17 +193,15 @@ bool EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcept
     event.events = events;
     event.data.fd = fd;
     if (-1 == epoll_ctl(m_fd.get(), EPOLL_CTL_MOD, fd, &event)) {
-        return false;
+        return make_system_error(errno);
     }
 
-    return true;
+    return {};
 }
 
 void EventLoop::modify(int fd, std::uint32_t events)
 {
-    if (false == modify(fd, events, std::nothrow)) {
-        throwf<std::runtime_error>("epoll_ctl() failed ({})", get_error_string());
-    }
+    throw_or_value<>(modify(fd, events, std::nothrow));
 }
 
 void EventLoop::change(int fd, Callback callback)
@@ -248,19 +246,21 @@ void EventLoop::dispatch(time::Duration const& timeout)
     dispatch(&timeout);
 }
 
-bool EventLoop::interrupt(std::nothrow_t) noexcept
+Result<> EventLoop::interrupt(std::nothrow_t) noexcept
 {
     std::uint8_t const cmd = 0;
 
     HLOGT(m_logger, "interrupting");
-    return 1 == write(m_pipe[1], &cmd, 1);
+    if (1 != write(m_pipe[1], &cmd, 1)) {
+        return make_system_error(errno);
+    }
+
+    return {};
 }
 
 void EventLoop::interrupt()
 {
-    if (false == interrupt(std::nothrow)) {
-        throwf<std::runtime_error>("write() failed ({})", get_error_string());
-    }
+    throw_or_value<>(interrupt(std::nothrow));
 }
 
 void EventLoop::flush() noexcept

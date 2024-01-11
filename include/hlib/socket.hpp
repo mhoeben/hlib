@@ -66,13 +66,13 @@ public:
     void setCloseCallback(OnClose callback) noexcept;
     void setReceiveBufferSize(std::size_t size, bool gather = false) noexcept;
 
-    bool open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept;
+    Result<> open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept;
     void open(UniqueHandle<int, -1> fd);
 
-    bool listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options, std::nothrow_t) noexcept;
+    Result<> listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options, std::nothrow_t) noexcept;
     void listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options);
 
-    bool connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept;
+    Result<> connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept;
     void connect(SockAddr const& address, int type, int protocol, std::uint32_t options);
 
     void receive(bool enable);

@@ -227,7 +227,7 @@ static int hlib_codec_encoder_binary_is_binary(hlib_codec_encoder_t* /* encoder 
 //
 // Public
 //
-hlib_codec_encoder_t* hlib_codec_encoder_binary_create(hlib_buffer_t* buffer)
+HLIB_C_VISIBILITY_IMPL hlib_codec_encoder_t* hlib_codec_encoder_binary_create(hlib_buffer_t* buffer)
 {
     hlib_codec_encoder_binary_t* self = (hlib_codec_encoder_binary_t*)malloc(sizeof(hlib_codec_encoder_binary_t));
     if (NULL == self) {
@@ -253,26 +253,26 @@ hlib_codec_encoder_t* hlib_codec_encoder_binary_create(hlib_buffer_t* buffer)
     return (hlib_codec_encoder_t*)self;
 }
 
-void hlib_codec_encoder_binary_destroy(hlib_codec_encoder_t* encoder)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_destroy(hlib_codec_encoder_t* encoder)
 {
     free(encoder);
 }
 
-void hlib_codec_encoder_binary_open_type(hlib_codec_encoder_t* /* encoder */, char const* /* name */, hlib_codec_type_t const* /* value */)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_open_type(hlib_codec_encoder_t* /* encoder */, char const* /* name */, hlib_codec_type_t const* /* value */)
 {
 }
 
-void hlib_codec_encoder_binary_open_array(hlib_codec_encoder_t* encoder, char const* /* name */, size_t value)
-{
-    hlib_codec_encoder_binary_encode_int64(encoder, NULL, value);
-}
-
-void hlib_codec_encoder_binary_open_map(hlib_codec_encoder_t* encoder, char const* /* name */, size_t value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_open_array(hlib_codec_encoder_t* encoder, char const* /* name */, size_t value)
 {
     hlib_codec_encoder_binary_encode_int64(encoder, NULL, value);
 }
 
-void hlib_codec_encoder_binary_encode_bool(hlib_codec_encoder_t* encoder, char const* /* name */, bool value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_open_map(hlib_codec_encoder_t* encoder, char const* /* name */, size_t value)
+{
+    hlib_codec_encoder_binary_encode_int64(encoder, NULL, value);
+}
+
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_bool(hlib_codec_encoder_t* encoder, char const* /* name */, bool value)
 {
     if (HLIB_ERROR_NONE != encoder->error) {
         return;
@@ -284,27 +284,27 @@ void hlib_codec_encoder_binary_encode_bool(hlib_codec_encoder_t* encoder, char c
     hlib_buffer_append(self->buffer, &b, 1);
 }
 
-void hlib_codec_encoder_binary_encode_int32(hlib_codec_encoder_t* encoder, char const* /* name */, int32_t value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_int32(hlib_codec_encoder_t* encoder, char const* /* name */, int32_t value)
 {
     HLIB_ENCODER_BINARY_ENCODE_INT(int32_t, __builtin_clz, encoder, value);
 }
 
-void hlib_codec_encoder_binary_encode_int64(hlib_codec_encoder_t* encoder, char const* /* name */, int64_t value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_int64(hlib_codec_encoder_t* encoder, char const* /* name */, int64_t value)
 {
     HLIB_ENCODER_BINARY_ENCODE_INT(int64_t, __builtin_clzll, encoder, value);
 }
 
-void hlib_codec_encoder_binary_encode_float(hlib_codec_encoder_t* encoder, char const* /* name */, float value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_float(hlib_codec_encoder_t* encoder, char const* /* name */, float value)
 {
     HLIB_ENCODER_BINARY_ENCODE_FLOAT(float, encoder, value);
 }
 
-void hlib_codec_encoder_binary_encode_double(hlib_codec_encoder_t* encoder, char const* /* name */, double value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_double(hlib_codec_encoder_t* encoder, char const* /* name */, double value)
 {
     HLIB_ENCODER_BINARY_ENCODE_FLOAT(double, encoder, value);
 }
 
-void hlib_codec_encoder_binary_encode_string(hlib_codec_encoder_t* encoder, char const* /* name */, hlib_codec_string_t const* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_string(hlib_codec_encoder_t* encoder, char const* /* name */, hlib_codec_string_t const* value)
 {
     hlib_codec_encoder_binary_encode_int64(encoder, NULL, value->length);
 
@@ -316,7 +316,7 @@ void hlib_codec_encoder_binary_encode_string(hlib_codec_encoder_t* encoder, char
     hlib_buffer_append(self->buffer, value->data, value->length);
 }
 
-void hlib_codec_encoder_binary_encode_binary(hlib_codec_encoder_t* encoder, char const* /* name */, hlib_codec_binary_t const* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_encode_binary(hlib_codec_encoder_t* encoder, char const* /* name */, hlib_codec_binary_t const* value)
 {
     hlib_codec_encoder_binary_encode_int64(encoder, NULL, value->size);
 
@@ -328,11 +328,11 @@ void hlib_codec_encoder_binary_encode_binary(hlib_codec_encoder_t* encoder, char
     hlib_buffer_append(self->buffer, value->data, value->size);
 }
 
-void hlib_codec_encoder_binary_close(hlib_codec_encoder_t* /* encoder */)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_binary_close(hlib_codec_encoder_t* /* encoder */)
 {
 }
 
-hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, size_t size)
+HLIB_C_VISIBILITY_IMPL hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, size_t size)
 {
     hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)malloc(sizeof(hlib_codec_decoder_binary_t));
     if (NULL == self) {
@@ -361,12 +361,12 @@ hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, size_t 
     return (hlib_codec_decoder_t*)self;
 }
 
-void hlib_codec_decoder_binary_destroy(hlib_codec_decoder_t* decoder)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_destroy(hlib_codec_decoder_t* decoder)
 {
     free(decoder);
 }
 
-void hlib_codec_decoder_binary_reset(hlib_codec_decoder_t* decoder, void const* data, size_t size)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_reset(hlib_codec_decoder_t* decoder, void const* data, size_t size)
 {
     hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder;
     self->data = (uint8_t const*)data;
@@ -374,22 +374,11 @@ void hlib_codec_decoder_binary_reset(hlib_codec_decoder_t* decoder, void const* 
     self->offset = 0;
 }
 
-void hlib_codec_decoder_binary_open_type(hlib_codec_decoder_t* /* decoder */, char const* /* name */, hlib_codec_type_t* /* value */)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_open_type(hlib_codec_decoder_t* /* decoder */, char const* /* name */, hlib_codec_type_t* /* value */)
 {
 }
 
-void hlib_codec_decoder_binary_open_array(hlib_codec_decoder_t* decoder, char const* /* name */, size_t* value)
-{
-    if (HLIB_ERROR_NONE != decoder->error) {
-        return;
-    }
-
-    int64_t size;
-    hlib_codec_decoder_binary_decode_int64(decoder, NULL, &size);
-    *value = size;
-}
-
-void hlib_codec_decoder_binary_open_map(hlib_codec_decoder_t* decoder, char const* /* name */, size_t* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_open_array(hlib_codec_decoder_t* decoder, char const* /* name */, size_t* value)
 {
     if (HLIB_ERROR_NONE != decoder->error) {
         return;
@@ -400,7 +389,18 @@ void hlib_codec_decoder_binary_open_map(hlib_codec_decoder_t* decoder, char cons
     *value = size;
 }
 
-void hlib_codec_decoder_binary_decode_bool(hlib_codec_decoder_t* decoder, char const* /* name */, bool* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_open_map(hlib_codec_decoder_t* decoder, char const* /* name */, size_t* value)
+{
+    if (HLIB_ERROR_NONE != decoder->error) {
+        return;
+    }
+
+    int64_t size;
+    hlib_codec_decoder_binary_decode_int64(decoder, NULL, &size);
+    *value = size;
+}
+
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_bool(hlib_codec_decoder_t* decoder, char const* /* name */, bool* value)
 {
     if (HLIB_ERROR_NONE != decoder->error) {
         return;
@@ -416,27 +416,27 @@ void hlib_codec_decoder_binary_decode_bool(hlib_codec_decoder_t* decoder, char c
     ++self->offset;
 }
 
-void hlib_codec_decoder_binary_decode_int32(hlib_codec_decoder_t* decoder, char const* /* name */, int32_t* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_int32(hlib_codec_decoder_t* decoder, char const* /* name */, int32_t* value)
 {
     HLIB_DECODER_BINARY_DECODE_INT(int32_t, decoder, value);
 }
 
-void hlib_codec_decoder_binary_decode_int64(hlib_codec_decoder_t* decoder, char const* /* name */, int64_t* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_int64(hlib_codec_decoder_t* decoder, char const* /* name */, int64_t* value)
 {
     HLIB_DECODER_BINARY_DECODE_INT(int64_t, decoder, value);
 }
 
-void hlib_codec_decoder_binary_decode_float(hlib_codec_decoder_t* decoder, char const* /* name */, float* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_float(hlib_codec_decoder_t* decoder, char const* /* name */, float* value)
 {
     HLIB_DECODER_BINARY_DECODE_FLOAT(float, decoder, value);
 }
 
-void hlib_codec_decoder_binary_decode_double(hlib_codec_decoder_t* decoder, char const* /* name */, double* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_double(hlib_codec_decoder_t* decoder, char const* /* name */, double* value)
 {
     HLIB_DECODER_BINARY_DECODE_FLOAT(double, decoder, value);
 }
 
-void hlib_codec_decoder_binary_decode_string(hlib_codec_decoder_t* decoder, char const* /* name */, hlib_codec_string_t* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_string(hlib_codec_decoder_t* decoder, char const* /* name */, hlib_codec_string_t* value)
 {
     int64_t length = 0;
     hlib_codec_decoder_binary_decode_int64(decoder, NULL, &length);
@@ -456,7 +456,7 @@ void hlib_codec_decoder_binary_decode_string(hlib_codec_decoder_t* decoder, char
     self->offset += length;
 }
 
-void hlib_codec_decoder_binary_decode_binary(hlib_codec_decoder_t* decoder, char const* /* name */, hlib_codec_binary_t* value)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_decode_binary(hlib_codec_decoder_t* decoder, char const* /* name */, hlib_codec_binary_t* value)
 {
     int64_t size = 0;
     hlib_codec_decoder_binary_decode_int64(decoder, NULL, &size);
@@ -476,17 +476,17 @@ void hlib_codec_decoder_binary_decode_binary(hlib_codec_decoder_t* decoder, char
     self->offset += size;
 }
 
-void hlib_codec_decoder_binary_close(hlib_codec_decoder_t* /* decoder */)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_binary_close(hlib_codec_decoder_t* /* decoder */)
 {
 }
 
-hlib_codec_type_id_t hlib_codec_decoder_binary_more(hlib_codec_decoder_t* decoder)
+HLIB_C_VISIBILITY_IMPL hlib_codec_type_id_t hlib_codec_decoder_binary_more(hlib_codec_decoder_t* decoder)
 {
     hlib_codec_decoder_binary_t* self = (hlib_codec_decoder_binary_t*)decoder;
     return self->offset < self->size;
 }
 
-hlib_codec_type_id_t hlib_codec_decoder_binary_peek(hlib_codec_decoder_t* decoder)
+HLIB_C_VISIBILITY_IMPL hlib_codec_type_id_t hlib_codec_decoder_binary_peek(hlib_codec_decoder_t* decoder)
 {
     hlib_codec_decoder_binary_t lookahead = *(hlib_codec_decoder_binary_t*)decoder; 
 

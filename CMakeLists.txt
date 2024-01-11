@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/file_server.hpp
     include/hlib/http_server.hpp
     include/hlib/format.hpp
+    include/hlib/ipc.hpp
     include/hlib/json.hpp
     include/hlib/lock.hpp
     include/hlib/log.hpp
@@ -81,6 +82,9 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/c/codec_binary.h
     include/hlib/c/endian.h
     include/hlib/c/error.h
+    include/hlib/c/hash_map.h
+    include/hlib/c/impl.h
+    include/hlib/c/ipc.h
     include/hlib/c/vector.h
 
     src/hlib_base.cpp
@@ -100,6 +104,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_file_server.cpp
     src/hlib_format.cpp
     src/hlib_http_server.cpp
+    src/hlib_ipc.cpp
     src/hlib_json.cpp
     src/hlib_log.cpp
     src/hlib_math.cpp

@@ -93,7 +93,7 @@ Subprocess::Stream::Stream(std::string const& filename)
 {
     m_fd.reset(open(filename.c_str(), O_RDONLY));
     if (-1 == m_fd.get()) {
-        throwf<std::runtime_error>("open() failed ({})", get_error_string());
+        throw make_system_error(errno, "open() failed");
     }
 }
 
@@ -104,7 +104,7 @@ Subprocess::Stream::Stream(std::string const& filename, int flags, mode_t mode)
 
     m_fd.reset(open(filename.c_str(), flags, mode));
     if (-1 == m_fd.get()) {
-        throwf<std::runtime_error>("open() failed ({})", filename, get_error_string());
+        throw make_system_error(errno, "open() failed");
     }
 }
 
@@ -242,7 +242,7 @@ int Subprocess::run(std::vector<char const*> argv)
         ? m_event_loop_private
         : m_event_loop_extern.lock();
     if (nullptr == event_loop) {
-        throwf<std::logic_error>("External event loop not available");
+        throwf<std::logic_error>("Event loop not available");
     }
 
     if (nullptr == m_input.m_on_update) {

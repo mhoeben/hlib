@@ -26,6 +26,7 @@
 #include "hlib/base.hpp"
 #include "hlib/file.hpp"
 #include "hlib/log.hpp"
+#include "hlib/result.hpp"
 #include "hlib/time.hpp"
 #include <condition_variable>
 #include <functional>
@@ -60,7 +61,7 @@ public:
     std::thread::id threadId() const noexcept;
 
     void add(int fd, std::uint32_t events, Callback callback);
-    bool modify(int fd, std::uint32_t events, std::nothrow_t) noexcept;
+    Result<> modify(int fd, std::uint32_t events, std::nothrow_t) noexcept;
     void modify(int fd, std::uint32_t events);
     void change(int fd, Callback callback);
     void remove(int fd);
@@ -68,7 +69,7 @@ public:
     void dispatch();
     void dispatch(time::Duration const& timeout);
 
-    bool interrupt(std::nothrow_t) noexcept;
+    Result<> interrupt(std::nothrow_t) noexcept;
     void interrupt();
     void flush() noexcept;
 

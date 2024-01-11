@@ -56,6 +56,7 @@ add_executable(${PROJECT_NAME}
     src/file_server.cpp
     src/hash_map.cpp
     src/http_server.cpp
+    src/ipc.cpp
     src/json.cpp
     src/math.cpp
     src/result.cpp

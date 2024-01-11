@@ -69,7 +69,7 @@ std::optional<std::int8_t> hlib::stoi8(std::string const& value, int base, std::
     return r;
 }
 
-std::optional<int16_t> hlib::stoi16(std::string const& value, int base, std::nothrow_t)
+std::optional<std::int16_t> hlib::stoi16(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::nullopt;
@@ -79,14 +79,14 @@ std::optional<int16_t> hlib::stoi16(std::string const& value, int base, std::not
     long r = strtol(value.c_str(), &pos, base);
     if (nullptr == pos
      || 0 != *pos
-     || r < std::numeric_limits<int16_t>::min()
-     || r > std::numeric_limits<int16_t>::max()) {
+     || r < std::numeric_limits<std::int16_t>::min()
+     || r > std::numeric_limits<std::int16_t>::max()) {
         return std::nullopt;
     }
     return r;
 }
 
-std::optional<int32_t> hlib::stoi32(std::string const& value, int base, std::nothrow_t)
+std::optional<std::int32_t> hlib::stoi32(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::nullopt;
@@ -98,15 +98,15 @@ std::optional<int32_t> hlib::stoi32(std::string const& value, int base, std::not
     long r = strtol(value.c_str(), &pos, base);
     if (nullptr == pos
      || 0 != *pos
-     || r < std::numeric_limits<int32_t>::min()
-     || r > std::numeric_limits<int32_t>::max()
+     || r < std::numeric_limits<std::int32_t>::min()
+     || r > std::numeric_limits<std::int32_t>::max()
      || ((LONG_MIN == r || LONG_MAX == r) && ERANGE == errno)) {
         return std::nullopt;
     }
     return r;
 }
 
-std::optional<int64_t> hlib::stoi64(std::string const& value, int base, std::nothrow_t)
+std::optional<std::int64_t> hlib::stoi64(std::string const& value, int base, std::nothrow_t)
 {
     if (true == value.empty() || isspace(value.front())) {
         return std::nullopt;
@@ -258,7 +258,7 @@ std::int8_t hlib::stoi8(std::string const& value, int base)
     return r;
 }
 
-int16_t hlib::stoi16(std::string const& value, int base)
+std::int16_t hlib::stoi16(std::string const& value, int base)
 {
     if (true == value.empty() || isspace(value.front())) {
         throw std::invalid_argument("stoi16");
@@ -269,14 +269,14 @@ int16_t hlib::stoi16(std::string const& value, int base)
     if (nullptr == pos || 0 != *pos) {
         throw std::invalid_argument("stoi16");
     }
-    if (r < std::numeric_limits<int16_t>::min()
-     || r > std::numeric_limits<int16_t>::max()) {
+    if (r < std::numeric_limits<std::int16_t>::min()
+     || r > std::numeric_limits<std::int16_t>::max()) {
         throw std::range_error("stoi16");
     }
     return r;
 }
 
-int32_t hlib::stoi32(std::string const& value, int base)
+std::int32_t hlib::stoi32(std::string const& value, int base)
 {
     if (true == value.empty() || isspace(value.front())) {
         throw std::invalid_argument("stoi32");
@@ -289,15 +289,15 @@ int32_t hlib::stoi32(std::string const& value, int base)
     if (nullptr == pos || 0 != *pos) {
         throw std::invalid_argument("stoi32");
     }
-    if (r < std::numeric_limits<int32_t>::min()
-     || r > std::numeric_limits<int32_t>::max()
+    if (r < std::numeric_limits<std::int32_t>::min()
+     || r > std::numeric_limits<std::int32_t>::max()
      || ((LONG_MIN == r || LONG_MAX == r) && ERANGE == errno)) {
         throw std::range_error("stoi32");
     }
     return r;
 }
 
-int64_t hlib::stoi64(std::string const& value, int base)
+std::int64_t hlib::stoi64(std::string const& value, int base)
 {
     if (true == value.empty() || isspace(value.front())) {
         throw std::invalid_argument("stoi64");

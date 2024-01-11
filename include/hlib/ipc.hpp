@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,40 +21,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#ifndef HLIB_C_IMPL
-#define HLIB_C_IMPL
+#pragma once
 
-#define HLIB_C_BUFFER_IMPL
-#include "hlib/c/buffer.h"
-#undef HLIB_C_BUFFER_IMPL
+#include "hlib/base.hpp"
+#include "hlib/result.hpp"
 
-#define HLIB_C_CIRCULAR_BUFFER_IMPL
-#include "hlib/c/circular_buffer.h"
-#undef HLIB_C_CIRCULAR_BUFFER_IMPL
+extern "C"
+{
+struct hlib_ipc_s;
+} // extern "C"
 
-#define HLIB_C_CODEC_IMPL
-#include "hlib/c/codec.h"
-#undef HLIB_C_CODEC_IMPL
+namespace hlib
+{
 
-#define HLIB_C_CODEC_BINARY_IMPL
-#include "hlib/c/codec_binary.h"
-#undef HLIB_C_CODEC_BINARY_IMPL
+class IPC final
+{
+    HLIB_NOT_COPYABLE(IPC);
+    HLIB_NOT_MOVABLE(IPC);
 
-#define HLIB_C_ERROR_IMPL
-#include "hlib/c/error.h"
-#undef HLIB_C_ERROR_IMPL
+public:
+    enum Type
+    {
+        NamedPipe,
+        SharedMemory
+    };
 
-#define HLIB_C_HASH_MAP_IMPL
-#include "hlib/c/hash_map.h"
-#undef HLIB_C_HASH_MAP_IMPL
+    struct Config
+    {
+        Type type;
+        std::string filepath;
+        mode_t mode{ 0600 };
+        int flags{ 0 };
+        std::size_t capacity{ 0 };
 
-#define HLIB_C_IPC_IMPL
-#include "hlib/c/ipc.h"
-#undef HLIB_C_IPC_IMPL
+        Config(Type a_type, std::string a_filepath, mode_t a_mode = 0600, int a_flags = 0);
+        Config(Type a_type, std::size_t a_capacity, std::string a_filepath, mode_t a_mode = 0600);
+    };
 
-#define HLIB_C_VECTOR_IMPL
-#include "hlib/c/vector.h"
-#undef HLIB_C_VECTOR_IMPL
+public:
+    IPC(Config const& config, bool producer);
+    ~IPC();
 
-#endif // HLIB_C_IMPL
+    int fd() const noexcept;
+
+    Result<std::size_t> produce(void const* data, size_t size);
+    Result<std::size_t> consume(void* data, size_t size);
+
+protected:
+    IPC(hlib_ipc_s* ipc);
+
+private:
+    hlib_ipc_s* m_ipc;
+};
+
+} // namespace hlib
 

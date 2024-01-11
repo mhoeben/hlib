@@ -24,71 +24,21 @@
 #pragma once
 
 #include <errno.h>
-#include <stdexcept>
 #include <string>
 #include <system_error>
-#include <variant>
 
 namespace hlib
 {
-
-class Error final : public std::exception
-{
-public:
-    enum Index
-    {
-        None,
-        Code,
-        String
-    };
-
-    typedef std::variant<std::monostate, std::error_code, std::string> Value;
-
-public:
-    Error() = default;
-    Error(std::error_code const& code);
-    Error(std::error_code&& code) noexcept;
-    Error(std::errc code);
-    Error(std::string const& string);
-    Error(std::string&& string) noexcept;
-
-    Error& operator =(std::error_code const& code);
-    Error& operator =(std::error_code&& code) noexcept;
-    Error& operator =(std::errc code);
-    Error& operator =(std::string const& string);
-    Error& operator =(std::string&& string) noexcept;
-
-    bool operator == (Error const& that) const noexcept;
-    bool operator != (Error const& that) const noexcept;
-
-    bool operator !() const noexcept;
-    operator bool() const noexcept;
-
-    Index index() const noexcept;
-    bool success() const noexcept;
-    bool failure() const noexcept;
-
-    Value const& value() const noexcept;
-    Value& value() noexcept;
-
-    std::error_code const& code() const;
-    std::error_code& code();
-
-    std::string const& string() const;
-    std::string& string();
-
-    void clear() noexcept;
-
-    char const* what() const noexcept override;
-
-private:
-    Value m_value;
-};
 
 int get_socket_error(int fd) noexcept;
 
 std::string get_error_string(int error_no);
 std::string get_error_string();
+
+std::error_code make_error_code(int posix_errno);
+
+std::system_error make_system_error(int posix_errno);
+std::system_error make_system_error(int posix_errno, std::string const& what);
 
 } // namespace hlib
 

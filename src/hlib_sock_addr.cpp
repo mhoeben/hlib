@@ -156,13 +156,13 @@ std::string SockAddr::address() const
     switch (m_family) {
     case AF_INET:
         if (nullptr == inet_ntop(AF_INET, &m_inet.sin_addr, address, INET_ADDRSTRLEN)) {
-            throwf<std::runtime_error>("inet_ntop() failed ({})", get_error_string());
+            throw make_system_error(errno, "inet_ntop() failed");
         }
         return address;
 
     case AF_INET6:
         if (nullptr == inet_ntop(AF_INET6, &m_inet6.sin6_addr, address, INET6_ADDRSTRLEN)) {
-            throwf<std::runtime_error>("inet_ntop() failed ({})", get_error_string());
+            throw make_system_error(errno, "inet_ntop() failed");
         }
         return address;
 

@@ -606,7 +606,7 @@ void ws::Server::onPoll(int fd, std::uint32_t events)
     assert(EventLoop::Read == events); (void)events;
 
     if (hws_poll(m_hws) < 0) {
-        throwf<std::runtime_error>("hws_poll() failed ({})", get_error_string());
+        throw make_system_error(errno, "hws_poll() failed");
     }
 }
 

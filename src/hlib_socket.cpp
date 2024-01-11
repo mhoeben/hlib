@@ -43,19 +43,19 @@ bool set_option(int fd, int option, int value = 1) noexcept
     return 0 == setsockopt(fd, SOL_SOCKET, option, &value, sizeof(value));
 }
 
-bool set_reuse(int fd, std::uint32_t options) noexcept
+Result<> set_reuse(int fd, std::uint32_t options) noexcept
 {
     if (0 != (Socket::ReuseAddr & options)
      && false == set_option(fd, SO_REUSEADDR, 1)) {
-        return false;
+        return make_system_error(errno, "setsocktopt(SO_REUSEADDR) failed");
     }
 
     if (0 != (Socket::ReusePort & options)
      && false == set_option(fd, SO_REUSEPORT, 1)) {
-        return false;
+        return make_system_error(errno, "setsocktopt(SO_REUSEPORT) failed");
     }
 
-    return true;
+    return {};
 }
 
 } // namespace
@@ -96,7 +96,7 @@ void Socket::onAccept(int fd, std::uint32_t events)
     }
 
     // Make non-blocking.
-    if (false == file::fd_set_non_blocking(socket.get(), true)) {
+    if (true == file::fd_set_non_blocking(socket.get(), true, std::nothrow).failure()) {
         callbackAndClose(errno);
         return;
     }
@@ -314,7 +314,7 @@ void Socket::setReceiveBufferSize(std::size_t size, bool gather) noexcept
     m_receive_buffer_gather = gather;
 }
 
-bool Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
+Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
 {
     using namespace std::placeholders;
 
@@ -327,24 +327,21 @@ bool Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
         loop.add(fd.get(), m_events, std::bind(&Socket::onEvent, this, _1, _2));
     });
     if (false == success) {
-        errno = ENODEV;
-        return false;
+        return make_system_error(ENODEV, "Failed to lock event loop");
     }
 
     // Store socket's file descriptor and signal it is connected.
     m_fd = std::move(fd);
     m_connected = 0 == get_socket_error(m_fd.get());
-    return true;
+    return {};
 }
 
 void Socket::open(UniqueHandle<int, -1> fd)
 {
-    if (false == Socket::open(std::move(fd), std::nothrow)) {
-        throwf<std::runtime_error>("Socket::open() failed ({})", get_error_string());
-    }
+    throw_or_value<>(Socket::open(std::move(fd), std::nothrow));
 }
 
-bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options, std::nothrow_t) noexcept
+Result<> Socket::listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options, std::nothrow_t) noexcept
 {
     using namespace std::placeholders;
 
@@ -358,32 +355,36 @@ bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog
         file::fd_close
     );
     if (-1 == fd.get()) {
-        return false;
+        return make_system_error(errno, "socket() failed");
     }
 
     // Set close-on-exec on listening sockets.
     if (-1 == fcntl(fd.get(), F_SETFD, FD_CLOEXEC)) {
-        return false;
+        return make_system_error(errno, "fcntl() failed");
     }
 
+    Result<> result;
+
     // Make non-blocking.
-    if (false == file::fd_set_non_blocking(fd.get(), true)) {
-        return false;
+    result = file::fd_set_non_blocking(fd.get(), true, std::nothrow);
+    if (true == result.failure()) {
+        return result;
     }
 
     // Set reuse options.
-    if (false == set_reuse(fd.get(), options)) {
-        return false;
+    result = set_reuse(fd.get(), options);
+    if (true == result.failure()) {
+        return result;
     }
 
     // Bind socket to address.
     if (-1 == ::bind(fd.get(), static_cast<sockaddr const*>(address), address.length())) {
-        return false;
+        return make_system_error(errno, "bind() failed");
     }
 
     // Listen for incoming connections
     if (-1 == ::listen(fd.get(), backlog)) {
-        return false;
+        return make_system_error(errno, "listen() failed");
     }
 
     // Add file descriptor to event loop.
@@ -391,23 +392,20 @@ bool Socket::listen(SockAddr const& address, int type, int protocol, int backlog
         loop.add(fd.get(), m_events, std::bind(&Socket::onAccept, this, _1, _2));
     });
     if (false == success) {
-        errno = ENODEV;
-        return false;
+        return make_system_error(ENODEV, "Event loop not available");
     }
 
     // Commit file descriptor.
     m_fd = std::move(fd);
-    return true;
+    return {};
 }
 
 void Socket::listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options)
 {
-    if (false == Socket::listen(address, type, protocol, backlog, options, std::nothrow)) {
-        throwf<std::runtime_error>("Socket::listen() failed ({})", get_error_string());
-    }
+    throw_or_value<>(Socket::listen(address, type, protocol, backlog, options, std::nothrow));
 }
 
-bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept
+Result<> Socket::connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept
 {
     using namespace std::placeholders;
 
@@ -424,23 +422,27 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
         file::fd_close
     );
     if (-1 == fd.get()) {
-        return false;
+        return make_system_error(errno, "socket() failed");
     }
 
+    Result<> result;
+
     // Make non-blocking.
-    if (false == file::fd_set_non_blocking(fd.get(), true)) {
-        return false;
+    result = file::fd_set_non_blocking(fd.get(), true, std::nothrow);
+    if (true == result.failure()) {
+        return result;
     }
 
     // Set reuse options.
-    if (false == set_reuse(fd.get(), options)) {
-        return false;
+    result = set_reuse(fd.get(), options);
+    if (true == result.failure()) {
+        return result;
     }
 
     // Connect to peer address.
     if (-1 == ::connect(fd.get(), static_cast<sockaddr const*>(address), address.length())) {
         if (EINPROGRESS != errno) {
-            return false;
+            return make_system_error(errno, "connect() failed");
         }
 
         callback = std::bind(&Socket::onConnect, this, _1, _2);
@@ -455,8 +457,7 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
         loop.add(fd.get(), events, std::move(callback));
     });
     if (false == success) {
-        errno = ENODEV;
-        return false;
+        return make_system_error(ENODEV, "Event loop not available");
     }
 
     // Commit file descriptor.
@@ -466,14 +467,13 @@ bool Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
     if (true == m_connected && nullptr != m_on_connected) {
         m_on_connected();
     }
-    return true;
+
+    return {};
 }
 
 void Socket::connect(SockAddr const& address, int type, int protocol, std::uint32_t options)
 {
-    if (false == Socket::connect(address, type, protocol, options, std::nothrow)) {
-        throwf<std::runtime_error>("Socket::connect() failed ({})", get_error_string());
-    }
+    throw_or_value<>(connect(address, type, protocol, options, std::nothrow));
 }
 
 void Socket::receive(bool enable)

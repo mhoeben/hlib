@@ -112,249 +112,206 @@ bool file::is_writable(std::filesystem::path const& filepath) noexcept
         || std::filesystem::perms::none != (std::filesystem::perms::others_write & permissions);
 }
 
-std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
+Result<> file::read(std::istream& stream, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept
 {
     char* ptr = static_cast<char*>(buffer.extend(size, std::nothrow));
     if (ptr == nullptr) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return stream;
+        return make_system_error(errno);
     }
 
     stream.read(ptr + buffer.size(), size);
     if (true == stream.fail()) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return stream;
+        return make_system_error(errno);
     }
 
-    hverify(nullptr != buffer.resize(buffer.size() + stream.gcount(), std::nothrow));
-    return stream;
+    if (nullptr == buffer.resize(buffer.size() + stream.gcount(), std::nothrow)) {
+        return make_system_error(errno);
+    }
+
+    return {};
 }
 
 std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size)
 {
-    std::error_code error_code;
-
-    read(stream, buffer, size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
-    }
-
+    throw_or_value<>(read(stream, buffer, size, std::nothrow));
     return stream;
 }
 
-Buffer file::read(std::istream& stream, std::size_t partial_size, std::error_code& error_code) noexcept
+Result<Buffer> file::read(std::istream& stream, std::size_t batch_size, std::nothrow_t) noexcept
 {
-    assert(partial_size > 0);
-    partial_size += 0 == partial_size;
+    assert(batch_size > 0);
+    batch_size += 0 == batch_size;
 
+    Result<> result;
     Buffer buffer;
 
     do {
-        read(stream, buffer, partial_size, error_code);
+        result = read(stream, buffer, batch_size, std::nothrow);
+        if (true == result.failure()) {
+            return result.error();
+        }
     }
     while (false == stream.fail() && false == stream.eof());
 
     return buffer;
 }
 
-Buffer file::read(std::istream& stream, std::size_t partial_size)
+Buffer file::read(std::istream& stream, std::size_t batch_size)
 {
-    std::error_code error_code;
-
-    Buffer buffer = read(stream, partial_size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
-    }
-
-    return buffer;
+    return throw_or_value<Buffer>(read(stream, batch_size, std::nothrow));
 }
 
-ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
+Result<std::size_t> file::read(FILE* file, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept
 {
     uint8_t* ptr = static_cast<uint8_t*>(buffer.extend(size, std::nothrow));
     if (ptr == nullptr) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return -1;
+        return make_system_error(errno);
     }
 
-    ssize_t count = fread(ptr + buffer.size(), 1, size, file);
-    if (count < 0) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return -1;
+    size_t count = fread(ptr + buffer.size(), 1, size, file);
+    if (nullptr == buffer.resize(buffer.size() + count, std::nothrow)) {
+        return make_system_error(errno);
     }
 
-    hverify(nullptr != buffer.resize(buffer.size() + count, std::nothrow));
-    return count;
-}
-
-ssize_t file::read(FILE* file, Buffer& buffer, std::size_t size)
-{
-    std::error_code error_code;
-
-    ssize_t count = read(file, buffer, size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
+    if (0 != ferror(file)) {
+        return make_system_error(errno);
     }
 
     return count;
 }
 
-Buffer file::read(FILE* file, std::size_t partial_size, std::error_code& error_code) noexcept
+std::size_t file::read(FILE* file, Buffer& buffer, std::size_t size)
 {
-    assert(partial_size > 0);
-    partial_size += 0 == partial_size;
+    return throw_or_value<std::size_t>(read(file, buffer, size, std::nothrow));
+}
 
+Result<Buffer> file::read(FILE* file, std::size_t batch_size, std::nothrow_t) noexcept
+{
+    assert(batch_size > 0);
+    batch_size += 0 == batch_size;
+
+    Result<size_t> result;
     Buffer buffer;
 
     do {
-        read(file, buffer, partial_size, error_code);
+        result = read(file, buffer, batch_size, std::nothrow);
+        if (true == result.failure()) {
+            return result.error();
+        }
     }
-    while (0 == ferror(file) && 0 == feof(file));
+    while (0 == feof(file));
 
     return buffer;
 }
 
-Buffer file::read(FILE* file, std::size_t partial_size)
+Buffer file::read(FILE* file, std::size_t batch_size)
 {
-    std::error_code error_code;
-
-    Buffer buffer = read(file, partial_size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
-    }
-
-    return buffer;
+    return throw_or_value<Buffer>(read(file, batch_size, std::nothrow));
 }
 
-ssize_t file::read(int fd, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept
+Result<size_t> file::read(int fd, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept
 {
     uint8_t* ptr = static_cast<uint8_t*>(buffer.extend(size, std::nothrow));
     if (ptr == nullptr) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return -1;
+        return make_system_error(errno);
     }
 
     ssize_t count = ::read(fd, ptr + buffer.size(), size);
     if (count < 0) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return -1;
+        return make_system_error(errno);
     }
 
-    hverify(nullptr != buffer.resize(buffer.size() + count, std::nothrow));
-    return count;
-}
-
-ssize_t file::read(int fd, Buffer& buffer, std::size_t size)
-{
-    std::error_code error_code;
-
-    ssize_t count = read(fd, buffer, size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
+    if (nullptr == buffer.resize(buffer.size() + count, std::nothrow)) {
+        return make_system_error(errno);
     }
 
     return count;
 }
 
-Buffer file::read(int fd, std::size_t partial_size, std::error_code& error_code) noexcept
+std::size_t file::read(int fd, Buffer& buffer, std::size_t size)
 {
-    assert(partial_size > 0);
-    partial_size += 0 == partial_size;
+    return throw_or_value<std::size_t>(read(fd, buffer, size, std::nothrow));
+}
 
+Result<Buffer> file::read(int fd, std::size_t batch_size, std::nothrow_t) noexcept
+{
+    assert(batch_size > 0);
+    batch_size += 0 == batch_size;
+
+    Result<size_t> result;
     Buffer buffer;
 
     do {
-        if (0 == read(fd, buffer, partial_size, error_code)) {
-            return buffer;
-        }
-
-        if (-1 == fcntl(fd, F_GETFL)) {
-            error_code = std::make_error_code(static_cast<std::errc>(errno));
-            return buffer;
+        result = read(fd, buffer, batch_size, std::nothrow);
+        if (true == result.failure()) {
+            return result.error();
         }
     }
-    while (true);
-}
-
-Buffer file::read(int fd, std::size_t partial_size)
-{
-    std::error_code error_code;
-
-    Buffer buffer = read(fd, partial_size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
-    }
+    while (result.value() > 0);
 
     return buffer;
 }
 
-Buffer file::read(std::string const& filepath, std::error_code& error_code) noexcept
+Buffer file::read(int fd, std::size_t batch_size)
 {
-    Buffer buffer;
+    return throw_or_value<Buffer>(read(fd, batch_size, std::nothrow));
+}
+
+Result<Buffer> file::read(std::string const& filepath, std::nothrow_t) noexcept
+{
+    std::error_code error_code;
 
     std::size_t size = std::filesystem::file_size(filepath, error_code);
     if (error_code) {
-        return buffer;
+        return std::system_error(error_code);
     }
+
+    Buffer buffer;
 
     if (0 == size) {
         return buffer;
     }
 
     std::ifstream stream(filepath);
-    read(stream, buffer, size, error_code);
+
+    Result<> result = read(stream, buffer, size, std::nothrow);
+    if (true == result.failure()) {
+        return result.error();
+    }
+
     return buffer;
 }
 
 Buffer file::read(std::string const& filepath)
 {
-    std::error_code error_code;
-
-    Buffer buffer = read(filepath, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "read() failed");
-    }
-
-    return buffer;
+    return throw_or_value<Buffer>(read(filepath, std::nothrow));
 }
 
-std::ostream& file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept
+Result<> file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept
 {
-    if (offset >= buffer.size()) {
-        error_code = std::make_error_code(static_cast<std::errc>(EINVAL));
-        return stream;
-    }
-
     size = std::min(size, buffer.size() - offset);
 
     std::streampos pos = stream.tellp();
 
     stream.write(static_cast<char const*>(buffer.data()) + offset, size);
     if (true == stream.fail()) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return stream;
+        return make_system_error(errno);
     }
 
     offset += stream.tellp() - pos;
-    return stream;
+    return {};
 }
 
 std::ostream& file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size)
 {
-    std::error_code error_code;
-
-    write(stream, buffer, offset, size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "Failed to write from buffer to stream");
-    }
-
+    throw_or_value(write(stream, buffer, offset, size, std::nothrow));
     return stream;
 }
 
-void file::write(std::ostream& stream, Buffer const& buffer, std::error_code& error_code) noexcept
+Result<> file::write(std::ostream& stream, Buffer const& buffer, std::nothrow_t) noexcept
 {
     std::size_t offset = 0;
-    write(stream, buffer, offset, buffer.size(), error_code);
+    return write(stream, buffer, offset, buffer.size(), std::nothrow);
 }
 
 void file::write(std::ostream& stream, Buffer const& buffer)
@@ -363,68 +320,84 @@ void file::write(std::ostream& stream, Buffer const& buffer)
     write(stream, buffer, offset, buffer.size());
 }
 
-ssize_t file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept
+Result<std::size_t> file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept
 {
-    if (offset >= buffer.size()) {
-        error_code = std::make_error_code(static_cast<std::errc>(EINVAL));
-        return -1;
-    }
-
     size = std::min(size, buffer.size() - offset);
 
-    ssize_t count = fwrite(static_cast<char const*>(buffer.data()) + offset, 1, size, file);
-    if (count < 0) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return -1;
+    size_t count = fwrite(static_cast<char const*>(buffer.data()) + offset, 1, size, file);
+    offset += count;
+
+    if (0 != ferror(file)) {
+        return make_system_error(errno);
+    }
+
+    return count;
+}
+
+std::size_t file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size)
+{
+    return throw_or_value<std::size_t>(write(file, buffer, offset, size, std::nothrow));
+}
+
+Result<std::size_t> file::write(FILE* file, Buffer const& buffer, std::nothrow_t) noexcept
+{
+    std::size_t offset = 0;
+
+    return write(file, buffer, offset, buffer.size(), std::nothrow);
+}
+
+std::size_t file::write(FILE* file, Buffer const& buffer)
+{
+    std::size_t offset = 0; 
+
+    return write(file, buffer, offset, buffer.size());
+}
+
+Result<std::size_t> write(int fd, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept
+{
+    size = std::min(size, buffer.size() - offset);
+
+    ssize_t count = write(fd, static_cast<char const*>(buffer.data()) + offset, size);
+    if (-1 == count) {
+        return make_system_error(errno);
     }
 
     offset += count;
     return count;
 }
 
-ssize_t file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size)
+std::size_t write(int fd, Buffer const& buffer, std::size_t& offset, std::size_t size)
 {
-    std::error_code error_code;
-
-    ssize_t count = write(file, buffer, offset, size, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "Failed to write from buffer to file");
-    }
-
-    return count;
+    return throw_or_value<std::size_t>(write(fd, buffer, offset, size, std::nothrow));
 }
 
-void file::write(FILE* file, Buffer const& buffer, std::error_code& error_code) noexcept
+Result<std::size_t> write(int fd, Buffer const& buffer, std::nothrow_t) noexcept
 {
     std::size_t offset = 0;
-    write(file, buffer, offset, buffer.size(), error_code);
+
+    return write(fd, buffer, offset, buffer.size());
 }
 
-void file::write(FILE* file, Buffer const& buffer)
+std::size_t write(int fd, Buffer const& buffer)
 {
     std::size_t offset = 0; 
-    write(file, buffer, offset, buffer.size());
+
+    return write(fd, buffer, offset, buffer.size());
 }
 
-void file::write(std::string const& filepath, Buffer const& buffer, std::error_code& error_code) noexcept
+Result<> file::write(std::string const& filepath, Buffer const& buffer, std::nothrow_t) noexcept
 {
     std::ofstream stream(filepath);
     if (!stream) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return;
+        return make_system_error(errno);
     }
 
-    write(stream, buffer, error_code);
+    return write(stream, buffer, std::nothrow);
 }
 
 void file::write(std::string const& filepath, Buffer const& buffer)
 {
-    std::error_code error_code;
-
-    write(filepath, buffer, error_code);
-    if (error_code) {
-        throw std::system_error(error_code, "Failed to write from buffer to file");
-    }
+    throw_or_value<>(write(filepath, buffer, std::nothrow));
 }
 
 std::string file::get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type)
@@ -498,11 +471,11 @@ std::string file::get_mime_type_from_file(std::string const& pathname, std::stri
     return get_mime_type_from_extension(path.extension(), default_mime_type);
 }
 
-bool file::fd_set_non_blocking(int fd, bool enable) noexcept
+Result<> file::fd_set_non_blocking(int fd, bool enable, std::nothrow_t) noexcept
 {
     int flags = fcntl(fd, F_GETFL, 0);
     if (-1 == flags) {
-        return false;
+        return make_system_error(errno);
     }
 
     if (true == enable) {
@@ -513,10 +486,15 @@ bool file::fd_set_non_blocking(int fd, bool enable) noexcept
     }
 
     if (-1 == fcntl(fd, F_SETFL, flags)) {
-        return false;
+        return make_system_error(errno);
     }
 
-    return true;
+    return {};
+}
+
+void file::fd_set_non_blocking(int fd, bool enable)
+{
+    throw_or_value(fd_set_non_blocking(fd, enable, std::nothrow));
 }
 
 void file::fd_close(int fd) noexcept
@@ -539,7 +517,10 @@ file::Handle::Handle() noexcept
 file::Handle::Handle(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept
     : Handle()
 {
-    open(filepath, mode, error_code);
+    Result<> result = open(filepath, mode, std::nothrow);
+    if (true == result.failure()) {
+        error_code = result.error().code();
+    }
 }
 
 file::Handle::Handle(std::string const& filepath, std::string const& mode)
@@ -564,25 +545,25 @@ file::Handle::operator FILE*() const noexcept
     return m_handle.get();
 }
 
-bool file::Handle::open(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept
+Result<> file::Handle::open(std::string const& filepath, std::string const& mode, std::nothrow_t) noexcept
 {
     close();
 
     m_handle.reset(fopen(filepath.c_str(), mode.c_str()));
     if (nullptr == m_handle.get()) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return false;
+        return make_system_error(errno);
     }
 
-    return true;
+    return {};
 }
 
 void file::Handle::open(std::string const& filepath, std::string const& mode)
 {
     std::error_code error_code;
 
-    if (false == open(filepath, mode, error_code)) {
-        throwf<std::runtime_error>("fopen() failed ({})", error_code.message());
+    Result<> result = open(filepath, mode, std::nothrow);
+    if (true == result.failure()) {
+        throw result.error();
     }
 }
 
@@ -612,7 +593,10 @@ file::Pipe::Pipe() noexcept
 file::Pipe::Pipe(std::error_code& error_code) noexcept
     : Pipe()
 {
-    Pipe::open(error_code);
+    Result<> result = Pipe::open(std::nothrow);
+    if (true == result.failure()) {
+        error_code = result.error().code();
+    }
 }
 
 file::Pipe::Pipe(bool open)
@@ -635,29 +619,24 @@ int file::Pipe::operator[](std::size_t index) const noexcept
     return m_fds[index].get();
 }
 
-bool file::Pipe::open(std::error_code& error_code) noexcept
+Result<> file::Pipe::open(std::nothrow_t) noexcept
 {
     std::array<int, 2> fds{ -1, -1 };
 
     close();
 
     if (-1 == ::pipe(fds.data())) {
-        error_code = std::make_error_code(static_cast<std::errc>(errno));
-        return false;
+        return make_system_error(errno);
     }
 
     m_fds[0].reset(fds[0]);
     m_fds[1].reset(fds[1]);
-    return true;
+    return {};
 }
 
 void file::Pipe::open()
 {
-    std::error_code error_code;
-
-    if (false == open(error_code)) {
-        throwf<std::runtime_error>("pipe() failed ({})", error_code.message());
-    }
+    throw_or_value(open(std::nothrow));
 }
 
 void file::Pipe::close() noexcept

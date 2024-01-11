@@ -129,7 +129,7 @@ extern hlib_codec_decoder_t* hlib_codec_decoder_binary_create(void const* data, 
 //
 // Public
 //
-char* hlib_codec_string_copy(char* dest, hlib_codec_string_t const* src, size_t size)
+HLIB_C_VISIBILITY_IMPL char* hlib_codec_string_copy(char* dest, hlib_codec_string_t const* src, size_t size)
 {
     assert(size > 0);
 
@@ -139,7 +139,7 @@ char* hlib_codec_string_copy(char* dest, hlib_codec_string_t const* src, size_t 
     return dest;
 }
 
-hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_buffer_s* buffer)
+HLIB_C_VISIBILITY_IMPL hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_buffer_s* buffer)
 {
     if (0 == strcmp("binary", name)) {
         return hlib_codec_encoder_binary_create(buffer);
@@ -148,7 +148,7 @@ hlib_codec_encoder_t* hlib_codec_encoder_create(char const* name, struct hlib_bu
     return NULL;
 }
 
-void hlib_codec_encoder_wrap(hlib_codec_encoder_t* encoder, hlib_codec_type_t const* type, hlib_codec_type_encode_t encode)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_encoder_wrap(hlib_codec_encoder_t* encoder, hlib_codec_type_t const* type, hlib_codec_type_encode_t encode)
 {
     encoder->open_array(encoder, NULL, 2);
     encoder->encode_int32(encoder, NULL, type->id_);
@@ -156,7 +156,7 @@ void hlib_codec_encoder_wrap(hlib_codec_encoder_t* encoder, hlib_codec_type_t co
     encoder->close(encoder);
 }
 
-hlib_codec_decoder_t* hlib_codec_decoder_create(char const* name, void const* data, size_t size)
+HLIB_C_VISIBILITY_IMPL hlib_codec_decoder_t* hlib_codec_decoder_create(char const* name, void const* data, size_t size)
 {
     if (0 == strcmp("binary", name)) {
         return hlib_codec_decoder_binary_create(data, size);
@@ -165,7 +165,7 @@ hlib_codec_decoder_t* hlib_codec_decoder_create(char const* name, void const* da
     return NULL;
 }
 
-void hlib_codec_decoder_unwrap(hlib_codec_decoder_t* decoder, hlib_codec_type_t* type, hlib_codec_type_decode_t decode)
+HLIB_C_VISIBILITY_IMPL void hlib_codec_decoder_unwrap(hlib_codec_decoder_t* decoder, hlib_codec_type_t* type, hlib_codec_type_decode_t decode)
 {
     size_t array_size;
     decoder->open_array(decoder, NULL, &array_size);

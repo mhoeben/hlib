@@ -23,8 +23,8 @@
 //
 #pragma once
 
-#include "hlib/error.hpp"
-#include <assert.h>
+#include <system_error>
+#include <variant>
 
 namespace hlib
 {
@@ -33,129 +33,53 @@ template<typename T = std::monostate>
 class Result final
 {
 public:
-    enum Index
-    {
-        Success,
-        ErrorCode,
-        ErrorString
-    };
     typedef T Type;
-    typedef std::variant<T, std::error_code, std::string> Value;
+    typedef std::variant<T, std::system_error> Value;
 
 public:
     Result() = default;
 
     Result(T const& value)
-        : m_value(std::in_place_index<Success>, value)
+        : m_value(std::in_place_index<0>, value)
     {
     }
 
     Result(T&& value)
-        : m_value(std::in_place_index<Success>, std::move(value))
+        : m_value(std::in_place_index<0>, std::move(value))
     {
     }
 
-    Result(Error const &error)
+    Result(std::system_error const &error)
+        : m_value(std::in_place_index<1>, error)
     {
-        Error::Value const& value = error.value();
-
-        switch (value.index()) {
-        case Error::None:
-            break;
-
-        case Error::Code:
-            m_value = Value(std::in_place_index<ErrorCode>, std::get<Error::Code>(value));
-            break;
-
-        case Error::String:
-            m_value = Value(std::in_place_index<ErrorString>, std::get<Error::String>(value));
-            break;
-
-        default:
-            assert(false);
-            break;
-        }
     }
 
-    Result(Error&& error)
+    Result(std::system_error&& error)
+        : m_value(std::in_place_index<1>, std::move(error))
     {
-        Error::Value& value = error.value();
-
-        switch (value.index()) {
-        case Error::None:
-            break;
-
-        case Error::Code:
-            m_value = Value(std::in_place_index<ErrorCode>, std::move(std::get<Error::Code>(value)));
-            break;
-
-        case Error::String:
-            m_value = Value(std::in_place_index<ErrorString>, std::move(std::get<Error::String>(value)));
-            break;
-
-        default:
-            assert(false);
-            break;
-        }
     }
 
     Result& operator =(T const& value) const
     {
-        m_value = Value(std::in_place_index<Success>, value);
+        m_value = Value(std::in_place_index<0>, value);
         return *this;
     }
 
     Result& operator =(T&& value)
     {
-        m_value = Value(std::in_place_index<Success>, std::move(value));
+        m_value = Value(std::in_place_index<0>, std::move(value));
         return *this;
     }
 
-    Result& operator =(Error const &error)
+    Result& operator =(std::system_error const &error)
     {
-        Error::Value const& value = error.value();
-
-        switch (value.index()) {
-        case Error::None:
-            break;
-
-        case Error::Code:
-            m_value = Value(std::in_place_index<ErrorCode>, std::get<Error::Code>(value));
-            break;
-
-        case Error::String:
-            m_value = Value(std::in_place_index<ErrorString>, std::get<Error::String>(value));
-            break;
-
-        default:
-            assert(false);
-            break;
-        }
-
+        m_value = Value(std::in_place_index<1>, error);
         return *this;
     }
 
-    Result& operator =(Error&& error)
+    Result& operator =(std::system_error&& error)
     {
-        Error::Value& value = error.value();
-
-        switch (value.index()) {
-        case Error::None:
-            break;
-
-        case Error::Code:
-            m_value = Value(std::in_place_index<ErrorCode>, std::move(std::get<Error::Code>(value)));
-            break;
-
-        case Error::String:
-            m_value = Value(std::in_place_index<ErrorString>, std::move(std::get<Error::String>(value)));
-            break;
-
-        default:
-            assert(false);
-            break;
-        }
-
+        m_value = Value(std::in_place_index<1>, std::move(error));
         return *this;
     }
 
@@ -171,69 +95,56 @@ public:
 
     T& operator *()
     {
-        return std::get<Success>(m_value);
+        return std::get<0>(m_value);
     }
 
     T& operator ->()
     {
-        return std::get<Success>(m_value);
-    }
-
-    Index index() const noexcept
-    {
-        return static_cast<Index>(m_value.index());
+        return std::get<0>(m_value);
     }
 
     bool success() const noexcept
     {
-        return Success == index();
+        return 0 == m_value.index();
     }
 
     bool failure() const noexcept
     {
-        return Success != index();
+        return 1 == m_value.index();
     }
 
     T const& value() const
     {
-        return std::get<Success>(m_value);
+        return std::get<0>(m_value);
     }
 
     T& value()
     {
-        return std::get<Success>(m_value);
+        return std::get<0>(m_value);
     }
 
-    std::error_code const& errorCode() const
+    std::system_error const& error() const
     {
-        return std::get<ErrorCode>(m_value);
+        return std::get<1>(m_value);
     }
 
-    std::string const& errorString() const
+    std::system_error& error()
     {
-        return std::get<ErrorString>(m_value);
-    }
-
-    Error error() const
-    {
-        switch (index()) {
-        case Success: return Error();
-        case ErrorCode: return errorCode();
-        case ErrorString: return errorString();
-        default:
-            throw std::logic_error("error()");
-        }
+        return std::get<1>(m_value);
     }
 
 private:
-    std::variant<T, std::error_code, std::string> m_value;
+    Value m_value;
 };
 
-template<typename T, typename U>
-typename std::enable_if<std::is_same<Error, T>::value, T>::type
-to(Result<U> const& result)
+template<typename T = void>
+T throw_or_value(Result<T> result)
 {
-    return result.error();
+    if (true == result.failure()) {
+        throw result.error();
+    }
+
+    return std::move(result.value());
 }
 
 } // namespace hlib

@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 
 #include "hlib/base.hpp"
 #include "hlib/c/circular_buffer.h"
+#include "hlib/result.hpp"
 #include <new>
 
 namespace hlib
@@ -51,15 +52,15 @@ public:
     std::size_t size() const noexcept;
     bool empty() const noexcept;
 
-    bool produce(void const* data, std::size_t size, bool wait, std::nothrow_t) noexcept;
-    bool produce(void const* data, std::size_t size, bool wait);
-    bool produce(Buffer const& buffer, bool wait, std::nothrow_t) noexcept;
-    bool produce(Buffer const& buffer, bool wait);
+    Result<std::size_t> produce(void const* data, std::size_t size, bool wait, std::nothrow_t) noexcept;
+           std::size_t  produce(void const* data, std::size_t size, bool wait);
+    Result<std::size_t> produce(Buffer const& buffer, bool wait, std::nothrow_t) noexcept;
+           std::size_t  produce(Buffer const& buffer, bool wait);
 
-    bool consume(void* data, std::size_t size, bool wait, std::nothrow_t) noexcept;
-    bool consume(void* data, std::size_t size, bool wait);
-    bool consume(Buffer& buffer, std::size_t size, bool wait, std::nothrow_t) noexcept;
-    bool consume(Buffer& buffer, std::size_t size, bool wait);
+    Result<std::size_t> consume(void* data, std::size_t size, bool wait, std::nothrow_t) noexcept;
+           std::size_t  consume(void* data, std::size_t size, bool wait);
+    Result<std::size_t> consume(Buffer& buffer, std::size_t size, bool wait, std::nothrow_t) noexcept;
+           std::size_t  consume(Buffer& buffer, std::size_t size, bool wait);
 
 private:
     hlib_circular_buffer_t* m_buffer{ nullptr };

@@ -29,42 +29,42 @@ using namespace hlib;
 TEST_CASE("CircularBuffer", "[buffer]")
 {
     CircularBuffer buffer(8);
-    uint8_t data[8];
+    char data[8];
 
     REQUIRE(8 == buffer.capacity());
     REQUIRE(0 == buffer.size());
     REQUIRE(true == buffer.empty());
 
-    REQUIRE(true == buffer.produce("abcd", 4, false));
+    REQUIRE(4 == buffer.produce("abcd", 4, false));
     REQUIRE(4 == buffer.size());
     REQUIRE(false == buffer.empty());
 
-    REQUIRE(false == buffer.produce("efghijkl", 8, false));
-    REQUIRE(4 == buffer.size());
-    REQUIRE(false == buffer.empty());
-
-    REQUIRE(false == buffer.consume(data, 8, false));
-    REQUIRE(4 == buffer.size());
-    REQUIRE(false == buffer.empty());
-
-    REQUIRE(true == buffer.produce("efgh", 4, false));
+    REQUIRE(4 == buffer.produce("efghijkl", 8, false));
     REQUIRE(8 == buffer.size());
     REQUIRE(false == buffer.empty());
 
-    REQUIRE(true == buffer.consume(data, 8, false));
+    REQUIRE(4 == buffer.consume(data, 4, false));
+    REQUIRE(4 == buffer.size());
+    REQUIRE(false == buffer.empty());
+
+    REQUIRE(4 == buffer.produce("ijkl", 4, false));
+    REQUIRE(8 == buffer.size());
+    REQUIRE(false == buffer.empty());
+
+    REQUIRE(8 == buffer.consume(data, 8, false));
     REQUIRE(0 == buffer.size());
     REQUIRE(true == buffer.empty());
-    REQUIRE(0 == memcmp("abcdefgh", data, 8));
+    REQUIRE(0 == memcmp("efghijkl", data, 8));
 
-    REQUIRE(true == buffer.produce("abcd", 4, false));
-    REQUIRE(true == buffer.consume(data, 4, false));
+    REQUIRE(4 == buffer.produce("abcd", 4, false));
+    REQUIRE(4 == buffer.consume(data, 4, false));
     REQUIRE(0 == memcmp("abcd", data, 4));
-    REQUIRE(true == buffer.produce("efghijkl", 8, false));
-    REQUIRE(true == buffer.consume(data, 2, false));
+    REQUIRE(8 == buffer.produce("efghijkl", 8, false));
+    REQUIRE(2 == buffer.consume(data, 2, false));
     REQUIRE(0 == memcmp("ef", data, 2));
-    REQUIRE(true == buffer.consume(data, 4, false));
+    REQUIRE(4 == buffer.consume(data, 4, false));
     REQUIRE(0 == memcmp("ghij", data, 4));
-    REQUIRE(true == buffer.consume(data, 2, false));
+    REQUIRE(2 == buffer.consume(data, 2, false));
     REQUIRE(0 == memcmp("kl", data, 2));
 }
 

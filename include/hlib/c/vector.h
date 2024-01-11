@@ -77,18 +77,18 @@ HLIB_C_VISIBILITY void* hlib_vector_at(hlib_vector_t* vector, size_t index);
 
 #ifdef HLIB_C_VECTOR_IMPL
 
-void hlib_vector_init(hlib_vector_t* vector, size_t sizeof_type)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_init(hlib_vector_t* vector, size_t sizeof_type)
 {
     vector->sizeof_type = sizeof_type;
     hlib_buffer_init(&vector->buffer);
 }
 
-void hlib_vector_free(hlib_vector_t* vector)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_free(hlib_vector_t* vector)
 {
     hlib_buffer_free(&vector->buffer);
 }
 
-int hlib_vector_copy(hlib_vector_t* vector, hlib_vector_t const* that)
+HLIB_C_VISIBILITY_IMPL int hlib_vector_copy(hlib_vector_t* vector, hlib_vector_t const* that)
 {
     if (-1 == hlib_buffer_copy(&vector->buffer, &that->buffer)) {
         return -1;
@@ -97,80 +97,80 @@ int hlib_vector_copy(hlib_vector_t* vector, hlib_vector_t const* that)
     return 0;
 }
 
-void hlib_vector_move(hlib_vector_t* vector, hlib_vector_t* that)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_move(hlib_vector_t* vector, hlib_vector_t* that)
 {
     hlib_buffer_move(&vector->buffer, &that->buffer);
     vector->sizeof_type = that->sizeof_type;
     that->sizeof_type = 0;
 }
 
-size_t hlib_vector_capacity(hlib_vector_t const* vector)
+HLIB_C_VISIBILITY_IMPL size_t hlib_vector_capacity(hlib_vector_t const* vector)
 {
     return vector->buffer.capacity / vector->sizeof_type;
 }
 
-size_t hlib_vector_size(hlib_vector_t const* vector)
+HLIB_C_VISIBILITY_IMPL size_t hlib_vector_size(hlib_vector_t const* vector)
 {
     return vector->buffer.size / vector->sizeof_type;
 }
 
-void* hlib_vector_data(hlib_vector_t const* vector)
+HLIB_C_VISIBILITY_IMPL void* hlib_vector_data(hlib_vector_t const* vector)
 {
     return vector->buffer.data;
 }
 
-void hlib_vector_clear(hlib_vector_t* vector)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_clear(hlib_vector_t* vector)
 {
     hlib_buffer_clear(&vector->buffer);
 }
 
-void hlib_vector_shrink(hlib_vector_t* vector)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_shrink(hlib_vector_t* vector)
 {
     hlib_buffer_shrink(&vector->buffer);
 }
 
-void* hlib_vector_reserve(hlib_vector_t* vector, size_t capacity)
+HLIB_C_VISIBILITY_IMPL void* hlib_vector_reserve(hlib_vector_t* vector, size_t capacity)
 {
     return hlib_buffer_reserve(&vector->buffer, capacity * vector->sizeof_type);
 }
 
-void* hlib_vector_resize(hlib_vector_t* vector, size_t size)
+HLIB_C_VISIBILITY_IMPL void* hlib_vector_resize(hlib_vector_t* vector, size_t size)
 {
     return hlib_buffer_resize(&vector->buffer, size * vector->sizeof_type);
 }
 
-int hlib_vector_assign(hlib_vector_t* vector, void const* values, size_t size)
+HLIB_C_VISIBILITY_IMPL int hlib_vector_assign(hlib_vector_t* vector, void const* values, size_t size)
 {
     return hlib_buffer_assign(&vector->buffer, values, size * vector->sizeof_type);
 }
 
-int hlib_vector_append(hlib_vector_t* vector, void const* values, size_t size)
+HLIB_C_VISIBILITY_IMPL int hlib_vector_append(hlib_vector_t* vector, void const* values, size_t size)
 {
     return hlib_buffer_append(&vector->buffer, values, size * vector->sizeof_type);
 }
 
-int hlib_vector_insert(hlib_vector_t* vector, size_t index, void const* values, size_t size)
+HLIB_C_VISIBILITY_IMPL int hlib_vector_insert(hlib_vector_t* vector, size_t index, void const* values, size_t size)
 {
     return hlib_buffer_insert(&vector->buffer, index * vector->sizeof_type, values, size * vector->sizeof_type);
 }
 
-void hlib_vector_erase(hlib_vector_t* vector, size_t index, size_t size)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_erase(hlib_vector_t* vector, size_t index, size_t size)
 {
     hlib_buffer_erase(&vector->buffer, index * vector->sizeof_type, size * vector->sizeof_type);
 }
 
-int hlib_vector_push_back(hlib_vector_t* vector, void* value)
+HLIB_C_VISIBILITY_IMPL int hlib_vector_push_back(hlib_vector_t* vector, void* value)
 {
     return hlib_vector_append(vector, value, 1);
 }
 
-void hlib_vector_pop_back(hlib_vector_t* vector)
+HLIB_C_VISIBILITY_IMPL void hlib_vector_pop_back(hlib_vector_t* vector)
 {
     assert(vector->buffer.size > vector->sizeof_type);
     vector->buffer.size -= vector->sizeof_type;
 }
 
-void* hlib_vector_at(hlib_vector_t* vector, size_t index)
+HLIB_C_VISIBILITY_IMPL void* hlib_vector_at(hlib_vector_t* vector, size_t index)
 {
     if (index * vector->sizeof_type >= vector->buffer.size) {
         return NULL;

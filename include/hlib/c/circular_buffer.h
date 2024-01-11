@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2019 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ extern "C"
 #define HLIB_C_CIRCULAR_BUFFER_H
 
 #include "hlib/c/base.h"
-#include <stdbool.h>
 #include <pthread.h>
 
 typedef struct hlib_circular_buffer_s
@@ -57,8 +56,11 @@ HLIB_C_VISIBILITY void hlib_circular_buffer_free(hlib_circular_buffer_t* buffer)
 HLIB_C_VISIBILITY hlib_circular_buffer_t* hlib_circular_buffer_create(size_t capacity);
 HLIB_C_VISIBILITY void hlib_circular_buffer_destroy(hlib_circular_buffer_t* buffer);
 
-HLIB_C_VISIBILITY int hlib_circular_buffer_produce(hlib_circular_buffer_t* buffer, void const* data, size_t size, bool wait);
-HLIB_C_VISIBILITY int hlib_circular_buffer_consume(hlib_circular_buffer_t* buffer, void* data, size_t size, bool wait);
+HLIB_C_VISIBILITY size_t hlib_circular_buffer_producable(hlib_circular_buffer_t* buffer);
+HLIB_C_VISIBILITY size_t hlib_circular_buffer_consumable(hlib_circular_buffer_t* buffer);
+
+HLIB_C_VISIBILITY ssize_t hlib_circular_buffer_produce(hlib_circular_buffer_t* buffer, void const* data, size_t size, bool wait);
+HLIB_C_VISIBILITY ssize_t hlib_circular_buffer_consume(hlib_circular_buffer_t* buffer, void* data, size_t size, bool wait);
 
 #endif // HLIB_C_CIRCULAR_BUFFER_H
 
@@ -103,7 +105,7 @@ HLIB_C_VISIBILITY_IMPL hlib_circular_buffer_t* hlib_circular_buffer_create(size_
 {
     assert(capacity > 0);
 
-    hlib_circular_buffer_t* buffer = (hlib_circular_buffer_t*)malloc(sizeof(hlib_circular_buffer_t) + capacity);
+    hlib_circular_buffer_t* buffer = (hlib_circular_buffer_t*)malloc(offsetof(hlib_circular_buffer_t, data) + capacity);
     if (NULL == buffer) {
         return NULL;
     }
@@ -122,7 +124,17 @@ HLIB_C_VISIBILITY_IMPL void hlib_circular_buffer_destroy(hlib_circular_buffer_t*
     free(buffer);
 }
 
-HLIB_C_VISIBILITY_IMPL int hlib_circular_buffer_produce(hlib_circular_buffer_t* buffer, void const* data, size_t size, bool wait)
+HLIB_C_VISIBILITY size_t hlib_circular_buffer_producable(hlib_circular_buffer_t* buffer)
+{
+    return buffer->capacity - buffer->size;
+}
+
+HLIB_C_VISIBILITY size_t hlib_circular_buffer_consumable(hlib_circular_buffer_t* buffer)
+{
+    return buffer->size;
+}
+
+HLIB_C_VISIBILITY_IMPL ssize_t hlib_circular_buffer_produce(hlib_circular_buffer_t* buffer, void const* data, size_t size, bool wait)
 {
     assert(NULL != buffer);
     assert(NULL != data);
@@ -135,9 +147,8 @@ HLIB_C_VISIBILITY_IMPL int hlib_circular_buffer_produce(hlib_circular_buffer_t* 
 
     while (buffer->capacity - buffer->size < size) {
         if (false == wait) {
-            pthread_mutex_unlock(&buffer->mutex);
-            errno = EAGAIN;
-            return -1;
+            size = hlib_circular_buffer_producable(buffer);
+            break;
         }
 
         pthread_cond_wait(&buffer->consumed, &buffer->mutex);
@@ -167,10 +178,10 @@ HLIB_C_VISIBILITY_IMPL int hlib_circular_buffer_produce(hlib_circular_buffer_t* 
 
     pthread_mutex_unlock(&buffer->mutex);
     pthread_cond_signal(&buffer->produced);
-    return 0;
+    return size;
 }
 
-HLIB_C_VISIBILITY_IMPL int hlib_circular_buffer_consume(hlib_circular_buffer_t* buffer, void* data, size_t size, bool wait)
+HLIB_C_VISIBILITY_IMPL ssize_t hlib_circular_buffer_consume(hlib_circular_buffer_t* buffer, void* data, size_t size, bool wait)
 {
     assert(NULL != buffer);
     assert(NULL != data);
@@ -182,12 +193,11 @@ HLIB_C_VISIBILITY_IMPL int hlib_circular_buffer_consume(hlib_circular_buffer_t* 
 
     while (buffer->size < size) {
         if (false == wait) {
-            pthread_mutex_unlock(&buffer->mutex);
-            errno = EAGAIN;
-            return -1;
+            size = hlib_circular_buffer_consumable(buffer);
+            break;
         }
 
-        pthread_cond_wait(&buffer->consumed, &buffer->mutex);
+        pthread_cond_wait(&buffer->produced, &buffer->mutex);
     }
 
     if (buffer->tail >= buffer->head) {
@@ -212,7 +222,7 @@ HLIB_C_VISIBILITY_IMPL int hlib_circular_buffer_consume(hlib_circular_buffer_t* 
 
     pthread_mutex_unlock(&buffer->mutex);
     pthread_cond_signal(&buffer->consumed);
-    return 0;
+    return size;
 }
 
 #endif // HLIB_C_BUFFER_IMPL

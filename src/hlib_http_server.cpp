@@ -440,7 +440,7 @@ void Server::onPoll(int fd, std::uint32_t events)
     assert(EventLoop::Read == events);   (void)events;
 
     if (hserv_poll(m_hserv) < 0) {
-        throwf<std::runtime_error>("HTTP server poll failed ({})", get_error_string());
+        throw make_system_error(errno, "HTTP server poll failed");
     }
 }
 

@@ -25,6 +25,7 @@
 
 #include "hlib/buffer.hpp"
 #include "hlib/memory.hpp"
+#include "hlib/result.hpp"
 #include <array>
 #include <cstdio>
 #include <filesystem>
@@ -44,51 +45,53 @@ bool is_creatable(std::filesystem::path const& filepath) noexcept;
 bool is_readable(std::filesystem::path const& filepath) noexcept;
 bool is_writable(std::filesystem::path const& filepath) noexcept;
 
-//
-// These functions follow the std::filesystem convention of passing
-// a std::error_code to differentiate between the noexcept and exception
-// throwing variants.
-//
-std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
+Result<>      read(std::istream& stream, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept;
 std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size);
 
-Buffer read(std::istream& stream, std::size_t partial_size, std::error_code& error_code) noexcept;
-Buffer read(std::istream& stream, std::size_t partial_size);
+Result<Buffer> read(std::istream& stream, std::size_t batch_size, std::nothrow_t) noexcept;
+       Buffer  read(std::istream& stream, std::size_t batch_size);
 
-ssize_t read(FILE* file, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
-ssize_t read(FILE* file, Buffer& buffer, std::size_t size);
+Result<std::size_t> read(FILE* file, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  read(FILE* file, Buffer& buffer, std::size_t size);
 
-Buffer read(FILE* file, std::size_t partial_size, std::error_code& error_code) noexcept;
-Buffer read(FILE* file, std::size_t partial_size);
+Result<Buffer> read(FILE* file, std::size_t batch_size, std::nothrow_t) noexcept;
+       Buffer  read(FILE* file, std::size_t batch_size);
 
-ssize_t read(int fd, Buffer& buffer, std::size_t size, std::error_code& error_code) noexcept;
-ssize_t read(int fd, Buffer& buffer, std::size_t size);
+Result<std::size_t> read(int fd, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  read(int fd, Buffer& buffer, std::size_t size);
 
-Buffer read(int fd, std::size_t partial_size, std::error_code& error_code) noexcept;
-Buffer read(int fd, std::size_t partial_size);
+Result<Buffer> read(int fd, std::size_t batch_size, std::nothrow_t) noexcept;
+       Buffer  read(int fd, std::size_t batch_size);
 
-Buffer read(std::string const& filepath, std::error_code& error_code) noexcept;
-Buffer read(std::string const& filepath);
+Result<Buffer> read(std::string const& filepath, std::nothrow_t) noexcept;
+       Buffer  read(std::string const& filepath);
 
-std::ostream& write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept;
+Result<>      write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept;
 std::ostream& write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size);
 
-void write(std::ostream& stream, Buffer const& buffer, std::error_code& error_code) noexcept;
-void write(std::ostream& stream, Buffer const& buffer);
+Result<> write(std::ostream& stream, Buffer const& buffer, std::nothrow_t) noexcept;
+void     write(std::ostream& stream, Buffer const& buffer);
 
-ssize_t write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size, std::error_code& error_code) noexcept;
-ssize_t write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size);
+Result<std::size_t> write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size);
 
-void write(FILE* file, Buffer const& buffer, std::error_code& error_code) noexcept;
-void write(FILE* file, Buffer const& buffer);
+Result<std::size_t> write(FILE* file, Buffer const& buffer, std::nothrow_t) noexcept;
+       std::size_t  write(FILE* file, Buffer const& buffer);
 
-void write(std::string const& filepath, Buffer const& buffer, std::error_code& error_code) noexcept;
-void write(std::string const& filepath, Buffer const& buffer);
+Result<std::size_t> write(int fd, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  write(int fd, Buffer const& buffer, std::size_t& offset, std::size_t size);
+
+Result<std::size_t> write(int fd, Buffer const& buffer, std::nothrow_t) noexcept;
+       std::size_t  write(int fd, Buffer const& buffer);
+
+Result<> write(std::string const& filepath, Buffer const& buffer, std::nothrow_t) noexcept;
+void     write(std::string const& filepath, Buffer const& buffer);
 
 std::string get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type);
 std::string get_mime_type_from_file(std::string const& pathname, std::string const& default_mime_type);
 
-bool fd_set_non_blocking(int fd, bool enable) noexcept;
+Result<> fd_set_non_blocking(int fd, bool enable, std::nothrow_t) noexcept;
+void fd_set_non_blocking(int fd, bool enable);
 
 void fd_close(int fd) noexcept;
 
@@ -106,7 +109,7 @@ public:
 
     operator FILE*() const noexcept;
 
-    bool open(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept;
+    Result<> open(std::string const& filepath, std::string const& mode, std::nothrow_t) noexcept;
     void open(std::string const& filepath, std::string const& mode);
     void close() noexcept;
     FILE* release() noexcept;
@@ -149,7 +152,7 @@ public:
         m_fds[index] = std::move(fd);
     }
 
-    bool open(std::error_code& error_code) noexcept;
+    Result<> open(std::nothrow_t) noexcept;
     void open();
 
     template<std::size_t index>
@@ -166,3 +169,4 @@ private:
 
 } // namespace file
 } // namespace hlib
+

@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -91,76 +91,76 @@ bool CircularBuffer::empty() const noexcept
     return 0 == size();
 }
 
-bool CircularBuffer::produce(void const* data, std::size_t size, bool wait, std::nothrow_t) noexcept
+Result<std::size_t> CircularBuffer::produce(void const* data, std::size_t size, bool wait, std::nothrow_t) noexcept
 {
-    return -1 != hlib_circular_buffer_produce(m_buffer, data, size, wait);
-}
-
-bool CircularBuffer::produce(void const* data, std::size_t size, bool wait)
-{
-    bool result = produce(data, size, wait, std::nothrow);
-    if (false == result) {
-        if (EAGAIN != errno) {
-            auto error_code = std::make_error_code(static_cast<std::errc>(errno));
-            throw std::system_error(error_code, "hlib_circular_buffer_produce() failed");
-        }
-        return false;
+    ssize_t produced = hlib_circular_buffer_produce(m_buffer, data, size, wait);
+    if (-1 == produced) {
+        return make_system_error(errno);
     }
 
-    return true;
+    return produced;
 }
 
-bool CircularBuffer::produce(Buffer const& buffer, bool wait, std::nothrow_t) noexcept
+std::size_t CircularBuffer::produce(void const* data, std::size_t size, bool wait)
+{
+    Result<std::size_t> result = produce(data, size, wait, std::nothrow);
+    if (true == result.failure()) {
+        throw result.error();
+    }
+
+    return result.value();
+}
+
+Result<std::size_t> CircularBuffer::produce(Buffer const& buffer, bool wait, std::nothrow_t) noexcept
 {
     return produce(buffer.data(), buffer.size(), wait, std::nothrow);
 }
 
-bool CircularBuffer::produce(Buffer const& buffer, bool wait)
+std::size_t  CircularBuffer::produce(Buffer const& buffer, bool wait)
 {
     return produce(buffer.data(), buffer.size(), wait);
 }
 
-bool CircularBuffer::consume(void* data, std::size_t size, bool wait, std::nothrow_t) noexcept
+Result<std::size_t> CircularBuffer::consume(void* data, std::size_t size, bool wait, std::nothrow_t) noexcept
 {
-    return -1 != hlib_circular_buffer_consume(m_buffer, data, size, wait);
-}
-
-bool CircularBuffer::consume(void* data, std::size_t size, bool wait)
-{
-    bool result = consume(data, size, wait, std::nothrow);
-    if (false == result) {
-        if (EAGAIN != errno) {
-            auto error_code = std::make_error_code(static_cast<std::errc>(errno));
-            throw std::system_error(error_code, "hlib_circular_buffer_consume() failed");
-        }
-        return false;
+    ssize_t consumed = hlib_circular_buffer_consume(m_buffer, data, size, wait);
+    if (-1 == consumed) {
+        return make_system_error(errno);
     }
 
-    return true;
+    return consumed;
 }
 
-bool CircularBuffer::consume(Buffer& buffer, std::size_t size, bool wait, std::nothrow_t) noexcept
+std::size_t CircularBuffer::consume(void* data, std::size_t size, bool wait)
+{
+    Result<std::size_t> result = consume(data, size, wait, std::nothrow);
+    if (true == result.failure()) {
+        throw result.error();
+    }
+
+    return result.value();
+}
+
+Result<std::size_t> CircularBuffer::consume(Buffer& buffer, std::size_t size, bool wait, std::nothrow_t) noexcept
 {
     void* data = buffer.extend(size, std::nothrow);
     if (nullptr == data) {
-        return false;
+        return make_system_error(errno);
     }
 
-    if (false == consume(data, size, wait, std::nothrow)) {
-        return false;
+    Result<std::size_t> result = consume(data, size, wait, std::nothrow);
+    if (true == result.success()) {
+        buffer.resize(buffer.size() + size);
     }
 
-    buffer.resize(buffer.size() + size);
-    return true;
+    return result;
 }
 
-bool CircularBuffer::consume(Buffer& buffer, std::size_t size, bool wait)
+std::size_t CircularBuffer::consume(Buffer& buffer, std::size_t size, bool wait)
 {
-    if (false == consume(buffer.extend(size), size, wait)) {
-        return false;
-    }
+    size = consume(buffer.extend(size), size, wait);
 
     buffer.resize(buffer.size() + size);
-    return true;
+    return size;
 }
 

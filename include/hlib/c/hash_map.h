@@ -271,7 +271,7 @@ static int hlib_hash_map_get_insertion_iterator(hlib_hash_map_t const* const map
 //
 // Public
 //
-int hlib_hash_map_init(hlib_hash_map_t* map, size_t capacity)
+HLIB_C_VISIBILITY_IMPL int hlib_hash_map_init(hlib_hash_map_t* map, size_t capacity)
 {
     assert(NULL != map);
 
@@ -287,7 +287,7 @@ int hlib_hash_map_init(hlib_hash_map_t* map, size_t capacity)
     return 0;
 }
 
-void hlib_hash_map_free(hlib_hash_map_t* map)
+HLIB_C_VISIBILITY_IMPL void hlib_hash_map_free(hlib_hash_map_t* map)
 {
     assert(NULL != map);
 
@@ -297,7 +297,7 @@ void hlib_hash_map_free(hlib_hash_map_t* map)
     memset(map, 0, sizeof(hlib_hash_map_t));
 }
 
-int hlib_hash_map_reserve(hlib_hash_map_t* map, size_t capacity)
+HLIB_C_VISIBILITY_IMPL int hlib_hash_map_reserve(hlib_hash_map_t* map, size_t capacity)
 {
     assert(NULL != map);
     assert(hlib_hash_map_is_pow2(capacity));
@@ -359,7 +359,7 @@ int hlib_hash_map_reserve(hlib_hash_map_t* map, size_t capacity)
     return r;
 }
 
-void hlib_hash_map_clear(hlib_hash_map_t* map)
+HLIB_C_VISIBILITY_IMPL void hlib_hash_map_clear(hlib_hash_map_t* map)
 {
     assert(NULL != map);
 
@@ -367,7 +367,7 @@ void hlib_hash_map_clear(hlib_hash_map_t* map)
     memset(map->entries, 0, sizeof(hlib_hash_map_entry_t) * map->capacity);
 }
 
-int hlib_hash_map_insert(hlib_hash_map_t* map,
+HLIB_C_VISIBILITY_IMPL int hlib_hash_map_insert(hlib_hash_map_t* map,
     void const* key, size_t key_length, void const* value)
 {
     assert(NULL != map);
@@ -409,7 +409,7 @@ int hlib_hash_map_insert(hlib_hash_map_t* map,
     return r;
 }
 
-void const* hlib_hash_map_erase(hlib_hash_map_t* map, void const* key, size_t key_length)
+HLIB_C_VISIBILITY_IMPL void const* hlib_hash_map_erase(hlib_hash_map_t* map, void const* key, size_t key_length)
 {
     size_t it = hlib_hash_map_find_iterator(map, key, key_length);
     if (hlib_hash_map_end(map) == it) {
@@ -422,13 +422,13 @@ void const* hlib_hash_map_erase(hlib_hash_map_t* map, void const* key, size_t ke
     return value;
 }
 
-void const* hlib_hash_map_find(hlib_hash_map_t* map, void const* key, size_t key_length)
+HLIB_C_VISIBILITY_IMPL void const* hlib_hash_map_find(hlib_hash_map_t* map, void const* key, size_t key_length)
 {
     size_t it = hlib_hash_map_find_iterator(map, key, key_length);
     return hlib_hash_map_end(map) != it ? map->entries[it].value : NULL;
 }
 
-hlib_hash_map_iterator_t hlib_hash_map_begin(hlib_hash_map_t* map)
+HLIB_C_VISIBILITY_IMPL hlib_hash_map_iterator_t hlib_hash_map_begin(hlib_hash_map_t* map)
 {
     assert(NULL != map);
 
@@ -443,14 +443,14 @@ hlib_hash_map_iterator_t hlib_hash_map_begin(hlib_hash_map_t* map)
     return hlib_hash_map_end(map);
 }
 
-hlib_hash_map_iterator_t hlib_hash_map_end(hlib_hash_map_t* map)
+HLIB_C_VISIBILITY_IMPL hlib_hash_map_iterator_t hlib_hash_map_end(hlib_hash_map_t* map)
 {
     assert(NULL != map);
     (void)map;
     return (hlib_hash_map_iterator_t)-1;
 }
 
-hlib_hash_map_iterator_t hlib_hash_map_next(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
+HLIB_C_VISIBILITY_IMPL hlib_hash_map_iterator_t hlib_hash_map_next(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
 {
     assert(NULL != map);
     assert(it < map->capacity);
@@ -464,7 +464,7 @@ hlib_hash_map_iterator_t hlib_hash_map_next(hlib_hash_map_t* map, hlib_hash_map_
     return hlib_hash_map_end(map);
 }
 
-hlib_hash_map_iterator_t hlib_hash_map_find_iterator(hlib_hash_map_t* map,
+HLIB_C_VISIBILITY_IMPL hlib_hash_map_iterator_t hlib_hash_map_find_iterator(hlib_hash_map_t* map,
     void const* key, size_t key_length)
 {
     size_t it = hlib_hash_map_get_iterator(map, (uint8_t const*)key, key_length);
@@ -482,7 +482,7 @@ hlib_hash_map_iterator_t hlib_hash_map_find_iterator(hlib_hash_map_t* map,
     return hlib_hash_map_end(map);
 }
 
-void const* hlib_hash_map_get_key(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
+HLIB_C_VISIBILITY_IMPL void const* hlib_hash_map_get_key(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
 {
     assert(NULL != map);
     assert(it < map->capacity);
@@ -490,7 +490,7 @@ void const* hlib_hash_map_get_key(hlib_hash_map_t* map, hlib_hash_map_iterator_t
     return map->entries[it].key;
 }
 
-size_t hlib_hash_map_get_key_length(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
+HLIB_C_VISIBILITY_IMPL size_t hlib_hash_map_get_key_length(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
 {
     assert(NULL != map);
     assert(it < map->capacity);
@@ -498,7 +498,7 @@ size_t hlib_hash_map_get_key_length(hlib_hash_map_t* map, hlib_hash_map_iterator
     return map->entries[it].key_length;
 }
 
-void const* hlib_hash_map_get_value(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
+HLIB_C_VISIBILITY_IMPL void const* hlib_hash_map_get_value(hlib_hash_map_t* map, hlib_hash_map_iterator_t it)
 {
     assert(NULL != map);
     assert(it < map->capacity);

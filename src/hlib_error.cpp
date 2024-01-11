@@ -29,143 +29,6 @@
 using namespace hlib;
 
 //
-// Public (Error)
-//
-Error::Error(std::error_code const& code)
-    : m_value(code)
-{
-}
-
-Error::Error(std::error_code&& code) noexcept
-    : m_value(std::move(code))
-{
-}
-
-Error::Error(std::errc code)
-    : Error(std::make_error_code(code))
-{
-}
-
-Error::Error(std::string const& string)
-    : m_value(string)
-{
-}
-
-Error::Error(std::string&& string) noexcept
-    : m_value(std::move(string))
-{
-}
-
-Error& Error::operator =(std::error_code const& code)
-{
-    m_value = code;
-    return *this;
-}
-
-Error& Error::operator =(std::error_code&& code) noexcept
-{
-    m_value = std::move(code);
-    return *this;
-}
-
-Error& Error::operator =(std::errc code)
-{
-    m_value = std::make_error_code(code);
-    return *this;
-}
-
-Error& Error::operator =(std::string const& string)
-{
-    m_value = string;
-    return *this;
-}
-
-Error& Error::operator =(std::string&& string) noexcept
-{
-    m_value = std::move(string);
-    return *this;
-}
-
-bool Error::operator == (Error const& that) const noexcept
-{
-    return that.m_value == m_value;
-}
-
-bool Error::operator != (Error const& that) const noexcept
-{
-    return that.m_value != m_value;
-}
-
-bool Error::operator !() const noexcept
-{
-    return success();
-}
-
-Error::operator bool() const noexcept
-{
-    return failure();
-}
-
-Error::Index Error::index() const noexcept
-{
-    return static_cast<Index>(m_value.index());
-}
-
-bool Error::success() const noexcept
-{
-    return None == index();
-}
-
-bool Error::failure() const noexcept
-{
-    return None != index();
-}
-
-Error::Value const& Error::value() const noexcept
-{
-    return m_value;
-}
-
-Error::Value& Error::value() noexcept
-{
-    return m_value;
-}
-
-std::error_code const& Error::code() const
-{
-    return std::get<Code>(m_value);
-}
-
-std::error_code& Error::code()
-{
-    return std::get<Code>(m_value);
-}
-
-std::string const& Error::string() const
-{
-    return std::get<String>(m_value);
-}
-
-std::string& Error::string()
-{
-    return std::get<String>(m_value);
-}
-
-void Error::clear() noexcept
-{
-    m_value = Value();
-}
-
-char const* Error::what() const noexcept
-{
-    if (String == index()) {
-        return std::get<String>(m_value).c_str();
-    }
-
-    return "";
-}
-
-//
 // Public
 //
 int hlib::get_socket_error(int fd) noexcept
@@ -191,5 +54,20 @@ std::string hlib::get_error_string(int error_no)
 std::string hlib::get_error_string()
 {
     return get_error_string(errno);
+}
+
+std::error_code hlib::make_error_code(int posix_errno)
+{
+    return std::make_error_code(static_cast<std::errc>(posix_errno));
+}
+
+std::system_error hlib::make_system_error(int posix_errno)
+{
+    return std::system_error(make_error_code(posix_errno));
+}
+
+std::system_error hlib::make_system_error(int posix_errno, std::string const& what)
+{
+    return std::system_error(make_error_code(posix_errno), what);
 }
 
