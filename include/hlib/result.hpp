@@ -23,8 +23,7 @@
 //
 #pragma once
 
-#include <system_error>
-#include <variant>
+#include "hlib/error.hpp"
 
 namespace hlib
 {
@@ -34,7 +33,7 @@ class Result final
 {
 public:
     typedef T Type;
-    typedef std::variant<T, std::system_error> Value;
+    typedef std::variant<T, Error> Value;
 
 public:
     Result() = default;
@@ -49,13 +48,25 @@ public:
     {
     }
 
-    Result(std::system_error const &error)
+    Result(Error const &error)
         : m_value(std::in_place_index<1>, error)
     {
     }
 
-    Result(std::system_error&& error)
+    Result(Error&& error)
         : m_value(std::in_place_index<1>, std::move(error))
+    {
+    }
+
+    template<typename E, typename = std::enable_if_t<std::is_base_of<std::exception, E>::value>>
+    Result(E const& exception)
+        : m_value(std::in_place_index<1>, Error(exception))
+    {
+    }
+
+    template<typename E, typename = std::enable_if_t<std::is_base_of<std::exception, E>::value>>
+    Result(E&& exception)
+        : m_value(std::in_place_index<1>, Error(std::move(exception)))
     {
     }
 
@@ -71,15 +82,29 @@ public:
         return *this;
     }
 
-    Result& operator =(std::system_error const &error)
+    Result& operator =(Error const &error)
     {
         m_value = Value(std::in_place_index<1>, error);
         return *this;
     }
 
-    Result& operator =(std::system_error&& error)
+    Result& operator =(Error&& error)
     {
         m_value = Value(std::in_place_index<1>, std::move(error));
+        return *this;
+    }
+
+    template<typename E, typename = std::enable_if_t<std::is_base_of<std::exception, E>::value>>
+    Result& operator =(E const &exception)
+    {
+        m_value = Value(std::in_place_index<1>, Error(exception));
+        return *this;
+    }
+
+    template<typename E, typename = std::enable_if_t<std::is_base_of<std::exception, E>::value>>
+    Result& operator =(E&& error)
+    {
+        m_value = Value(std::in_place_index<1>, Error(std::move(error)));
         return *this;
     }
 
@@ -123,12 +148,12 @@ public:
         return std::get<0>(m_value);
     }
 
-    std::system_error const& error() const
+    Error const& error() const
     {
         return std::get<1>(m_value);
     }
 
-    std::system_error& error()
+    Error& error()
     {
         return std::get<1>(m_value);
     }
@@ -141,7 +166,7 @@ template<typename T = void>
 T throw_or_value(Result<T> result)
 {
     if (true == result.failure()) {
-        throw result.error();
+        result.error().toss();
     }
 
     return std::move(result.value());

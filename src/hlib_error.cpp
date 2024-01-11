@@ -28,6 +28,57 @@
 
 using namespace hlib;
 
+namespace
+{
+
+template<class... Ts>
+struct Overloaded : Ts... { using Ts::operator()...; };
+
+template<class... Ts>
+Overloaded(Ts...) -> Overloaded<Ts...>;
+
+} // namespace
+
+//
+// Public (Error)
+//
+std::error_code Error::code() const
+{
+    if (false == std::holds_alternative<std::system_error>(m_value)) {
+        return std::error_code();
+    }
+
+    return std::get<std::system_error>(m_value).code();
+}
+
+std::string Error::what() const
+{
+    return std::visit(Overloaded{
+        [](std::bad_alloc const& /* e */) noexcept
+        {
+            return "bad alloc";
+        },
+        [](auto const& e) noexcept
+        {
+            return e.what();
+        }
+    }, m_value);
+
+    return std::string();
+}
+
+[[noreturn]] void Error::toss() const
+{
+    std::visit(Overloaded{
+        [](auto const& e)
+        {
+            throw e;
+        }
+    }, m_value);
+
+    throw std::bad_variant_access();
+}
+
 //
 // Public
 //

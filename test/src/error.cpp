@@ -23,6 +23,27 @@
 //
 #include "test.hpp"
 #include "hlib/error.hpp"
+#include "hlib/string.hpp"
+
+#include "hlib/format.hpp"
 
 using namespace hlib;
 
+TEST_CASE("Error", "[error]")
+{
+    Error logic_error(std::logic_error("logic error"));
+    REQUIRE("logic error" == logic_error.what());
+    REQUIRE_THROWS(logic_error.toss());
+
+    Error runtime_error(std::runtime_error("runtime error"));
+    REQUIRE("runtime error" == runtime_error.what());
+    REQUIRE_THROWS(runtime_error.toss());
+
+    Error system_error(make_system_error(EAGAIN, "system error"));
+    REQUIRE(true == contains(system_error.what(), "system error"));
+    REQUIRE_THROWS(system_error.toss());
+
+    Error bad_alloc(std::bad_alloc{});
+    REQUIRE("bad alloc" == bad_alloc.what());
+    REQUIRE_THROWS(bad_alloc.toss());
+}

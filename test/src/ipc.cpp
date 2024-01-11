@@ -77,10 +77,11 @@ void test(std::string const& type, IPC& producer, IPC& consumer, std::size_t siz
         cumulative += results[sample];
     }
 
-    fmt::print("---- {} : {} ----\n", type, size);
-    fmt::print("min: {}us\n", min.value());
-    fmt::print("max: {}us\n", max.value());
-    fmt::print("avg: {}us\n", cumulative.value() / samples);
+    (void)type;
+    // fmt::print("---- {} : {} ----\n", type, size);
+    // fmt::print("min: {}us\n", min.value());
+    // fmt::print("max: {}us\n", max.value());
+    // fmt::print("avg: {}us\n", cumulative.value() / samples);
 };
 
 } // namespace

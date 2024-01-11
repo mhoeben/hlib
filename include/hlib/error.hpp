@@ -24,11 +24,66 @@
 #pragma once
 
 #include <errno.h>
+#include <stdexcept>
 #include <string>
 #include <system_error>
+#include <variant>
 
 namespace hlib
 {
+
+class Error final
+{
+public:
+    typedef std::variant<
+        std::logic_error,
+            std::invalid_argument,
+            std::domain_error,
+            std::length_error,
+            std::out_of_range,
+        std::runtime_error,
+            std::range_error,
+            std::overflow_error,
+            std::underflow_error,
+            std::system_error,
+        std::bad_alloc
+    > Value;
+
+public:
+    template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
+    Error(T const& value)
+        : m_value(value)
+    {
+    }
+
+    template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
+    Error(T&& value)
+        : m_value(std::move(value))
+    {
+    }
+
+    template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
+    Error& operator =(T const& value)
+    {
+        m_value = value;
+        return *this;
+    }
+
+    template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
+    Error& operator =(T&& value)
+    {
+        m_value = std::move(value);
+        return *this;
+    }
+
+    std::error_code code() const;
+    std::string what() const;
+
+    [[noreturn]] void toss() const;
+
+private:
+    Value m_value;
+};
 
 int get_socket_error(int fd) noexcept;
 
