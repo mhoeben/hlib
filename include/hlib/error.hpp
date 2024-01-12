@@ -36,17 +36,18 @@ class Error final
 {
 public:
     typedef std::variant<
-        std::logic_error,
-            std::invalid_argument,
-            std::domain_error,
-            std::length_error,
-            std::out_of_range,
-        std::runtime_error,
-            std::range_error,
-            std::overflow_error,
-            std::underflow_error,
-            std::system_error,
-        std::bad_alloc
+        std::exception,
+            std::logic_error,
+                std::invalid_argument,
+                std::domain_error,
+                std::length_error,
+                std::out_of_range,
+            std::runtime_error,
+                std::range_error,
+                std::overflow_error,
+                std::underflow_error,
+                std::system_error,
+            std::bad_alloc
     > Value;
 
 public:

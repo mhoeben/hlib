@@ -25,8 +25,6 @@
 #include "hlib/error.hpp"
 #include "hlib/string.hpp"
 
-#include "hlib/format.hpp"
-
 using namespace hlib;
 
 TEST_CASE("Error", "[error]")
