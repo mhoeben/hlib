@@ -229,20 +229,20 @@ void Subprocess::onStreamUpdate(std::uint32_t events)
     m_event_loop_private->interrupt();
 }
 
-int Subprocess::run(std::vector<char const*> argv)
+Result<int> Subprocess::run(std::vector<char const*> argv)
 {
     using namespace std::placeholders;
 
     assert(-1 == m_pid);
 
     m_state = Failed;
-    m_return_code = Pending;
+    m_return_code = 0;
 
     std::shared_ptr<EventLoop> event_loop = m_event_loop_private
         ? m_event_loop_private
         : m_event_loop_extern.lock();
     if (nullptr == event_loop) {
-        throwf<std::logic_error>("Event loop not available");
+        return std::logic_error("Event loop not available");
     }
 
     if (nullptr == m_input.m_on_update) {
@@ -287,7 +287,7 @@ int Subprocess::run(std::vector<char const*> argv)
 
     switch (m_pid = fork()) {
     case -1:
-        throwf<std::runtime_error>("fork() failed ({})", get_error_string());
+        return make_system_error(errno, "fork() failed");
 
     case 0:
         event_loop.reset();
@@ -375,7 +375,7 @@ int Subprocess::run(std::vector<char const*> argv)
         m_state = Running;
 
         if (nullptr == m_event_loop_private) {
-            return Pending;
+            return 0;
         }
 
         if (true == redirect) {
@@ -446,7 +446,7 @@ Subprocess::Subprocess(Subprocess&& that) noexcept
     , m_output_buffer(std::move(that.m_output_buffer))
     , m_error_buffer(std::move(that.m_error_buffer))
 {
-    that.m_return_code = Pending;
+    that.m_return_code = 0;
 }
 
 Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
@@ -460,7 +460,7 @@ Subprocess& Subprocess::operator =(Subprocess&& that) noexcept
     m_output_buffer = std::move(that.m_output_buffer);
     m_error_buffer = std::move(that.m_error_buffer);
 
-    that.m_return_code = Pending;
+    that.m_return_code = 0;
     return *this;
 }
 
@@ -510,54 +510,89 @@ void Subprocess::setCloseFDs(bool enable, std::set<int> exceptions)
     m_close_fds_exceptions = std::move(exceptions);
 }
 
-int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
+Result<int> Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::nothrow_t) noexcept
 {
     return run(to_argv(command, args));
+}
+
+Result<int> Subprocess::run(std::string const& command, std::vector<std::string> const& args, Stream input, std::nothrow_t) noexcept
+{
+    m_input = std::move(input);
+    return run(to_argv(command, args));
+}
+
+Result<int> Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::string const& input, std::nothrow_t) noexcept
+{
+    m_input = std::make_shared<Buffer>(input);
+    return run(to_argv(command, args));
+}
+
+Result<int> Subprocess::run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error, std::nothrow_t) noexcept
+{
+    m_input = std::move(input);
+    m_output = std::move(output);
+    m_error = std::move(error);
+    return run(to_argv(command, args));
+}
+
+Result<int> Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error, std::nothrow_t) noexcept
+{
+    m_input = std::make_shared<Buffer>(input);
+    m_output = std::move(output);
+    m_error = std::move(error);
+    return run(to_argv(command, args));
+}
+
+int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
+{
+    return throw_or_value(run(command, args, std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, Stream input)
 {
-    m_input = std::move(input);
-    return run(to_argv(command, args));
+    return throw_or_value(run(command, args, std::move(input), std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::string const& input)
 {
-    m_input = std::make_shared<Buffer>(input);
-    return run(to_argv(command, args));
+    return throw_or_value(run(command, args, input, std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error)
 {
-    m_input = std::move(input);
-    m_output = std::move(output);
-    m_error = std::move(error);
-    return run(to_argv(command, args));
+    return throw_or_value(run(command, args, std::move(input), std::move(output), std::move(error), std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error)
 {
-    m_input = std::make_shared<Buffer>(input);
-    m_output = std::move(output);
-    m_error = std::move(error);
-    return run(to_argv(command, args));
+    return throw_or_value(run(command, args, input, std::move(output), std::move(error), std::nothrow));
 }
 
-bool Subprocess::kill(int signal) noexcept
+Result<> Subprocess::kill(int signal, std::nothrow_t) noexcept
 {
     if (m_pid <= 0) {
         errno = 0;
-        return false;
+        return Result<>();
     }
 
     if (-1 == ::kill(m_pid, signal)) {
-        return false;
+        return make_system_error(errno, "kill() failed");
     }
 
-    return true;
+    return Result<>();
 }
 
-int Subprocess::wait()
+Result<> Subprocess::kill(std::nothrow_t) noexcept
+{
+    return kill(SIGKILL, std::nothrow);
+}
+
+void Subprocess::kill(int signal)
+{
+    throw_or_value(kill(signal, std::nothrow));
+}
+
+Result<int> Subprocess::wait(std::nothrow_t) noexcept
 {
     assert(Running == m_state);
 
@@ -566,7 +601,7 @@ int Subprocess::wait()
     m_state = Failed;
 
     if (m_pid != waitpid(m_pid, &status, 0)) {
-        throwf<std::runtime_error>("waitpid failed ({})", get_error_string());
+        return make_system_error(errno, "waitpid() failed");
     }
 
     if (WIFEXITED(status)) {
@@ -596,3 +631,9 @@ int Subprocess::wait()
     m_state = Exited;
     return m_return_code;
 }
+
+int Subprocess::wait()
+{
+    return throw_or_value(wait(std::nothrow));
+}
+

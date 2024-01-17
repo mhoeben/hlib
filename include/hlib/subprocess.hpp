@@ -26,6 +26,7 @@
 #include "hlib/buffer.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/memory.hpp"
+#include "hlib/result.hpp"
 #include <csignal>
 #include <fcntl.h>
 #include <set>
@@ -43,10 +44,6 @@ class Subprocess final
     HLIB_NOT_COPYABLE(Subprocess);
 
 public:
-    static constexpr int Pending{ -2 };
-    static constexpr int Failure{ -1 };
-    static constexpr int Success{ 0 };
-
     enum State
     {
         Idle,
@@ -111,13 +108,23 @@ public:
     void setError(Stream error) noexcept;
     void setCloseFDs(bool enable, std::set<int> exceptions = { STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO });
 
+    Result<int> run(std::string const& command, std::vector<std::string> const& args, std::nothrow_t) noexcept;
+    Result<int> run(std::string const& command, std::vector<std::string> const& args, Stream input, std::nothrow_t) noexcept;
+    Result<int> run(std::string const& command, std::vector<std::string> const& args, std::string const& input, std::nothrow_t) noexcept;
+    Result<int> run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error, std::nothrow_t) noexcept;
+    Result<int> run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error, std::nothrow_t) noexcept;
+
     int run(std::string const& command, std::vector<std::string> const& args);
     int run(std::string const& command, std::vector<std::string> const& args, Stream input);
     int run(std::string const& command, std::vector<std::string> const& args, std::string const& input);
     int run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error);
     int run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error);
 
-    bool kill(int signal = SIGKILL) noexcept;
+    Result<> kill(int signal, std::nothrow_t) noexcept;
+    Result<> kill(std::nothrow_t) noexcept;
+    void kill(int signal = SIGKILL);
+
+    Result<int> wait(std::nothrow_t) noexcept;
     int wait();
 
 private:
@@ -126,7 +133,7 @@ private:
 
     State m_state{ State::Idle };
     int m_pid{ -1 };
-    int m_return_code{ Pending };
+    int m_return_code{ 0 };
 
     std::size_t m_input_offset{ 0 };
     Stream m_input;
@@ -146,7 +153,7 @@ private:
     void onError(int fd, std::uint32_t events);
     void onStreamUpdate(std::uint32_t events);
 
-    int run(std::vector<char const*> argv);
+    Result<int> run(std::vector<char const*> argv);
 };
 
 } // namespace hlib

@@ -33,7 +33,7 @@ TEST_CASE("Subprocess", "[subprocess]")
     Subprocess process;
     REQUIRE(Subprocess::Idle == process.state());
     REQUIRE(-1 == process.pid());
-    REQUIRE(Subprocess::Pending == process.returnCode());
+    REQUIRE(0 == process.returnCode());
     REQUIRE(true == process.output().empty());
     REQUIRE(true == process.error().empty());
 }
