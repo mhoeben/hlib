@@ -23,7 +23,6 @@
 //
 #include "test.hpp"
 #include "hlib/buffer.hpp"
-#include "hlib/format.hpp"
 
 using namespace hlib;
 
@@ -79,15 +78,5 @@ TEST_CASE("Buffer Empty", "[buffer]")
     Buffer buffer;
     REQUIRE_NOTHROW(nullptr == buffer.reserve(0));
     REQUIRE_NOTHROW(nullptr == buffer.resize(0));
-}
-
-TEST_CASE("Buffer Iterator", "[buffer][format]")
-{
-    Buffer buffer;
-    buffer.append("foo", 3);
-
-    format_to(buffer, " bar {}", "baz");
-
-    REQUIRE("foo bar baz" == to_string(buffer));
 }
 

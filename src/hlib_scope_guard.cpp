@@ -50,7 +50,7 @@ ScopeGuard::~ScopeGuard()
     m_on_exit();
 }
 
-void ScopeGuard::clear()
+void ScopeGuard::clear() noexcept
 {
     m_on_exit = nullptr;
 }

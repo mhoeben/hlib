@@ -25,7 +25,6 @@
 
 #include "hlib/base.hpp"
 #include <netinet/in.h>
-#include <new>
 #include <sys/un.h>
 #include <string>
 

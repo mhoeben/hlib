@@ -22,7 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/uuid.hpp"
-#include "hlib/format.hpp"
+#include "hlib_format.hpp"
 
 using namespace hlib;
 
@@ -36,7 +36,7 @@ UUID::UUID()
 
 std::string hlib::to_string(UUID const& uuid)
 {
-    return fmt::format("{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+    return format("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         uuid.octets[0], uuid.octets[1], uuid.octets[2], uuid.octets[3],
         uuid.octets[4], uuid.octets[5],
         uuid.octets[6], uuid.octets[7],

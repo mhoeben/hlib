@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/error.hpp"
 
 namespace hlib

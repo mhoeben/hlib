@@ -22,12 +22,10 @@
 // SOFTWARE.
 //
 #include "hlib/socket.hpp"
-#include "hlib/config.hpp"
 #include "hlib/lock.hpp"
 #include "hlib/error.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/file.hpp"
-#include "hlib/format.hpp"
 #include <fcntl.h>
 
 using namespace hlib;
@@ -37,6 +35,9 @@ using namespace hlib;
 //
 namespace
 {
+
+constexpr std::size_t default_receive_buffer_size = 4096;
+constexpr bool default_receive_buffer_gather = false;
 
 bool set_option(int fd, int option, int value = 1) noexcept
 {
@@ -243,8 +244,8 @@ void Socket::callbackAndClose(int error)
 Socket::Socket(std::weak_ptr<EventLoop> event_loop) noexcept
     : m_event_loop(std::move(event_loop))
     , m_fd(file::fd_close)
-    , m_receive_buffer_size(Config::socketReceiveBufferSize())
-    , m_receive_buffer_gather(Config::socketReceiveBufferGather())
+    , m_receive_buffer_size{ default_receive_buffer_size }
+    , m_receive_buffer_gather{ default_receive_buffer_gather }
 {
 }
 

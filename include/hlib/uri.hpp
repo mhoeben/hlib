@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include <cstdint>
 #include <string>
 

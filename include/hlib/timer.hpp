@@ -23,11 +23,11 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/time.hpp"
 #include <ctime>
 #include <functional>
 #include <memory>
-#include <new>
 
 namespace hlib
 {

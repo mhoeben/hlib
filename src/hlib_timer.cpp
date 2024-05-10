@@ -22,16 +22,21 @@
 // SOFTWARE.
 //
 #include "hlib/timer.hpp"
-#include "hlib/config.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
-#include "hlib/format.hpp"
 #include "hlib/memory.hpp"
 #include "hlib/utility.hpp"
 #include <sys/timerfd.h>
 #include <unistd.h>
 
 using namespace hlib;
+
+namespace
+{
+
+constexpr long immediate_nsec = 1000;
+
+} // namespace
 
 //
 // Implementation
@@ -109,7 +114,7 @@ bool Timer::set(time::Duration const& expire, time::Duration const& interval) no
     // Replace 0 expire with a small timer value so instead as to cancel
     // the timer, it almost immediately expires.
     if (0 == ts.it_value.tv_sec && 0 == ts.it_value.tv_nsec) {
-        ts.it_value.tv_nsec = ::Config::timerImmediateNSec();
+        ts.it_value.tv_nsec = immediate_nsec;
     }
 
     if (-1 == timerfd_settime(m_fd, 0, &ts, nullptr)) {

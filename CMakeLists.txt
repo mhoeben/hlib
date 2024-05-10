@@ -29,34 +29,17 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type." FORCE)
 endif()
 
-if (NOT BUILD_SHARED_LIBS)
-    set(OPENSSL_USE_STATIC_LIBS TRUE)
-endif()
-
-find_package(OpenSSL REQUIRED)
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-add_subdirectory(third_party/fmt fmt)
-add_subdirectory(tools/codegen codegen)
 
 add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/base.hpp
     include/hlib/buffer.hpp
-    include/hlib/codec.hpp
-    include/hlib/config.hpp
     include/hlib/endian.hpp
     include/hlib/error.hpp
     include/hlib/event_loop.hpp
     include/hlib/event_queue.hpp
     include/hlib/file.hpp
-    include/hlib/file_server.hpp
-    include/hlib/http_server.hpp
-    include/hlib/format.hpp
-    include/hlib/ipc.hpp
-    include/hlib/json.hpp
     include/hlib/lock.hpp
-    include/hlib/log.hpp
     include/hlib/math.hpp
     include/hlib/memory.hpp
     include/hlib/result.hpp
@@ -73,40 +56,15 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/uri.hpp
     include/hlib/utility.hpp
     include/hlib/uuid.hpp
-    include/hlib/web_socket_server.hpp
 
-    include/hlib/c/base.h
-    include/hlib/c/buffer.h
-    include/hlib/c/circular_buffer.h
-    include/hlib/c/codec.h
-    include/hlib/c/codec_binary.h
-    include/hlib/c/endian.h
-    include/hlib/c/error.h
-    include/hlib/c/hash_map.h
-    include/hlib/c/impl.h
-    include/hlib/c/ipc.h
-    include/hlib/c/vector.h
-
-    src/hlib_base.cpp
     src/hlib_buffer.cpp
-    src/hlib_c_impl.cpp
-    src/hlib_circular_buffer.cpp
-    src/hlib_codec.cpp
-    src/hlib_codec_binary.cpp
-    src/hlib_codec_binary.hpp
-    src/hlib_codec_json.cpp
-    src/hlib_codec_json.hpp
     src/hlib_endian.cpp
     src/hlib_error.cpp
     src/hlib_event_loop.cpp
     src/hlib_event_queue.cpp
     src/hlib_file.cpp
-    src/hlib_file_server.cpp
     src/hlib_format.cpp
-    src/hlib_http_server.cpp
-    src/hlib_ipc.cpp
-    src/hlib_json.cpp
-    src/hlib_log.cpp
+    src/hlib_format.hpp
     src/hlib_math.cpp
     src/hlib_scope_guard.cpp
     src/hlib_signal.cpp
@@ -120,7 +78,6 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_uri.cpp
     src/hlib_utility.cpp
     src/hlib_uuid.cpp
-    src/hlib_web_socket_server.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -182,14 +139,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     include
-    third_party/fmt/include
-    ${OPENSSL_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    fmt
     uuid
-    ${OPENSSL_LIBRARIES}
 )
 
 if (HLIB_ENABLE_TESTS)

@@ -23,7 +23,6 @@
 //
 #include "hlib/event_loop.hpp"
 #include "hlib/error.hpp"
-#include "hlib/format.hpp"
 #include "hlib/lock.hpp"
 #include "hlib/memory.hpp"
 #include "hlib/scope_guard.hpp"
@@ -113,9 +112,8 @@ void EventLoop::dispatch(time::Duration const* timeout)
 //
 // Public
 //
-EventLoop::EventLoop(log::Domain logger)
-    : m_logger(std::move(logger))
-    , m_fd(epoll_create1(0), file::fd_close)
+EventLoop::EventLoop()
+    : m_fd(epoll_create1(0), file::fd_close)
 {
     if (-1 == m_fd.get()) {
         throw make_system_error(errno, "epoll_create() failed");
@@ -133,17 +131,10 @@ EventLoop::EventLoop(log::Domain logger)
         (void)events;
 
         std::uint8_t cmd;
-        hverify(1 == read(fd, &cmd, 1));
+        HVERIFY(1 == read(fd, &cmd, 1));
 
         m_interrupt = true;
     });
-
-    HLOGD(m_logger, "constructed");
-}
-
-EventLoop::~EventLoop()
-{
-    HLOGD(m_logger, "destructed");
 }
 
 int EventLoop::fd() const noexcept
@@ -160,8 +151,6 @@ void EventLoop::add(int fd, std::uint32_t events, Callback callback)
 {
     assert(-1 != fd);
     assert(nullptr != callback);
-
-    HLOGD(m_logger, "fd: {:3}, events: {:#04x} (adding)", fd, events);
 
     HLIB_LOCK_GUARD(lock, m_mutex);
 
@@ -187,8 +176,6 @@ Result<> EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcep
 {
     assert(-1 != fd);
 
-    HLOGT(m_logger, "fd: {:3}, events: {:#04x} (modifying)", fd, events);
-
     epoll_event event{};
     event.events = events;
     event.data.fd = fd;
@@ -208,8 +195,6 @@ void EventLoop::change(int fd, Callback callback)
 {
     assert(-1 != fd);
 
-    HLOGT(m_logger, "fd: {:3}, (changing)", fd);
-
     HLIB_UNIQUE_LOCK(lock, m_mutex);
 
     auto it = m_callbacks.find(fd);
@@ -222,8 +207,6 @@ void EventLoop::remove(int fd)
 {
     assert(-1 != fd);
 
-    HLOGT(m_logger, "fd: {:3}, events: {:#04x} (removing)", fd, 0);
-
     HLIB_UNIQUE_LOCK(lock, m_mutex);
 
     assert(m_callbacks.end() != m_callbacks.find(fd));
@@ -231,7 +214,7 @@ void EventLoop::remove(int fd)
     struct epoll_event event;
     event.events = 0;
     event.data.fd = fd;
-    hverify(-1 != epoll_ctl(m_fd.get(), EPOLL_CTL_DEL, fd, &event));
+    HVERIFY(-1 != epoll_ctl(m_fd.get(), EPOLL_CTL_DEL, fd, &event));
 
     m_callbacks.erase(fd);
 }
@@ -250,7 +233,6 @@ Result<> EventLoop::interrupt(std::nothrow_t) noexcept
 {
     std::uint8_t const cmd = 0;
 
-    HLOGT(m_logger, "interrupting");
     if (1 != write(m_pipe[1], &cmd, 1)) {
         return make_system_error(errno);
     }

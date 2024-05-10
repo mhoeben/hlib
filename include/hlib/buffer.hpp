@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2019 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,6 @@
 #pragma once
 
 #include "hlib/base.hpp"
-#include "hlib/c/buffer.h"
-#include <new>
 #include <string>
 
 namespace hlib
@@ -44,9 +42,6 @@ public:
     ~Buffer();
 
     Buffer& operator =(Buffer&& that) noexcept;
-
-    hlib_buffer_t const* buffer() const noexcept;
-    hlib_buffer_t* buffer() noexcept;
 
     void const* data() const noexcept;
     std::size_t capacity() const noexcept;
@@ -93,7 +88,11 @@ public:
     Buffer copy();
 
 private:
-    hlib_buffer_t m_buffer{};
+    void* m_data{ nullptr };
+    std::size_t m_capacity{ 0 };
+    std::size_t m_size{ 0 };
+
+    bool realloc(std::size_t capacity, bool shrink) noexcept;
 };
 
 template <typename T>
@@ -146,4 +145,5 @@ private:
 std::string to_string(Buffer const& buffer);
 
 } // namespace hlib
+
 

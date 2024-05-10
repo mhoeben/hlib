@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,63 +21,70 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/format.hpp"
-#include <cctype>
+#include "hlib_format.hpp"
+#include <cstdio>
+#include <stdarg.h>
 
-using namespace hlib;
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 
-void hlib::hexdump(FILE* output, void const* data, std::size_t size, std::size_t columns, bool ascii)
+//
+// Public
+//
+std::string hlib::format(char const* format_string, ...) noexcept
 {
-    const std::uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
-    std::size_t row = 0;
-    std::size_t index;
-    std::size_t column;
+    va_list ap;
 
-    fmt::memory_buffer hex_buffer;
-    fmt::memory_buffer ascii_buffer;
+    va_start(ap, format_string);
+    int formatted_length = vsnprintf(nullptr, 0, format_string, ap);
+    va_end(ap);
 
-    auto print_row = [&]
-    {
-        fmt::print(output, "{:8x} |{:<{}}", row, fmt::to_string(hex_buffer), columns * 3);
-        if (true == ascii) {
-            fmt::print(output, "| {}\n", fmt::to_string(ascii_buffer));
-        }
-        else {
-            fmt::print(output, "\n");
-        }
-        row += columns;
-    };
-
-    for (index = 0, column = 0; index < size; ++index, ++column) {
-        if (column == columns) {
-            print_row();
-
-            column = 0;
-            hex_buffer.clear();
-            ascii_buffer.clear();
-        }
-
-        fmt::format_to(std::back_inserter(hex_buffer), " {:02x}", ptr[index]);
-        fmt::format_to(std::back_inserter(ascii_buffer), "{:c}", std::isprint(ptr[index]) ? ptr[index] : '.');
+    if (formatted_length < 0) {
+        return std::string();
     }
 
-    if (0 != column) {
-        print_row();
+    std::string string;
+
+    try {
+        string.resize(formatted_length + 1);
     }
+    catch (...) {
+        return std::string();
+    }
+
+    va_start(ap, format_string);
+    HVERIFY(vsnprintf(string.data(), formatted_length + 1, format_string, ap) >= 0);
+    va_end(ap);
+
+    string.pop_back();
+    return string;
 }
 
-void hlib::hexdump(void const* data, size_t size, std::size_t columns, bool ascii)
+bool hlib::format_to(std::string& string, char const* format_string, ...) noexcept
 {
-    hexdump(stdout, data, size, columns, ascii);
-}
+    va_list ap;
 
-void hlib::hexdump(FILE* output, Buffer const& buffer, std::size_t columns, bool ascii)
-{
-    hexdump(output, buffer.data(), buffer.size(), columns, ascii);
-}
+    va_start(ap, format_string);
+    int formatted_length = vsnprintf(nullptr, 0, format_string, ap);
+    va_end(ap);
 
-void hlib::hexdump(Buffer const& buffer, std::size_t columns, bool ascii)
-{
-    hexdump(stdout, buffer, columns, ascii);
+    if (formatted_length < 0) {
+        return false;
+    }
+
+    std::size_t const string_length = string.length();
+
+    try {
+        string.resize(string_length + formatted_length + 1);
+    }
+    catch (...) {
+        return false;
+    }
+
+    va_start(ap, format_string);
+    HVERIFY(vsnprintf(string.data() + string_length, formatted_length + 1, format_string, ap) >= 0);
+    va_end(ap);
+
+    string.pop_back();
+    return true;
 }
 
