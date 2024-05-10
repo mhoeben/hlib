@@ -118,7 +118,7 @@ public:
         return reinterpret_cast<T*>(ptr + m_size);
     }
 
-    void deallocate(T* ptr, std::size_t size) noexcept
+    void deallocate(__attribute__((unused)) T* ptr, __attribute__((unused)) std::size_t size) noexcept
     {
         assert(static_cast<std::uint8_t const*>(m_buffer.data()) + m_size == reinterpret_cast<std::uint8_t*>(ptr));
         assert(m_buffer.size() == m_size + size);
