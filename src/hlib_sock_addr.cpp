@@ -23,7 +23,7 @@
 //
 #include "hlib/sock_addr.hpp"
 #include "hlib/error.hpp"
-#include "hlib/format.hpp"
+#include "hlib_format.hpp"
 #include "hlib/string.hpp"
 #include <arpa/inet.h>
 
@@ -409,13 +409,13 @@ std::string hlib::to_string(SockAddr const& sa)
     switch (sa.family()) {
     case AF_INET:
         if (port > 0) {
-            return fmt::format("{}:{}", address, port);
+            return format("%s:%d", address.c_str(), port);
         }
         break;
 
     case AF_INET6:
         if (port > 0) {
-            return fmt::format("[{}]:{}", address, port);
+            return format("[%s]:%d", address.c_str(), port);
         }
         break;
 

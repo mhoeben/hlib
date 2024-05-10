@@ -39,7 +39,7 @@ public:
     ScopeGuard(std::function<void()> on_enter, std::function<void()> on_exit);
     ~ScopeGuard();
 
-    void clear();
+    void clear() noexcept;
 
 private:
     std::function<void()> m_on_exit;

@@ -23,7 +23,7 @@
 //
 #include "hlib/test.hpp"
 #include "hlib/container.hpp"
-#include "hlib/format.hpp"
+#include "hlib_format.hpp"
 #include "hlib/string.hpp"
 
 using namespace hlib;
@@ -74,14 +74,14 @@ void test::Suite::run(std::string tag, Case* test_case)
         return;
     }
     catch (AssertionFailed const& e) {
-        fmt::print(stderr, "{}:{}: assertion failed: {}\n", e.expression.file, e.expression.line, e.what());
-        fmt::print(stderr, "{}:{}: in test case with tags [{}]\n", test_case->file, test_case->line, join(test_case->tags, ", "));
+        fprintf(stderr, "%s:%d: assertion failed: %s\n", e.expression.file, e.expression.line, e.what());
+        fprintf(stderr, "%s:%d: in test case with tags [%s]\n", test_case->file, test_case->line, join(test_case->tags, ", ").c_str());
     }
     catch (std::exception const& e) {
-        fmt::print(stderr, "{}:{}: uncaught exception '{}' in test case with tags [{}]\n", test_case->file, test_case->line, e.what(), join(test_case->tags, ", "));
+        fprintf(stderr, "%s:%d: uncaught exception '%s' in test case with tags [%s]\n", test_case->file, test_case->line, e.what(), join(test_case->tags, ", ").c_str());
     }
     catch (...) {
-        fmt::print(stderr, "{}:{}: uncaught exception in test case with tags [{}]\n", test_case->file, test_case->line, join(test_case->tags, ", "));
+        fprintf(stderr, "%s:%d: uncaught exception in test case with tags [%s]\n", test_case->file, test_case->line, join(test_case->tags, ", ").c_str());
     }
 
     ++statistics.assertions_failed;
@@ -189,16 +189,16 @@ std::string test::to_string(Expression const& expression)
 {
     switch (expression.assertion) {
     case Assertion::Require:
-        return fmt::format("{}({}) => ({} {} {})",
-            to_string(expression.assertion),
+        return format("%s(%s) => (%s %s %s)",
+            to_string(expression.assertion).c_str(),
             expression.string,
-            expression.lhs,
-            to_string(expression.operation),
-            expression.rhs
+            expression.lhs.c_str(),
+            to_string(expression.operation).c_str(),
+            expression.rhs.c_str()
         );
     default:
-        return fmt::format("{}({})",
-            to_string(expression.assertion),
+        return format("%s(%s)",
+            to_string(expression.assertion).c_str(),
             expression.string
         );
     }

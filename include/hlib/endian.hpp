@@ -23,10 +23,9 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
-#include "hlib/c/endian.h"
 #include <limits>
-#include <new>
 
 namespace hlib
 {
@@ -41,44 +40,120 @@ template<typename T>
 inline void* transform(void* data, T const& value) noexcept;
 
 template<>
-inline void* transform(void* data, int8_t const& value) noexcept
-    { return hlib_be_set_int8(data, value); }
+inline void* transform(void* data, std::int8_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)value;
+    return ptr + sizeof(int8_t);
+}
 
 template<>
-inline void* transform(void* data, int16_t const& value) noexcept
-    { return hlib_be_set_int16(data, value); }
+inline void* transform(void* data, std::int16_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  8);
+    ptr[1] = (uint8_t)(value >>  0);
+    return ptr + sizeof(int16_t);
+}
 
 template<>
-inline void* transform(void* data, int32_t const& value) noexcept
-    { return hlib_be_set_int32(data, value); }
+inline void* transform(void* data, std::int32_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >> 24);
+    ptr[1] = (uint8_t)(value >> 16);
+    ptr[2] = (uint8_t)(value >>  8);
+    ptr[3] = (uint8_t)(value >>  0);
+    return ptr + sizeof(int32_t);
+}
 
 template<>
-inline void* transform(void* data, int64_t const& value) noexcept
-    { return hlib_be_set_int64(data, value); }
+inline void* transform(void* data, std::int64_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >> 56);
+    ptr[1] = (uint8_t)(value >> 48);
+    ptr[2] = (uint8_t)(value >> 40);
+    ptr[3] = (uint8_t)(value >> 32);
+    ptr[4] = (uint8_t)(value >> 24);
+    ptr[5] = (uint8_t)(value >> 16);
+    ptr[6] = (uint8_t)(value >>  8);
+    ptr[7] = (uint8_t)(value >>  0);
+    return ptr + sizeof(int64_t);
+}
 
 template<>
-inline void* transform(void* data, uint8_t const& value) noexcept
-    { return hlib_be_set_uint8(data, value); }
+inline void* transform(void* data, std::uint8_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = value;
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
-inline void* transform(void* data, uint16_t const& value) noexcept
-    { return hlib_be_set_uint16(data, value); }
+inline void* transform(void* data, std::uint16_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  8);
+    ptr[1] = (uint8_t)(value >>  0);
+    return ptr + sizeof(uint16_t);
+}
 
 template<>
-inline void* transform(void* data, uint32_t const& value) noexcept
-    { return hlib_be_set_uint32(data, value); }
+inline void* transform(void* data, std::uint32_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >> 24);
+    ptr[1] = (uint8_t)(value >> 16);
+    ptr[2] = (uint8_t)(value >>  8);
+    ptr[3] = (uint8_t)(value >>  0);
+    return ptr + sizeof(uint32_t);
+}
 
 template<>
-inline void* transform(void* data, uint64_t const& value) noexcept
-    { return hlib_be_set_uint64(data, value); }
+inline void* transform(void* data, std::uint64_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >> 56);
+    ptr[1] = (uint8_t)(value >> 48);
+    ptr[2] = (uint8_t)(value >> 40);
+    ptr[3] = (uint8_t)(value >> 32);
+    ptr[4] = (uint8_t)(value >> 24);
+    ptr[5] = (uint8_t)(value >> 16);
+    ptr[6] = (uint8_t)(value >>  8);
+    ptr[7] = (uint8_t)(value >>  0);
+    return ptr + sizeof(uint64_t);
+}
 
 template<>
 inline void* transform(void* data, float const& value) noexcept
-    { return hlib_be_set_float(data, value); }
+{
+    union
+    {
+        float f;
+        uint32_t n;
+    } convert = { value };
+    return transform(data, convert.n);
+}
 
 template<>
 inline void* transform(void* data, double const& value) noexcept
-    { return hlib_be_set_double(data, value); }
+{
+    union
+    {
+        double f;
+        uint64_t n;
+    } convert = { value };
+    return transform(data, convert.n);
+}
 
 template<typename T, typename U>
 inline void* transform(void* data, T const& value) noexcept
@@ -141,50 +216,122 @@ template<typename T>
 inline void const* transform(void const* data, T& value) noexcept;
 
 template<>
-inline void const* transform(void const* data, int8_t& value) noexcept
-    { return hlib_be_get_int8(data, &value); }
+inline void const* transform(void const* data, std::int8_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = (int8_t)ptr[0];
+    return ptr + sizeof(int8_t);
+}
 
 template<>
-inline void const* transform(void const* data, int16_t& value) noexcept
-    { return hlib_be_get_int16(data, &value); }
+inline void const* transform(void const* data, std::int16_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((int16_t)ptr[0] << 8)
+          | ((int16_t)ptr[1] << 0);
+    return ptr + sizeof(int16_t);
+}
 
 template<>
-inline void const* transform(void const* data, int32_t& value) noexcept
-    { return hlib_be_get_int32(data, &value); }
+inline void const* transform(void const* data, std::int32_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((int32_t)ptr[0] << 24)
+          | ((int32_t)ptr[1] << 16)
+          | ((int32_t)ptr[2] <<  8)
+          | ((int32_t)ptr[3] <<  0);
+    return ptr + sizeof(int32_t);
+}
 
 template<>
-inline void const* transform(void const* data, int64_t& value) noexcept
-    { return hlib_be_get_int64(data, &value); }
+inline void const* transform(void const* data, std::int64_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((int64_t)ptr[0] << 56)
+          | ((int64_t)ptr[1] << 48)
+          | ((int64_t)ptr[2] << 40)
+          | ((int64_t)ptr[3] << 32)
+          | ((int64_t)ptr[4] << 24)
+          | ((int64_t)ptr[5] << 16)
+          | ((int64_t)ptr[6] <<  8)
+          | ((int64_t)ptr[7] <<  0);
+    return ptr + sizeof(int64_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint8_t& value) noexcept
-    { return hlib_be_get_uint8(data, &value); }
+inline void const* transform(void const* data, std::uint8_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ptr[0];
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint16_t& value) noexcept
-    { return hlib_be_get_uint16(data, &value); }
+inline void const* transform(void const* data, std::uint16_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((uint16_t)ptr[0] << 8)
+          | ((uint16_t)ptr[1] << 0);
+    return ptr + sizeof(uint16_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint32_t& value) noexcept
-    { return hlib_be_get_uint32(data, &value); }
+inline void const* transform(void const* data, std::uint32_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((uint32_t)ptr[0] << 24)
+          | ((uint32_t)ptr[1] << 16)
+          | ((uint32_t)ptr[2] <<  8)
+          | ((uint32_t)ptr[3] <<  0);
+    return ptr + sizeof(uint32_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint64_t& value) noexcept
-    { return hlib_be_get_uint64(data, &value); }
+inline void const* transform(void const* data, std::uint64_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((uint64_t)ptr[0] << 56)
+          | ((uint64_t)ptr[1] << 48)
+          | ((uint64_t)ptr[2] << 40)
+          | ((uint64_t)ptr[3] << 32)
+          | ((uint64_t)ptr[4] << 24)
+          | ((uint64_t)ptr[5] << 16)
+          | ((uint64_t)ptr[6] <<  8)
+          | ((uint64_t)ptr[7] <<  0);
+    return ptr + sizeof(uint64_t);
+}
 
 template<>
 inline void const* transform(void const* data, float& value) noexcept
-    { return hlib_be_get_float(data, &value); }
+{
+    union
+    {
+        uint32_t n;
+        float f;
+    } convert;
+    data = transform<std::uint32_t>(data, convert.n);
+    value = convert.f;
+    return data;
+}
 
 template<>
 inline void const* transform(void const* data, double& value) noexcept
-    { return hlib_be_get_double(data, &value); }
+{
+    union
+    {
+        uint64_t n;
+        double f;
+    } convert;
+    data = transform<std::uint64_t>(data, convert.n);
+    value = convert.f;
+    return data;
+}
 
 template<typename T, typename U>
 inline void const* transform(void const* data, T& value) noexcept
 {
     U underlying;
-    data = transform(data, underlying);
+    data = transform<U>(data, underlying);
     value = static_cast<T>(underlying);
     return data;
 }
@@ -193,7 +340,7 @@ template<typename T>
 inline T to(void const* data) noexcept
 {
     T value;
-    transform(data, value);
+    transform<T>(data, value);
     return value;
 }
 
@@ -275,49 +422,125 @@ template<typename T>
 inline void* transform(void* data, T const& value) noexcept;
 
 template<>
-inline void* transform(void* data, int8_t const& value) noexcept
-    { return hlib_le_set_int8(data, value); }
+inline void* transform(void* data, std::int8_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)value;
+    return ptr + sizeof(int8_t);
+}
 
 template<>
-inline void* transform(void* data, int16_t const& value) noexcept
-    { return hlib_le_set_int16(data, value); }
+inline void* transform(void* data, std::int16_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  0);
+    ptr[1] = (uint8_t)(value >>  8);
+    return ptr + sizeof(int16_t);
+}
 
 template<>
-inline void* transform(void* data, int32_t const& value) noexcept
-    { return hlib_le_set_int32(data, value); }
+inline void* transform(void* data, std::int32_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  0);
+    ptr[1] = (uint8_t)(value >>  8);
+    ptr[2] = (uint8_t)(value >> 16);
+    ptr[3] = (uint8_t)(value >> 24);
+    return ptr + sizeof(int32_t);
+}
 
 template<>
-inline void* transform(void* data, int64_t const& value) noexcept
-    { return hlib_le_set_int64(data, value); }
+inline void* transform(void* data, std::int64_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  0);
+    ptr[1] = (uint8_t)(value >>  8);
+    ptr[2] = (uint8_t)(value >> 16);
+    ptr[3] = (uint8_t)(value >> 24);
+    ptr[4] = (uint8_t)(value >> 32);
+    ptr[5] = (uint8_t)(value >> 40);
+    ptr[6] = (uint8_t)(value >> 48);
+    ptr[7] = (uint8_t)(value >> 56);
+    return ptr + sizeof(int64_t);
+}
 
 template<>
-inline void* transform(void* data, uint8_t const& value) noexcept
-    { return hlib_le_set_uint8(data, value); }
+inline void* transform(void* data, std::uint8_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = value;
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
-inline void* transform(void* data, uint16_t const& value) noexcept
-    { return hlib_le_set_uint16(data, value); }
+inline void* transform(void* data, std::uint16_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  0);
+    ptr[1] = (uint8_t)(value >>  8);
+    return ptr + sizeof(uint16_t);
+}
 
 template<>
-inline void* transform(void* data, uint32_t const& value) noexcept
-    { return hlib_le_set_uint32(data, value); }
+inline void* transform(void* data, std::uint32_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  0);
+    ptr[1] = (uint8_t)(value >>  8);
+    ptr[2] = (uint8_t)(value >> 16);
+    ptr[3] = (uint8_t)(value >> 24);
+    return ptr + sizeof(uint32_t);
+}
 
 template<>
-inline void* transform(void* data, uint64_t const& value) noexcept
-    { return hlib_le_set_uint64(data, value); }
+inline void* transform(void* data, std::uint64_t const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)(value >>  0);
+    ptr[1] = (uint8_t)(value >>  8);
+    ptr[2] = (uint8_t)(value >> 16);
+    ptr[3] = (uint8_t)(value >> 24);
+    ptr[4] = (uint8_t)(value >> 32);
+    ptr[5] = (uint8_t)(value >> 40);
+    ptr[6] = (uint8_t)(value >> 48);
+    ptr[7] = (uint8_t)(value >> 56);
+    return ptr + sizeof(uint64_t);
+}
 
 template<>
 inline void* transform(void* data, float const& value) noexcept
-    { return hlib_le_set_float(data, value); }
+{
+    union
+    {
+        float f;
+        uint32_t n;
+    } convert = { value };
+    return transform<uint32_t>(data, convert.n);
+}
 
 template<>
 inline void* transform(void* data, double const& value) noexcept
-    { return hlib_le_set_double(data, value); }
+{
+    union
+    {
+        double f;
+        uint64_t n;
+    } convert = { value };
+    return transform<uint64_t>(data, convert.n);
+}
 
 template<typename T, typename U>
 inline void* transform(void* data, T const& value) noexcept
 {
-    return transform(data, static_cast<U>(value));
+    return transform<U>(data, static_cast<U>(value));
 }
 
 class Serializer final
@@ -375,50 +598,122 @@ template<typename T>
 inline void const* transform(void const* data, T& value) noexcept;
 
 template<>
-inline void const* transform(void const* data, int8_t& value) noexcept
-    { return hlib_le_get_int8(data, &value); }
+inline void const* transform(void const* data, std::int8_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = (int8_t)ptr[0];
+    return ptr + sizeof(int8_t);
+}
 
 template<>
-inline void const* transform(void const* data, int16_t& value) noexcept
-    { return hlib_le_get_int16(data, &value); }
+inline void const* transform(void const* data, std::int16_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((int16_t)ptr[0] << 0)
+          | ((int16_t)ptr[1] << 8);
+    return ptr + sizeof(int16_t);
+}
 
 template<>
-inline void const* transform(void const* data, int32_t& value) noexcept
-    { return hlib_le_get_int32(data, &value); }
+inline void const* transform(void const* data, std::int32_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((int32_t)ptr[0] <<  0)
+          | ((int32_t)ptr[1] <<  8)
+          | ((int32_t)ptr[2] << 16)
+          | ((int32_t)ptr[3] << 24);
+    return ptr + sizeof(int32_t);
+}
 
 template<>
-inline void const* transform(void const* data, int64_t& value) noexcept
-    { return hlib_le_get_int64(data, &value); }
+inline void const* transform(void const* data, std::int64_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((int64_t)ptr[0] <<  0)
+          | ((int64_t)ptr[1] <<  8)
+          | ((int64_t)ptr[2] << 16)
+          | ((int64_t)ptr[3] << 24)
+          | ((int64_t)ptr[4] << 32)
+          | ((int64_t)ptr[5] << 40)
+          | ((int64_t)ptr[6] << 48)
+          | ((int64_t)ptr[7] << 56);
+    return ptr + sizeof(int64_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint8_t& value) noexcept
-    { return hlib_le_get_uint8(data, &value); }
+inline void const* transform(void const* data, std::uint8_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ptr[0];
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint16_t& value) noexcept
-    { return hlib_le_get_uint16(data, &value); }
+inline void const* transform(void const* data, std::uint16_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((uint16_t)ptr[0] << 0)
+          | ((uint16_t)ptr[1] << 8);
+    return ptr + sizeof(uint16_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint32_t& value) noexcept
-    { return hlib_le_get_uint32(data, &value); }
+inline void const* transform(void const* data, std::uint32_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((uint32_t)ptr[0] <<  0)
+          | ((uint32_t)ptr[1] <<  8)
+          | ((uint32_t)ptr[2] << 16)
+          | ((uint32_t)ptr[3] << 24);
+    return ptr + sizeof(uint32_t);
+}
 
 template<>
-inline void const* transform(void const* data, uint64_t& value) noexcept
-    { return hlib_le_get_uint64(data, &value); }
+inline void const* transform(void const* data, std::uint64_t& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = ((uint64_t)ptr[0] <<  0)
+          | ((uint64_t)ptr[1] <<  8)
+          | ((uint64_t)ptr[2] << 16)
+          | ((uint64_t)ptr[3] << 24)
+          | ((uint64_t)ptr[4] << 32)
+          | ((uint64_t)ptr[5] << 40)
+          | ((uint64_t)ptr[6] << 48)
+          | ((uint64_t)ptr[7] << 56);
+    return ptr + sizeof(uint64_t);
+}
 
 template<>
 inline void const* transform(void const* data, float& value) noexcept
-    { return hlib_le_get_float(data, &value); }
+{
+    union
+    {
+        uint32_t n;
+        float f;
+    } convert;
+    data = transform<uint32_t>(data, convert.n);
+    value = convert.f;
+    return data;
+}
 
 template<>
 inline void const* transform(void const* data, double& value) noexcept
-    { return hlib_le_get_double(data, &value); }
+{
+    union
+    {
+        uint64_t n;
+        double f;
+    } convert;
+    data = transform<std::uint64_t>(data, convert.n);
+    value = convert.f;
+    return data;
+}
 
 template<typename T, typename U>
 inline void const* transform(void const* data, T& value) noexcept
 {
     U underlying;
-    data = transform(data, underlying);
+    data = transform<U>(data, underlying);
     value = static_cast<T>(underlying);
     return data;
 }
@@ -427,7 +722,7 @@ template<typename T>
 inline T to(void const* data) noexcept
 {
     T value;
-    transform(data, value);
+    transform<T>(data, value);
     return value;
 }
 

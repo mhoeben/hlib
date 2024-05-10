@@ -23,9 +23,9 @@
 //
 #include "hlib/file.hpp"
 #include "hlib/error.hpp"
-#include "hlib/format.hpp"
 #include "hlib/scope_guard.hpp"
 #include "hlib/string.hpp"
+#include <cstring>
 #include <fcntl.h>
 #include <fstream>
 #include <system_error>

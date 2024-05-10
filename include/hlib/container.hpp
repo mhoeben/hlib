@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/type_traits.hpp"
 #include <algorithm>
 #include <iterator>

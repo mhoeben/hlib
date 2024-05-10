@@ -22,14 +22,15 @@
 // SOFTWARE.
 //
 #include "hlib/error.hpp"
-#include "hlib/config.hpp"
-#include "hlib/format.hpp"
+#include <cstring>
 #include <sys/socket.h>
 
 using namespace hlib;
 
 namespace
 {
+
+constexpr std::size_t max_error_string = 256;
 
 template<class... Ts>
 struct Overloaded : Ts... { using Ts::operator()...; };
@@ -96,10 +97,10 @@ int hlib::get_socket_error(int fd) noexcept
 
 std::string hlib::get_error_string(int error_no)
 {
-    char buffer[Config::maxErrorString()];
+    char buffer[max_error_string];
 
     char* string = strerror_r(error_no, buffer, sizeof(buffer));
-    return nullptr != string ? std::string(string) : fmt::format("errno {}", error_no);
+    return nullptr != string ? std::string(string) : "errno " + std::to_string(error_no);
 }
 
 std::string hlib::get_error_string()

@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include <errno.h>
 #include <stdexcept>
 #include <string>

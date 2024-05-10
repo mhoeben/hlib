@@ -22,11 +22,9 @@
 // SOFTWARE.
 //
 #include "hlib/subprocess.hpp"
-#include "hlib/config.hpp"
 #include "hlib/container.hpp"
 #include "hlib/error.hpp"
 #include "hlib/file.hpp"
-#include "hlib/format.hpp"
 #include <array>
 #include <cstdio>
 #include <sys/wait.h>
@@ -36,6 +34,8 @@ using namespace hlib;
 
 namespace
 {
+
+static constexpr std::size_t output_batch_size = 1024;
 
 std::vector<char const*> to_argv(std::string const& command, std::vector<std::string> const& args)
 {
@@ -192,7 +192,7 @@ void Subprocess::onOutput(int fd, std::uint32_t events)
     assert(nullptr != m_output.m_buffer);
 
     if (0 != (EventLoop::Read & events)) {
-        ssize_t count = file::read(fd, *m_output.m_buffer, Config::subprocessOutputBatchSize());
+        ssize_t count = file::read(fd, *m_output.m_buffer, output_batch_size);
         if (count < 0) {
             return m_output.update(EventLoop::Hup);
         }
@@ -207,7 +207,7 @@ void Subprocess::onError(int fd, std::uint32_t events)
     assert(nullptr != m_error.m_buffer);
 
     if (0 != (EventLoop::Read & events)) {
-        ssize_t count = file::read(fd, *m_error.m_buffer, Config::subprocessOutputBatchSize());
+        ssize_t count = file::read(fd, *m_error.m_buffer, output_batch_size);
         if (count < 0) {
             return m_error.update(EventLoop::Hup);
         }
@@ -293,13 +293,13 @@ Result<int> Subprocess::run(std::vector<char const*> argv)
         event_loop.reset();
 
         if (input_pipe.get<0>().get() >= 0) {
-            hverify(-1 != dup2(input_pipe.get<0>().get(), STDIN_FILENO));
+            HVERIFY(-1 != dup2(input_pipe.get<0>().get(), STDIN_FILENO));
         }
         if (output_pipe.get<1>().get() >= 0) {
-            hverify(-1 != dup2(output_pipe.get<1>().get(), STDOUT_FILENO));
+            HVERIFY(-1 != dup2(output_pipe.get<1>().get(), STDOUT_FILENO));
         }
         if (error_pipe.get<1>().get() >= 0) {
-            hverify(-1 != dup2(error_pipe.get<1>().get(), STDERR_FILENO));
+            HVERIFY(-1 != dup2(error_pipe.get<1>().get(), STDERR_FILENO));
         }
 
         input_pipe.close();
@@ -317,9 +317,9 @@ Result<int> Subprocess::run(std::vector<char const*> argv)
             }
         }
 
-        hverify(-1 == execvp(argv[0], const_cast<char * const *>(argv.data())));
+        HVERIFY(0 == execvp(argv[0], const_cast<char * const *>(argv.data())));
 
-        fmt::print(stderr, "execvp() failed ({})", get_error_string());
+        fprintf(stderr, "execvp() failed (%s)", get_error_string().c_str());
         abort();
         return -1;
 

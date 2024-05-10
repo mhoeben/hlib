@@ -1,15 +1,4 @@
-[submodule "third_party/fmt"]
-	path = third_party/fmt
-	url = https://github.com/fmtlib/fmt.git
-	branch = a0b8a92
 [submodule "third_party/catch2"]
 	path = third_party/catch2
 	url = https://github.com/catchorg/Catch2.git
 	branch = 3f0283d
-[submodule "third_party/jsmn"]
-	path = third_party/jsmn
-	url = https://github.com/zserge/jsmn.git
-[submodule "third_party/hserv"]
-	path = third_party/hserv
-	url = https://github.com/mhoeben/hserv.git
-    branch = main

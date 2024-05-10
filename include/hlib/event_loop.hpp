@@ -25,13 +25,11 @@
 
 #include "hlib/base.hpp"
 #include "hlib/file.hpp"
-#include "hlib/log.hpp"
 #include "hlib/result.hpp"
 #include "hlib/time.hpp"
 #include <condition_variable>
 #include <functional>
 #include <mutex>
-#include <new>
 #include <sys/epoll.h>
 #include <thread>
 #include <unordered_map>
@@ -54,8 +52,7 @@ public:
     typedef std::function<void(int fd, std::uint32_t events)> Callback;
 
 public:
-    EventLoop(log::Domain logger = log::Domain("EVENTLOOP"));
-    ~EventLoop();
+    EventLoop();
 
     int fd() const noexcept;
     std::thread::id threadId() const noexcept;
@@ -74,7 +71,6 @@ public:
     void flush() noexcept;
 
 private:
-    log::Domain const m_logger;
     UniqueHandle<int, -1> m_fd;
     file::Pipe m_pipe;
     bool m_interrupt{ false };

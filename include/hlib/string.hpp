@@ -23,9 +23,9 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
 #include <functional>
-#include <new>
 #include <optional>
 #include <string>
 #include <vector>
@@ -317,12 +317,12 @@ std::string join(Container const& container, std::string const& separator,
 std::string replace(std::string string, std::string const& literal, std::string const& value);
 
 std::size_t base64_encode_get_length(std::size_t size) noexcept;
-void base64_encode(Buffer& buffer, void const* data, std::size_t size);
+bool base64_encode(Buffer& buffer, void const* data, std::size_t size) noexcept;
 std::string base64_encode(void const* data, std::size_t length);
 std::string base64_encode(Buffer const& buffer);
 
 std::size_t base64_decode_get_size(std::size_t length) noexcept;
-void base64_decode(Buffer& buffer, char const* data, std::size_t length);
+bool base64_decode(Buffer& buffer, char const* data, std::size_t length) noexcept;
 Buffer base64_decode(std::string const& string);
 
 } // namespace hlib

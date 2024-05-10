@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/math.hpp"
 #include <ctime>
 #include <cmath>
@@ -39,7 +40,7 @@ typedef math::RatioValue<std::milli, int64_t> MSec;
 typedef math::RatioValue<std::micro, int64_t> USec;
 typedef math::RatioValue<std::nano, int64_t> NSec;
 
-struct Clock;
+class Clock;
 
 class Duration final : public std::timespec
 {
@@ -147,18 +148,23 @@ Clock now_utc(clockid_t clock_id = CLOCK_REALTIME);
 
 extern Clock const infinity;
 
-Clock to_clock_utc(std::string const& iso8601);
+Clock to_clock(std::string const& iso8601);
 
 } // namespace time
 
 std::string to_string(time::Duration const& duration, bool milliseconds = false);
 
 std::string to_string_utc_date(time::Clock const& clock);
-std::string to_string_utc_time(time::Clock const& clock, bool milliseconds = false);
+std::string to_string_utc_date_and_time(time::Clock const& clock);
+std::string to_string_utc_time(time::Clock const& clock);
+std::string to_string_utc_time_milliseconds(time::Clock const& clock);
 std::string to_string_utc(time::Clock const& clock, bool milliseconds = false);
 
-std::string to_string_utc_local_time(time::Clock const& clock, bool milliseconds = false);
-std::string to_string_utc_local(time::Clock const& clock, bool milliseconds = false);
+std::string to_string_local_date(time::Clock const& clock);
+std::string to_string_local_date_and_time(time::Clock const& clock);
+std::string to_string_local_time(time::Clock const& clock);
+std::string to_string_local_time_milliseconds(time::Clock const& clock);
+std::string to_string_local(time::Clock const& clock, bool milliseconds = false);
 
 } // namespace hlib
 

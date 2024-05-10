@@ -22,8 +22,7 @@
 // SOFTWARE.
 //
 #include "hlib/uri.hpp"
-#include "hlib/base.hpp"
-#include "hlib/format.hpp"
+#include "hlib_format.hpp"
 #include "hlib/string.hpp"
 #include <regex>
 #include <unordered_map>
@@ -108,66 +107,66 @@ std::string hlib::to_string(URI const& uri)
                         + uri.query.length() + 1
                         + uri.fragment.length() + 1;
 
-    fmt::memory_buffer buffer;
-    buffer.reserve(length);
+    std::string string;
+    string.reserve(length);
 
     if (false == uri.scheme.empty()) {
-        fmt::format_to(std::back_inserter(buffer), "{}:", uri.scheme);
+        format_to(string, "%s:", uri.scheme.c_str());
     }
 
     if (false == uri.host.empty()) {
-        append_to(buffer, "//");
+        string += "//";
 
         if (false == uri.user_info.empty()) {
-            fmt::format_to(std::back_inserter(buffer), "{}@", uri.user_info);
+            format_to(string, "%s@", uri.user_info.c_str());
         }
 
-        append_to(buffer, uri.host);
+        string += uri.host;
         if (0 != uri.port && uri_get_default_port_for_scheme(uri.scheme) != uri.port) {
-            fmt::format_to(std::back_inserter(buffer), ":{}", uri.port);
+            format_to(string, ":%u", uri.port);
         }
     }
 
-    append_to(buffer, false == uri.path.empty() ? uri.path.c_str() : "/");
+    string += false == uri.path.empty() ? uri.path.c_str() : "/";
 
     if (false == uri.query.empty()) {
-        fmt::format_to(std::back_inserter(buffer), "?{}", uri.query);
+        format_to(string, "?%s", uri.query.c_str());
     }
 
     if (false == uri.fragment.empty()) {
-        fmt::format_to(std::back_inserter(buffer), "#{}", uri.fragment);
+        format_to(string, "#%s", uri.fragment.c_str());
     }
 
-    return fmt::to_string(buffer);
+    return string;
 }
 
 std::string hlib::uri_get_host_port(URI const& uri)
 {
-    fmt::memory_buffer buffer;
-    buffer.reserve(uri.host.length() + 6);
+    std::string string;
+    string.reserve(uri.host.length() + 6);
 
-    append_to(buffer, uri.host);
+    string = uri.host;
     if (uri.port != 0 && uri.port != uri_get_default_port_for_scheme(uri.scheme)) {
-        fmt::format_to(std::back_inserter(buffer), ":{}", uri.port);
+        format_to(string, ":%u", uri.port);
     }
 
-    return fmt::to_string(buffer);
+    return string;
 }
 
 std::string hlib::uri_get_path_query_fragment(URI const& uri)
 {
-    fmt::memory_buffer buffer;
-    buffer.reserve(uri.path.length() + uri.query.length() + uri.fragment.length() + 2);
+    std::string string;
+    string.reserve(uri.path.length() + uri.query.length() + uri.fragment.length() + 2);
 
-    append_to(buffer, uri.path);
+    string = uri.path;
     if (uri.query.empty() == false) {
-        fmt::format_to(std::back_inserter(buffer), "?{}", uri.query);
+        format_to(string, "?%s", uri.query.c_str());
     }
     if (uri.fragment.empty() == false) {
-        fmt::format_to(std::back_inserter(buffer), "#{}", uri.fragment);
+        format_to(string, "#%s", uri.fragment.c_str());
     }
 
-    return fmt::to_string(buffer);
+    return string;
 }
 
 std::uint16_t hlib::uri_get_default_port_for_scheme(std::string const& scheme)
@@ -198,33 +197,35 @@ std::string hlib::uri_encoding_escape(std::string const& string)
 {
     static char const *hdigit{ "0123456789ABCDEF" };
 
-    auto escape = [](char const c)
+    auto needs_escaping = [](char const c)
     {
         return !(isalnum(c) || '-' == c || '.' == c || '_' == c || '~' == c);
     };
 
-    fmt::memory_buffer buffer;
-    buffer.reserve(string.length());
+    std::string escaped;
+    escaped.reserve(string.length());
 
     for(std::size_t i = 0; i < string.length(); ++i) {
         char const c = string[i];
-        if (escape(c)) {
-            fmt::format_to(std::back_inserter(buffer), "%{}{}", 
+        if (true == needs_escaping(c)) {
+            format_to(escaped, "%%%c%c", 
                 hdigit[(c >> 4) & 0x0f],
                 hdigit[(c >> 0) & 0x0f]
             );
         }
         else {
-            append_to(buffer, c);
+            escaped += c;
         }
     }
 
-    return fmt::to_string(buffer);
+    return escaped;
 }
 
 std::string hlib::uri_encoding_unescape(std::string const& string)
 {
-    fmt::memory_buffer buffer;
+    std::string unescaped;
+    unescaped.reserve(string.length());
+
     char hex[4]{};
 
     for(std::size_t i = 0; i < string.length(); ++i) {
@@ -244,10 +245,10 @@ std::string hlib::uri_encoding_unescape(std::string const& string)
             c = static_cast<char>(::strtoul(hex, nullptr, 16));
         }
 
-        append_to(buffer, c);
+        unescaped += hex;
     }
 
-    return fmt::to_string(buffer);
+    return unescaped;
 }
 
 std::string hlib::target_get_path(std::string const& target)

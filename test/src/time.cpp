@@ -48,16 +48,16 @@ TEST_CASE("Clock UTC Strings", "[time]")
     time::Clock const now = time::now_utc();
     std::string iso8601;
 
-    iso8601 = to_string_utc_date(now);
-    REQUIRE(iso8601 == to_string_utc_date(time::to_clock_utc(iso8601)));
+    iso8601 = to_string_utc_date_and_time(now);
+    REQUIRE(iso8601 == to_string_utc_date_and_time(time::to_clock(iso8601)));
 
     iso8601 = to_string_utc(now);
-    REQUIRE(iso8601 == to_string_utc(time::to_clock_utc(iso8601)));
+    REQUIRE(iso8601 == to_string_utc(time::to_clock(iso8601)));
 
     iso8601 = to_string_utc(now, true);
-    REQUIRE(iso8601 == to_string_utc(time::to_clock_utc(iso8601), true));
+    REQUIRE(iso8601 == to_string_utc(time::to_clock(iso8601), true));
 
-    iso8601 = to_string_utc_local(now);
-    REQUIRE(iso8601 == to_string_utc_local(time::to_clock_utc(iso8601)));
+    iso8601 = to_string_local(now);
+    REQUIRE(iso8601 == to_string_local(time::to_clock(iso8601)));
 }
 

@@ -23,12 +23,12 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/memory.hpp"
 #include "hlib/sock_addr.hpp"
 #include <list>
-#include <new>
 
 namespace hlib
 {

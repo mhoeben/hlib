@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
 #include "hlib/memory.hpp"
 #include "hlib/result.hpp"
@@ -30,7 +31,6 @@
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
-#include <new>
 #include <string>
 
 namespace hlib

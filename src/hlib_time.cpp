@@ -23,7 +23,7 @@
 //
 #include "hlib/time.hpp"
 #include "hlib/error.hpp"
-#include "hlib/format_extra.hpp"
+#include "hlib_format.hpp"
 #include "hlib/string.hpp"
 
 using namespace hlib;
@@ -89,6 +89,28 @@ std::timespec timespec_divide(const timespec& lhs, double that)
     result.tv_nsec = static_cast<long>((divided_secs - result.tv_sec) * nsec_per_sec);
 
     return result;
+}
+
+std::string localtime_offset_string(time::Clock const& clock)
+{
+    struct tm time_info;
+    std::int32_t offset;
+    char sign;
+
+    // Get local time reentrant.
+    localtime_r(&clock.tv_sec, &time_info);
+
+    // Determine sign and absolute offset.
+    if (time_info.tm_gmtoff >= 0) {
+        sign = '+';
+        offset = time_info.tm_gmtoff / 60;
+    }
+    else {
+        sign = '-';
+        offset = -(time_info.tm_gmtoff / 60);
+    }
+
+    return format("%c%02d:%02d", sign, offset / 60, offset % 60);
 }
 
 } // namespace
@@ -223,7 +245,7 @@ time::Clock::Clock(std::time_t sec, long nsec) noexcept
 
 time::Clock::Clock(clockid_t clock_id, std::nothrow_t) noexcept
 {
-    hverify(0 == clock_gettime(clock_id, static_cast<std::timespec*>(this)));
+    HVERIFY(0 == clock_gettime(clock_id, static_cast<std::timespec*>(this)));
 }
 
 time::Clock::Clock(clockid_t clock_id)
@@ -321,7 +343,7 @@ time::Clock time::now_utc(clockid_t clock_id)
 
 time::Clock const time::infinity(0x7fffffff, 0);
 
-time::Clock time::to_clock_utc(std::string const& iso8601)
+time::Clock time::to_clock(std::string const& iso8601)
 {
     std::tm tm_time{};
     std::timespec timespec;
@@ -371,86 +393,106 @@ time::Clock time::to_clock_utc(std::string const& iso8601)
 
 std::string hlib::to_string(time::Duration const& duration, bool milliseconds)
 {
-    fmt::memory_buffer buffer;
-
-    format_to(buffer, "{:02d}:{:02d}:{:02d}",
+    std::string string = format("%02ld:%02ld:%02ld",
         (duration.tv_sec / 3600),
         (duration.tv_sec / 60) % 60,
         (duration.tv_sec / 1) % 60
     );
 
     if (true == milliseconds) {
-        format_to(buffer, ".{:03d}", duration.tv_nsec / 1000000);
+        format_to(string, ".%03ld", duration.tv_nsec / 1000000);
     }
 
-    return fmt::to_string(buffer);
+    return string;
 }
 
 std::string hlib::to_string_utc_date(time::Clock const& clock)
 {
-    return fmt::format("{:%Y-%m-%d}", fmt::gmtime(clock.tv_sec));
+    char string[12]; // ISO 8601 format: "YYYY-MM-DDZ\0"
+    strftime(string, sizeof(string), "%Y-%m-%dZ", gmtime(&(clock.tv_sec)));
+    return string;
 }
 
-std::string hlib::to_string_utc_time(time::Clock const& clock, bool milliseconds)
+std::string hlib::to_string_utc_date_and_time(time::Clock const& clock)
 {
-    fmt::memory_buffer buffer;
+    char string[21]; // ISO 8601 format: "YYYY-MM-DDTHH:MM:SSZ\0"
+    strftime(string, sizeof(string), "%Y-%m-%dT%H:%M:%SZ", gmtime(&(clock.tv_sec)));
+    return string;
+}
 
-    format_to(buffer, "{:%H:%M:%S}", fmt::gmtime(clock.tv_sec));
+std::string hlib::to_string_utc_time(time::Clock const& clock)
+{
+    char string[10]; // ISO 8601 format: "HH:MM:SSZ\0"
+    strftime(string, sizeof(string), "%H:%M:%SZ", gmtime(&(clock.tv_sec)));
+    return string;
+}
 
-    if (true == milliseconds) {
-        format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
-    }
+std::string hlib::to_string_utc_time_milliseconds(time::Clock const& clock)
+{
+    char string[14]; // ISO 8601 format: "HH:MM:SS[.MMM]Z\0"
+    constexpr std::size_t millisecond_offset = 8;
 
-    append_to(buffer, "Z");
-    return fmt::to_string(buffer);
+    strftime(string, sizeof(string), "%H:%M:%S", gmtime(&(clock.tv_sec)));
+    snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ldZ", clock.tv_nsec / 1000000);
+    return string;
 }
 
 std::string hlib::to_string_utc(time::Clock const& clock, bool milliseconds)
 {
-    fmt::memory_buffer buffer;
+    char string[25]; // ISO 8601 format: "YYYY-MM-DDTHH:MM:SS[.MMM]Z\0"
+    constexpr std::size_t millisecond_offset = 19;
 
-    format_to(buffer, "{:%Y-%m-%dT%H:%M:%S}", fmt::gmtime(clock.tv_sec));
-
-    if (true == milliseconds) {
-        format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
-    }
-
-    append_to(buffer, "Z");
-    return fmt::to_string(buffer);
-}
-
-std::string hlib::to_string_utc_local_time(time::Clock const& clock, bool milliseconds)
-{
-    fmt::memory_buffer buffer;
-    struct tm time_info;
-    std::uint32_t offset;
-    char sign;
-
-    format_to(buffer, "{:%H:%M:%S}", fmt::gmtime(clock.tv_sec));
+    strftime(string, sizeof(string), "%Y-%m-%dT%H:%M:%SZ", gmtime(&(clock.tv_sec)));
 
     if (true == milliseconds) {
-        format_to(buffer, ".{:03d}", clock.tv_nsec / 1000000);
+        snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ldZ", clock.tv_nsec / 1000000);
     }
 
-    // Get local time reentrant.
-    localtime_r(&clock.tv_sec, &time_info);
-
-    // Determine sign and absolute offset.
-    if (time_info.tm_gmtoff >= 0) {
-        sign = '+';
-        offset = time_info.tm_gmtoff / 60;
-    }
-    else {
-        sign = '-';
-        offset = -(time_info.tm_gmtoff / 60);
-    }
-
-    // Add timezone offset to GMT.
-    format_to(buffer, "{}{:02d}:{:02d}", sign, offset / 60, offset % 60);
-    return fmt::to_string(buffer);
+    return string;
 }
 
-std::string hlib::to_string_utc_local(time::Clock const& clock, bool milliseconds)
+std::string hlib::to_string_local_date(time::Clock const& clock)
 {
-    return fmt::format("{:%Y-%m-%d}T{}", fmt::gmtime(clock.tv_sec), to_string_utc_local_time(clock, milliseconds));
+    char string[11]; // ISO 8601 format: "YYYY-MM-DD\0"
+    strftime(string, sizeof(string), "%Y-%m-%d", localtime(&(clock.tv_sec)));
+    return string + localtime_offset_string(clock);
 }
+
+std::string hlib::to_string_local_date_and_time(time::Clock const& clock)
+{
+    char string[20]; // ISO 8601 format: "YYYY-MM-DDTHH:MM:SS\0"
+    strftime(string, sizeof(string), "%Y-%m-%dT%H:%M:%S", localtime(&(clock.tv_sec)));
+    return string + localtime_offset_string(clock);
+}
+
+std::string hlib::to_string_local_time(time::Clock const& clock)
+{
+    char string[9]; // ISO 8601 format: "HH:MM:SS\0"
+    strftime(string, sizeof(string), "%H:%M:%S", localtime(&(clock.tv_sec)));
+    return string + localtime_offset_string(clock);
+}
+
+std::string hlib::to_string_local_time_milliseconds(time::Clock const& clock)
+{
+    char string[14]; // ISO 8601 format: "HH:MM:SS[.MMM]\0"
+    constexpr std::size_t millisecond_offset = 8;
+
+    strftime(string, sizeof(string), "%H:%M:%S", gmtime(&(clock.tv_sec)));
+    snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ld", clock.tv_nsec / 1000000);
+    return string + localtime_offset_string(clock);
+}
+
+std::string hlib::to_string_local(time::Clock const& clock, bool milliseconds)
+{
+    char string[24]; // ISO 8601 format: "YYYY-MM-DDTHH:MM:SS[.MMM]\0"
+    constexpr std::size_t millisecond_offset = 19;
+
+    strftime(string, sizeof(string), "%Y-%m-%dT%H:%M:%S", gmtime(&(clock.tv_sec)));
+
+    if (true == milliseconds) {
+        snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ld", clock.tv_nsec / 1000000);
+    }
+
+    return string + localtime_offset_string(clock);
+}
+
