@@ -36,8 +36,17 @@ using namespace hlib;
 namespace
 {
 
-constexpr std::size_t default_receive_buffer_size = 4096;
-constexpr bool default_receive_buffer_gather = false;
+int get_option(int fd, int option) noexcept
+{
+    int result;
+    socklen_t optlen = sizeof(result);
+
+    if (getsockopt(fd, SOL_SOCKET, option, &result, &optlen) == -1) {
+        return -1;
+    }
+
+    return result;
+}
 
 bool set_option(int fd, int option, int value = 1) noexcept
 {
@@ -141,17 +150,6 @@ void Socket::onEvent(int fd, std::uint32_t events)
     assert(m_fd.get() == fd);
     assert(true == m_connected);
 
-    auto callback_receive = [this]
-    {
-        // Callback with received buffer.
-        if (nullptr != m_on_receive) {
-            m_on_receive(m_receive_buffer);
-        }
-
-        // Clear receive buffer.
-        m_receive_buffer.clear();
-    };
-
     if (0 != ((EventLoop::Error|EventLoop::Hup) & events)) {
         // A socket error occurred, callback and close socket.
         callbackAndClose(get_socket_error(fd));
@@ -159,72 +157,92 @@ void Socket::onEvent(int fd, std::uint32_t events)
     }
 
     if (0 != (EventLoop::Read & events)) {
-        // Reserve up to configured size.
-        std::uint8_t* ptr = static_cast<std::uint8_t*>(m_receive_buffer.reserve(m_receive_buffer_size));
-        std::size_t offset = m_receive_buffer.size();
+        HLIB_UNIQUE_LOCK(lock, m_mutex);
 
-        assert(offset < m_receive_buffer_size);
+        auto completed = [this, &lock]
+        {
+            // Completed receive, disable read event.
+            updateEventsLocked(m_events & ~(EventLoop::Read));
 
-        // Progressively receive to buffer.
-        ssize_t size = ::recv(fd, ptr + offset, m_receive_buffer_size - offset, 0);
+            auto sink = std::move(m_receive_sink);
+            auto callback = std::move(m_receive_callback);
+
+            lock.unlock();
+
+            if (nullptr != callback) {
+                callback(sink);
+            }
+        };
+
+        assert(nullptr != m_receive_sink);
+
+        // Extend sink by headroom, limited by the socket's receive buffer size.
+        std::size_t headroom = m_receive_sink->headroom(m_receive_buffer_size);
+        void* ptr = m_receive_sink->extend(headroom);
+
+        // Progressively receive to sink.
+        ssize_t size = ::recv(fd, ptr, headroom, 0);
         switch (size) {
         case -1:
-            // Something went wrong, callback and close socket.
+            lock.unlock();
+
+            // Something went wrong.
             callbackAndClose(errno);
             return;
 
         case 0:
-            // Socket closed, callback with buffered data.
-            if (0 != m_receive_buffer.size()) {
-                callback_receive();
-            }
-
-            // Callback no error and close socket.
+            // Socket closed.
+            completed();
             callbackAndClose(0);
-            break;
+            return;
 
         default:
-            // Adjust receive buffer for additionally received bytes.
-            m_receive_buffer.resize(offset + size);
+            // Commit received bytes.
+            m_receive_sink->commit(size);
 
-            // Callback immediately when not gathering or with full buffer
-            // when gathering.
-            if (false == m_receive_buffer_gather
-             || m_receive_buffer.size() == m_receive_buffer_size) {
-                callback_receive();
+            // All data received?
+            if (0 == m_receive_sink->maximum() || m_receive_sink->size() == m_receive_sink->maximum()) {
+                completed();
             }
-            break;
         }
     }
 
     if (0 != (EventLoop::Write & events)) {
-        HLIB_LOCK_GUARD(lock, m_mutex);
+        HLIB_UNIQUE_LOCK(lock, m_mutex);
 
-        // Get buffer at the front of the queue.
+        // Get source at the front of the queue.
         assert(false == m_send_queue.empty());
-        Buffer& buffer = m_send_queue.front();
-        assert(m_send_buffer_offset < buffer.size());
+        Source& source = *m_send_queue.front().source;
 
-        // Progressively send queued buffers.
-        ssize_t size = ::send(fd, buffer.get(m_send_buffer_offset), buffer.size() - m_send_buffer_offset, 0);
+        // Progressively send from source.
+        ssize_t size = ::send(fd, source.consume(), source.available(), 0);
         if (-1 == size) {
+            lock.unlock();
+
+            // Something went wrong.
             callbackAndClose(errno);
             return;
         }
 
-        // Add sent number of bytes and check whether there is more to send.
-        m_send_buffer_offset += size;
-        if (m_send_buffer_offset < buffer.size()) {
-            return;
-        }
+        // Consume bytes sent.
+        (void)source.consume(size);
 
-        // All sent, restart process for next buffer, if available.
-        m_send_buffer_offset = 0;
-        m_send_queue.pop_front();
-        if (true == m_send_queue.empty()) {
-            // Send queue is empty, disable write event.
-            updateEventsLocked(m_events & ~(EventLoop::Write));
-            return;
+        // Everything sent?
+        if (true == source.empty()) {
+            auto completed = m_send_queue.front();
+            m_send_queue.pop_front();
+
+            // Disable write events on empty send queue.
+            if (true == m_send_queue.empty()) {
+                updateEventsLocked(m_events & ~(EventLoop::Write));
+            }
+
+            lock.unlock();
+
+            // Callback completed sink.
+            if (nullptr != completed.callback) {
+                completed.callback(completed.source);
+            }
         }
     }
 }
@@ -244,8 +262,6 @@ void Socket::callbackAndClose(int error)
 Socket::Socket(std::weak_ptr<EventLoop> event_loop) noexcept
     : m_event_loop(std::move(event_loop))
     , m_fd(file::fd_close)
-    , m_receive_buffer_size{ default_receive_buffer_size }
-    , m_receive_buffer_gather{ default_receive_buffer_gather }
 {
 }
 
@@ -270,11 +286,6 @@ bool Socket::connected() const noexcept
     return m_connected;
 }
 
-std::uint32_t Socket::events() const noexcept
-{
-    return m_events;
-}
-
 SockAddr Socket::getPeerAddress() const noexcept
 {
     sockaddr_storage storage{};
@@ -297,22 +308,9 @@ void Socket::setConnectedCallback(OnConnected callback) noexcept
     m_on_connected = std::move(callback);
 }
 
-void Socket::setReceiveCallback(OnReceive callback) noexcept
-{
-    m_on_receive = std::move(callback);
-}
-
 void Socket::setCloseCallback(OnClose callback) noexcept
 {
     m_on_close = std::move(callback);
-}
-
-void Socket::setReceiveBufferSize(std::size_t size, bool gather) noexcept
-{
-    assert(size > 0);
-
-    m_receive_buffer_size = size;
-    m_receive_buffer_gather = gather;
 }
 
 Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
@@ -334,6 +332,12 @@ Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
     // Store socket's file descriptor and signal it is connected.
     m_fd = std::move(fd);
     m_connected = 0 == get_socket_error(m_fd.get());
+
+    if (true == m_connected) {
+        // Get receive buffer size.
+        m_receive_buffer_size = std::max<std::size_t>(get_option(m_fd.get(), SO_RCVBUF), m_receive_buffer_size);
+    }
+
     return {};
 }
 
@@ -464,6 +468,9 @@ Result<> Socket::connect(SockAddr const& address, int type, int protocol, std::u
     // Commit file descriptor.
     m_fd = std::move(fd);
 
+    // Get receive buffer size.
+    m_receive_buffer_size = std::max<std::size_t>(get_option(m_fd.get(), SO_RCVBUF), m_receive_buffer_size);
+
     // Callback connected, if connected.
     if (true == m_connected && nullptr != m_on_connected) {
         m_on_connected();
@@ -477,12 +484,12 @@ void Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
     throw_or_value<>(connect(address, type, protocol, options, std::nothrow));
 }
 
-void Socket::receive(bool enable)
+void Socket::receive(std::shared_ptr<Sink> sink, OnReceived callback)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
     std::uint32_t events = m_events;
-    if (true == enable) {
+    if (nullptr != sink) {
         events |= EventLoop::Read;
     }
     else {
@@ -492,9 +499,12 @@ void Socket::receive(bool enable)
     if (events != m_events) {
         updateEventsLocked(events);
     }
+
+    m_receive_sink = std::move(sink);
+    m_receive_callback = std::move(callback);
 }
 
-void Socket::send(Buffer buffer)
+void Socket::send(std::shared_ptr<Source> source, OnSent callback)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
@@ -503,15 +513,18 @@ void Socket::send(Buffer buffer)
         events |= EventLoop::Write;
     }
 
-    m_send_queue.emplace_back(std::move(buffer));
+    m_send_queue.emplace_back(SendTuple{ std::move(source), std::move(callback) });
 
     if (events != m_events) {
         updateEventsLocked(events);
     }
 }
 
+
 void Socket::close() noexcept
 {
+    HLIB_LOCK_GUARD(lock, m_mutex);
+
     if (-1 == m_fd.get()) {
         return;
     }
@@ -522,9 +535,12 @@ void Socket::close() noexcept
 
     m_fd.reset();
 
-    m_receive_buffer.reset();
+    m_connected = false;
+    m_events = 0;
 
-    m_send_buffer_offset = 0;
+    m_receive_sink.reset();
+    m_receive_callback = nullptr;
+
     m_send_queue.clear();
 }
 

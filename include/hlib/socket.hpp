@@ -44,7 +44,8 @@ public:
 
     typedef std::function<void(UniqueHandle<int, -1> fd, SockAddr const& address)> OnAccept;
     typedef std::function<void()> OnConnected;
-    typedef std::function<void(Buffer& buffer)> OnReceive;
+    typedef std::function<void(std::shared_ptr<Sink> const& sink)> OnReceived;
+    typedef std::function<void(std::shared_ptr<Source> const& source)> OnSent;
     typedef std::function<void(int error)> OnClose;
 
 public:
@@ -56,15 +57,12 @@ public:
 
     int fd() const noexcept;
     bool connected() const noexcept;
-    std::uint32_t events() const noexcept;
 
     SockAddr getPeerAddress() const noexcept;
 
     void setAcceptCallback(OnAccept callback) noexcept;
     void setConnectedCallback(OnConnected callback) noexcept;
-    void setReceiveCallback(OnReceive callback) noexcept;
     void setCloseCallback(OnClose callback) noexcept;
-    void setReceiveBufferSize(std::size_t size, bool gather = false) noexcept;
 
     Result<> open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept;
     void open(UniqueHandle<int, -1> fd);
@@ -75,8 +73,9 @@ public:
     Result<> connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept;
     void connect(SockAddr const& address, int type, int protocol, std::uint32_t options);
 
-    void receive(bool enable);
-    void send(Buffer buffer);
+    void receive(std::shared_ptr<Sink> sink, OnReceived callback);
+    void send(std::shared_ptr<Source> source, OnSent callback);
+
     void close() noexcept;
 
 private:
@@ -85,7 +84,6 @@ private:
 
     OnAccept m_on_accept;
     OnConnected m_on_connected;
-    OnReceive m_on_receive;
     OnClose m_on_close;
 
     std::mutex m_mutex;
@@ -93,12 +91,16 @@ private:
     bool m_connected{ false };
     std::uint32_t m_events{ 0 };
 
-    std::size_t m_receive_buffer_size;
-    bool m_receive_buffer_gather;
-    Buffer m_receive_buffer;
+    std::size_t m_receive_buffer_size{ 8*1024 };
+    std::shared_ptr<Sink> m_receive_sink;
+    OnReceived m_receive_callback;
 
-    std::size_t m_send_buffer_offset{ 0 };
-    std::list<Buffer> m_send_queue;
+    struct SendTuple
+    {
+        std::shared_ptr<Source> source;
+        OnSent callback;
+    };
+    std::list<SendTuple> m_send_queue;
 
     void updateEventsLocked(std::uint32_t events) noexcept;
 
@@ -110,3 +112,4 @@ private:
 };
 
 } // namespace hlib
+

@@ -45,8 +45,10 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/result.hpp
     include/hlib/scope_guard.hpp
     include/hlib/signal.hpp
+    include/hlib/sink.hpp
     include/hlib/sock_addr.hpp
     include/hlib/socket.hpp
+    include/hlib/source.hpp
     include/hlib/string.hpp
     include/hlib/subprocess.hpp
     include/hlib/test.hpp
