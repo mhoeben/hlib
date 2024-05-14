@@ -24,6 +24,9 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include "hlib/sink.hpp"
+#include "hlib/source.hpp"
+#include <memory>
 #include <string>
 
 namespace hlib
@@ -140,6 +143,39 @@ public:
 private:
     Buffer& m_buffer;
     std::size_t m_size;
+};
+
+class BufferSink final : public Sink
+{
+public:
+    BufferSink(std::shared_ptr<Buffer> buffer) noexcept;
+    BufferSink(std::size_t maximum);
+
+    std::shared_ptr<Buffer> const& buffer() const noexcept;
+
+private:
+    std::shared_ptr<Buffer> const m_buffer;
+
+    std::size_t capacity() const noexcept override;
+    std::size_t size() const noexcept override;
+    void* reserve(std::size_t size) noexcept override;
+    void* resize(std::size_t size) noexcept override;
+};
+
+class BufferSource final : public Source
+{
+public:
+    BufferSource(std::shared_ptr<Buffer> buffer) noexcept;
+    BufferSource(void const* data, size_t size);
+    BufferSource(std::string const& string);
+
+    std::shared_ptr<Buffer> const& buffer() const noexcept;
+
+private:
+    std::shared_ptr<Buffer> const m_buffer;
+
+    std::size_t size() const noexcept override;
+    void const* data() const noexcept override;
 };
 
 std::string to_string(Buffer const& buffer);

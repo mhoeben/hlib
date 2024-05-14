@@ -99,11 +99,6 @@ public:
         return m_handle;
     }
 
-    operator bool() const noexcept
-    {
-        return invalid_handle != m_handle;
-    }
-
     bool operator ==(UniqueHandle const& that) const noexcept
     {
         return m_handle == that.m_handle;
