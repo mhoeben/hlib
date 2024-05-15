@@ -39,7 +39,7 @@ enum FooBar
 
 TEST_CASE("Big Endian", "[endian]")
 {
-    auto sink = make_sink<Buffer>(100);
+    auto sink = make_sink<Buffer>(46);
 
     be::Serializer serializer(sink);
     serializer.transform<std::int8_t>(-13)
@@ -101,7 +101,7 @@ TEST_CASE("Big Endian", "[endian]")
 
 TEST_CASE("Little Endian", "[endian]")
 {
-    auto sink = make_sink<Buffer>(100);
+    auto sink = make_sink<Buffer>(46);
 
     le::Serializer serializer(sink);
     serializer.transform<std::int8_t>(-13)
