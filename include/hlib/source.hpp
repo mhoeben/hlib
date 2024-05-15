@@ -24,6 +24,7 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include "hlib/type_traits.hpp"
 #include <memory>
 
 namespace hlib
@@ -50,7 +51,9 @@ private:
     std::size_t m_progress{ 0 };
 };
 
-template<typename T>
+template<typename T,
+         typename = std::enable_if_t<true == has_size_method<T>::value
+                                  && true == has_data_method<T>::value>>
 class SourceAdapter final : public Source
 {
     HLIB_NOT_COPYABLE(SourceAdapter);

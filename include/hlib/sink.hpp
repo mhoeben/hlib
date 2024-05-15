@@ -24,6 +24,7 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include "hlib/type_traits.hpp"
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -42,7 +43,7 @@ public:
     std::size_t headroom(std::size_t limit) const noexcept;
 
     void* produce(std::size_t size) noexcept;
-    std::size_t produce(void* data, std::size_t size) noexcept;
+    std::size_t produce(void const* data, std::size_t size) noexcept;
 
 protected:
     Sink() = default;
@@ -54,7 +55,9 @@ private:
     std::size_t m_maximum{ std::numeric_limits<std::size_t>::max() };
 };
 
-template<typename T>
+template<typename T,
+         typename = std::enable_if_t<true == has_size_method<T>::value
+                                  && true == has_resize_method<T>::value>>
 class SinkAdapter final : public Sink
 {
     HLIB_NOT_COPYABLE(SinkAdapter);
@@ -88,7 +91,6 @@ public:
     {
         return m_data;
     }
-
 
 private:
     T m_data;

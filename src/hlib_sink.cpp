@@ -69,7 +69,7 @@ void* Sink::produce(std::size_t size) noexcept
     return ptr + before_resize;
 }
 
-std::size_t Sink::produce(void* data, std::size_t size) noexcept
+std::size_t Sink::produce(void const* data, std::size_t size) noexcept
 {
     void* ptr = this->produce(size);
     if (nullptr == ptr) {
