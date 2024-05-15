@@ -345,19 +345,9 @@ Buffer Buffer::copy()
 //
 // BufferSink Implementation
 //
-std::size_t BufferSink::capacity() const noexcept
-{
-    return m_buffer->capacity();
-}
-
 std::size_t BufferSink::size() const noexcept
 {
     return m_buffer->size();
-}
-
-void* BufferSink::reserve(std::size_t size) noexcept
-{
-    return m_buffer->reserve(size);
 }
 
 void* BufferSink::resize(std::size_t size) noexcept
@@ -379,7 +369,17 @@ BufferSink::BufferSink(std::size_t maximum)
 {
 }
 
-std::shared_ptr<Buffer> const& BufferSink::buffer() const noexcept
+Buffer const& BufferSink::buffer() const noexcept
+{
+    return *m_buffer;
+}
+
+Buffer& BufferSink::buffer() noexcept
+{
+    return *m_buffer;
+}
+
+std::shared_ptr<Buffer> const& BufferSink::get() const noexcept
 {
     return m_buffer;
 }
@@ -415,7 +415,17 @@ BufferSource::BufferSource(std::string const& string)
 {
 }
 
-std::shared_ptr<Buffer> const& BufferSource::buffer() const noexcept
+Buffer const& BufferSource::buffer() const noexcept
+{
+    return *m_buffer;
+}
+
+Buffer& BufferSource::buffer() noexcept
+{
+    return *m_buffer;
+}
+
+std::shared_ptr<Buffer> const& BufferSource::get() const noexcept
 {
     return m_buffer;
 }

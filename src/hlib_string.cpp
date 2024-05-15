@@ -30,8 +30,10 @@
 #include <locale>
 #include <limits>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wunused-function"
+
+using namespace hlib;
 
 //
 // Public
@@ -827,5 +829,79 @@ hlib::Buffer hlib::base64_decode(std::string const& string)
     Buffer buffer;
     base64_decode(buffer, string.data(), string.length());
     return buffer;
+}
+
+//
+// StringSink Implementation
+//
+std::size_t StringSink::size() const noexcept
+{
+    return m_string.size();
+}
+
+void* StringSink::resize(std::size_t size) noexcept
+{
+    m_string.resize(size);
+    return m_string.data();
+}
+
+//
+// StringSink Public
+//
+StringSink::StringSink(std::size_t maximum)
+    : Sink(maximum)
+{
+    m_string.reserve(maximum);
+}
+
+std::string const& StringSink::string() const noexcept
+{
+    return m_string;
+}
+
+std::string& StringSink::string() noexcept
+{
+    return m_string;
+}
+
+//
+// StringSource Implementation
+//
+std::size_t StringSource::size() const noexcept
+{
+    return m_string.size();
+}
+
+void const* StringSource::data() const noexcept
+{
+    return m_string.data();
+}
+
+//
+// StringSource Public
+//
+StringSource::StringSource(std::string string) noexcept
+    : m_string(std::move(string))
+{
+}
+
+StringSource::StringSource(std::string_view string_view) noexcept
+    : m_string(string_view)
+{
+}
+
+StringSource::StringSource(char const* string, std::size_t length) noexcept
+    : m_string(string, length)
+{
+}
+
+StringSource::StringSource(char const* string) noexcept
+    : m_string(string)
+{
+}
+
+std::string const& StringSource::string() const noexcept
+{
+    return m_string;
 }
 

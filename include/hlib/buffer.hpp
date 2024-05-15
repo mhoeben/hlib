@@ -151,14 +151,15 @@ public:
     BufferSink(std::shared_ptr<Buffer> buffer) noexcept;
     BufferSink(std::size_t maximum);
 
-    std::shared_ptr<Buffer> const& buffer() const noexcept;
+    Buffer const& buffer() const noexcept;
+    Buffer& buffer() noexcept;
+
+    std::shared_ptr<Buffer> const& get() const noexcept;
 
 private:
     std::shared_ptr<Buffer> const m_buffer;
 
-    std::size_t capacity() const noexcept override;
     std::size_t size() const noexcept override;
-    void* reserve(std::size_t size) noexcept override;
     void* resize(std::size_t size) noexcept override;
 };
 
@@ -169,7 +170,10 @@ public:
     BufferSource(void const* data, size_t size);
     BufferSource(std::string const& string);
 
-    std::shared_ptr<Buffer> const& buffer() const noexcept;
+    Buffer const& buffer() const noexcept;
+    Buffer& buffer() noexcept;
+
+    std::shared_ptr<Buffer> const& get() const noexcept;
 
 private:
     std::shared_ptr<Buffer> const m_buffer;

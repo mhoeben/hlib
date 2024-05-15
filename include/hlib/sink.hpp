@@ -33,9 +33,7 @@ namespace hlib
 class Sink
 {
 public:
-    virtual std::size_t capacity() const noexcept = 0;
     virtual std::size_t size() const noexcept = 0;
-    virtual void* reserve(std::size_t size) noexcept = 0;
     virtual void* resize(std::size_t size) noexcept = 0;
 
     std::size_t maximum() const noexcept
@@ -72,31 +70,24 @@ public:
     {
         assert(0 == m_maximum || this->size() + size <= m_maximum);
 
-        std::uint8_t* ptr = static_cast<std::uint8_t*>(reserve(this->size() + size));
+        std::size_t before_resize = this->size();
+        std::uint8_t* ptr = static_cast<std::uint8_t*>(resize(before_resize + size));
         if (nullptr == ptr) {
             return nullptr;
         }
 
-        return ptr + this->size();
+        return ptr + before_resize;
     }
 
-    void commit(std::size_t size) noexcept
+    std::size_t produce(void* data, std::size_t size) noexcept
     {
-        assert(this->size() + size <= this->capacity());
-
-        (void)resize(this->size() + size);
-    }
-
-    void produce(void* data, std::size_t size)
-    {
-        assert(0 == m_maximum || this->size() + size < m_maximum);
-
-        void* ptr = this->resize(this->size() + size);
+        void* ptr = this->extend(size);
         if (nullptr == ptr) {
-            throw std::bad_alloc();
+            return 0;
         }
 
         memcpy(ptr, data, size);
+        return this->size();
     }
 
 protected:

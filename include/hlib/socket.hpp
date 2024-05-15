@@ -24,10 +24,11 @@
 #pragma once
 
 #include "hlib/base.hpp"
-#include "hlib/buffer.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/memory.hpp"
+#include "hlib/sink.hpp"
 #include "hlib/sock_addr.hpp"
+#include "hlib/source.hpp"
 #include <list>
 
 namespace hlib
@@ -91,7 +92,6 @@ private:
     bool m_connected{ false };
     std::uint32_t m_events{ 0 };
 
-    std::size_t m_receive_buffer_size{ 8*1024 };
     std::shared_ptr<Sink> m_receive_sink;
     OnReceived m_receive_callback;
 
