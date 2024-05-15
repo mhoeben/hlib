@@ -41,12 +41,15 @@ public:
     explicit Buffer(std::size_t reservation);
     Buffer(void const* data, size_t size);
     Buffer(std::string const& string);
+    Buffer(char const* string);
     Buffer(Buffer&& that) noexcept;
     ~Buffer();
 
     Buffer& operator =(Buffer&& that) noexcept;
 
     void const* data() const noexcept;
+    void* data() noexcept;
+
     std::size_t capacity() const noexcept;
     std::size_t size() const noexcept;
     bool empty() const noexcept;
@@ -143,43 +146,6 @@ public:
 private:
     Buffer& m_buffer;
     std::size_t m_size;
-};
-
-class BufferSink final : public Sink
-{
-public:
-    BufferSink(std::shared_ptr<Buffer> buffer) noexcept;
-    BufferSink(std::size_t maximum);
-
-    Buffer const& buffer() const noexcept;
-    Buffer& buffer() noexcept;
-
-    std::shared_ptr<Buffer> const& get() const noexcept;
-
-private:
-    std::shared_ptr<Buffer> const m_buffer;
-
-    std::size_t size() const noexcept override;
-    void* resize(std::size_t size) noexcept override;
-};
-
-class BufferSource final : public Source
-{
-public:
-    BufferSource(std::shared_ptr<Buffer> buffer) noexcept;
-    BufferSource(void const* data, size_t size);
-    BufferSource(std::string const& string);
-
-    Buffer const& buffer() const noexcept;
-    Buffer& buffer() noexcept;
-
-    std::shared_ptr<Buffer> const& get() const noexcept;
-
-private:
-    std::shared_ptr<Buffer> const m_buffer;
-
-    std::size_t size() const noexcept override;
-    void const* data() const noexcept override;
 };
 
 std::string to_string(Buffer const& buffer);

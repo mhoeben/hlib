@@ -325,38 +325,5 @@ std::size_t base64_decode_get_size(std::size_t length) noexcept;
 bool base64_decode(Buffer& buffer, char const* data, std::size_t length) noexcept;
 Buffer base64_decode(std::string const& string);
 
-class StringSink final : public Sink
-{
-public:
-    StringSink() = default;
-    StringSink(std::size_t maximum);
-
-    std::string const& string() const noexcept;
-    std::string& string() noexcept;
-
-private:
-    std::string m_string;
-
-    std::size_t size() const noexcept override;
-    void* resize(std::size_t size) noexcept override;
-};
-
-class StringSource final : public Source
-{
-public:
-    StringSource(std::string string) noexcept;
-    StringSource(std::string_view string_view) noexcept;
-    StringSource(char const* string, std::size_t length) noexcept;
-    StringSource(char const* string) noexcept;
-
-    std::string const& string() const noexcept;
-
-private:
-    std::string const m_string;
-
-    std::size_t size() const noexcept override;
-    void const* data() const noexcept override;
-};
-
 } // namespace hlib
 

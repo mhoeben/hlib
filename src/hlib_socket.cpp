@@ -176,7 +176,14 @@ void Socket::onEvent(int fd, std::uint32_t events)
         // Resize sink by headroom, limited by the available bytes in the receive buffer.
         std::size_t headroom = m_receive_sink->headroom(available);
         std::size_t unextended = m_receive_sink->size();
-        void* ptr = m_receive_sink->extend(headroom);
+        void* ptr = m_receive_sink->produce(headroom);
+        if (nullptr == ptr) {
+            lock.unlock();
+
+            // Something went wrong.
+            callbackAndClose(ENOMEM);
+            return;
+        }
 
         // Progressively receive to sink.
         ssize_t size = ::recv(fd, ptr, headroom, 0);
@@ -201,7 +208,7 @@ void Socket::onEvent(int fd, std::uint32_t events)
             m_receive_sink->resize(unextended + size);
 
             // All data received?
-            if (0 == m_receive_sink->maximum() || m_receive_sink->size() == m_receive_sink->maximum()) {
+            if (true == m_receive_sink->full()) {
                 completed();
             }
         }

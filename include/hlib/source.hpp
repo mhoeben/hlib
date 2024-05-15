@@ -24,6 +24,7 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include <memory>
 
 namespace hlib
 {
@@ -34,49 +35,12 @@ public:
     virtual std::size_t size() const noexcept = 0;
     virtual void const* data() const noexcept = 0;
 
-    bool empty() const noexcept
-    {
-        assert(m_progress <= size());
-        return m_progress == size();
-    }
+    std::size_t available() const noexcept;
+    bool empty() const noexcept;
 
-    std::size_t available() const noexcept
-    {
-        assert(m_progress <= size());
-        return size() - m_progress;
-    }
-
-    std::size_t progress() const noexcept
-    {
-        return m_progress;
-    }
-
-    void setProgress(std::size_t progress) noexcept
-    {
-        assert(progress <= size());
-        m_progress = progress;
-    }
-
-    void const* consume() noexcept
-    {
-        assert(m_progress <= this->size());
-
-        return static_cast<std::uint8_t const*>(this->data()) + m_progress;
-    }
-
-    void const* consume(std::size_t size) noexcept
-    {
-        assert(m_progress + size <= this->size());
-
-        void const* data = consume();
-        m_progress += size;
-        return data;
-    }
-
-    void consume(void* data, std::size_t size) noexcept
-    {
-        memcpy(data, consume(size), size);
-    }
+    void const* consume() noexcept;
+    void const* consume(std::size_t size) noexcept;
+    void consume(void* data, std::size_t size) noexcept;
 
 protected:
     Source() = default;
@@ -85,6 +49,64 @@ protected:
 private:
     std::size_t m_progress{ 0 };
 };
+
+template<typename T>
+class SourceAdapter final : public Source
+{
+    HLIB_NOT_COPYABLE(SourceAdapter);
+
+public:
+    SourceAdapter(T data) noexcept
+        : m_data(std::move(data))
+    {
+    }
+
+    SourceAdapter(SourceAdapter&& that) noexcept
+        : m_data(std::move(that.m_data))
+    {
+    }
+
+    SourceAdapter& operator=(SourceAdapter&& that) noexcept
+    {
+        m_data = std::move(that.m_data);
+        return *this;
+    }
+
+    T const& get() const noexcept
+    {
+        return m_data;
+    }
+
+    T& get() noexcept
+    {
+        return m_data;
+    }
+
+private:
+    T m_data;
+
+    std::size_t size() const noexcept override
+    {
+        return m_data.size();
+    }
+
+    void const* data() const noexcept override
+    {
+        return m_data.data();
+    }
+};
+
+template<typename T>
+SourceAdapter<T> make_source(T data)
+{
+    return SourceAdapter<T>(std::move(data));
+}
+
+template<typename T>
+std::shared_ptr<SourceAdapter<T>> make_shared_source(T data)
+{
+    return std::make_shared<SourceAdapter<T>>(std::move(data));
+}
 
 } // namespace hlib
 
