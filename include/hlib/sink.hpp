@@ -35,6 +35,10 @@ namespace hlib
 class Sink
 {
 public:
+    static constexpr std::size_t Unspecified = 0;
+    static constexpr std::size_t Infinite = std::numeric_limits<std::size_t>::max();
+
+public:
     virtual std::size_t size() const noexcept = 0;
     virtual void* resize(std::size_t size) noexcept = 0;
 
@@ -68,7 +72,9 @@ public:
     SinkAdapter(std::size_t maximum) noexcept
         : Sink(maximum)
     {
-        m_data.reserve(maximum);
+        if (Sink::Infinite != maximum) {
+            m_data.reserve(maximum);
+        }
     }
 
     SinkAdapter(SinkAdapter&& that) noexcept
