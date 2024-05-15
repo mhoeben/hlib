@@ -114,13 +114,13 @@ private:
 };
 
 template<typename T>
-SinkAdapter<T> make_sink(std::size_t maximum = 0)
+SinkAdapter<T> make_sink(std::size_t maximum = Sink::Infinite)
 {
     return SinkAdapter<T>(maximum);
 }
 
 template<typename T>
-std::shared_ptr<SinkAdapter<T>> make_shared_sink(std::size_t maximum = 0)
+std::shared_ptr<SinkAdapter<T>> make_shared_sink(std::size_t maximum = Sink::Infinite)
 {
     return std::make_shared<SinkAdapter<T>>(maximum);
 }
