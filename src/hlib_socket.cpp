@@ -511,6 +511,10 @@ void Socket::send(std::shared_ptr<Source> source, OnSent callback)
     }
 }
 
+void Socket::send(std::shared_ptr<Source> source)
+{
+    send(std::move(source), OnSent());
+}
 
 void Socket::close() noexcept
 {

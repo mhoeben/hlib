@@ -76,6 +76,7 @@ public:
 
     void receive(std::shared_ptr<Sink> sink, OnReceived callback);
     void send(std::shared_ptr<Source> source, OnSent callback);
+    void send(std::shared_ptr<Source> source);
 
     void close() noexcept;
 
