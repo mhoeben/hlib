@@ -29,44 +29,100 @@ using namespace hlib;
 //
 // Public
 //
-void EventBus::subscribe(std::string tag, std::weak_ptr<EventQueue> queue, Callback callback)
+void EventBus::subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
-    m_subscriptions.emplace(std::move(tag), Subscription{ std::move(queue), std::move(callback) });
+    m_actions[action][name] = Subscription{ std::move(queue), std::move(callback) };
 }
 
-void EventBus::unsubscribe(std::string const& tag)
+void EventBus::unsubscribe(std::string const& name, std::string const& action)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
-    m_subscriptions.erase(tag);
+    // Find action.
+    auto it = m_actions.find(action);
+    if (m_actions.end() == it) {
+        return;
+    }
+
+    // Find subscription by name.
+    auto jt = it->second.find(name);
+    if (it->second.end() == jt) {
+        return;
+    }
+
+    // Erase named subscription.
+    it->second.erase(jt);
+
+    // Cleanup all actions without subscription.
+    for (it = m_actions.begin(); it != m_actions.end(); /* in-loop */) {
+        if (true == it->second.empty()) {
+            it = m_actions.erase(it);
+            continue;
+        }
+        ++ it;
+    }
 }
 
-void EventBus::raise(std::string const& tag, std::any data)
+void EventBus::raise(std::string const& name, std::string const& action, std::any data)
 {
-    HLIB_UNIQUE_LOCK(lock, m_mutex);
+    HLIB_LOCK_GUARD(lock, m_mutex);
 
-    // Find subscription of tag.
-    auto it = m_subscriptions.find(tag);
-    if (m_subscriptions.end() == it) {
+    // Find action.
+    auto it = m_actions.find(action);
+    if (m_actions.end() == it) {
+        return;
+    }
+
+    // Find subscription by name.
+    auto jt = it->second.find(name);
+    if (it->second.end() == jt) {
         return;
     }
 
     // Obtain a shared pointer to the event queue.
-    std::shared_ptr<EventQueue> queue = it->second.queue.lock();
+    std::shared_ptr<EventQueue> queue = jt->second.queue.lock();
     if (nullptr == queue) {
         // Remove subscription if the queue has gone away.
-        m_subscriptions.erase(it);
+        it->second.erase(jt);
         return;
     }
 
     // Bind data to event queue callback.
-    EventQueue::Callback callback = std::bind(it->second.callback, std::move(data));
+    EventQueue::Callback callback = std::bind(jt->second.callback, std::move(data));
 
-    lock.unlock();
-
-    // Push callback.
+    // Push callback on event queue.
     queue->push(std::move(callback));
+}
+
+void EventBus::raise(std::string const& action, std::any data)
+{
+    HLIB_LOCK_GUARD(lock, m_mutex);
+
+    // Find action.
+    auto it = m_actions.find(action);
+    if (m_actions.end() == it) {
+        return;
+    }
+
+    // Broadcast action to all subscriptions.
+    for (auto jt = it->second.begin(); jt != it->second.end(); /* in-loop */) {
+        // Obtain a shared pointer to the event queue.
+        std::shared_ptr<EventQueue> queue = jt->second.queue.lock();
+        if (nullptr == queue) {
+            // Remove subscription if the queue has gone away.
+            jt = it->second.erase(jt);
+            continue;
+        }
+
+        // Bind data to event queue callback.
+        EventQueue::Callback callback = std::bind(jt->second.callback, std::move(data));
+
+        // Push callback on event queue.
+        queue->push(std::move(callback));
+
+        ++jt;
+    }
 }
 
