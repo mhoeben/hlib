@@ -26,6 +26,7 @@
 #include "hlib/base.hpp"
 #include "hlib/event_queue.hpp"
 #include <any>
+#include <list>
 #include <mutex>
 #include <unordered_map>
 
@@ -43,10 +44,11 @@ public:
 public:
     EventBus() = default;
 
-    void subscribe(std::string tag, std::weak_ptr<EventQueue> queue, Callback callback);
-    void unsubscribe(std::string const& tag);
+    void subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback);
+    void unsubscribe(std::string const& name, std::string const& action);
 
-    void raise(std::string const& tag, std::any data);
+    void raise(std::string const& name, std::string const& action, std::any data);
+    void raise(std::string const& action, std::any data);
 
 private:
     std::mutex m_mutex;
@@ -56,7 +58,13 @@ private:
         std::weak_ptr<EventQueue> queue;
         Callback callback;
     };
-    std::unordered_map<std::string, Subscription> m_subscriptions;
+    std::unordered_map<
+        std::string, // action,
+        std::unordered_map<
+            std::string, // name,
+            Subscription
+        >
+    > m_actions;
 };
 
 } // namespace hlib
