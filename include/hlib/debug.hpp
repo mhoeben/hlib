@@ -25,6 +25,10 @@
 
 #include "hlib/macro.hpp"
 
-#define HLIB_DEBUG_HERE           (__FILE__ ":" HLIB_STRINGIFY_NUMBER(__LINE__))
-#define HLIB_DEBUG_HERE_STRING    std::string(HLIB_DEBUG_HERE)
-
+#ifndef NDEBUG
+#define HLIB_DEBUG_HERE         (__FILE__ ":" HLIB_STRINGIFY_NUMBER(__LINE__))
+#define HLIB_DEBUG_HERE_STRING  std::string(HLIB_DEBUG_HERE)
+#else
+#define HLIB_DEBUG_HERE         ""
+#define HLIB_DEBUG_HERE_STRING  std::string()
+#endif
