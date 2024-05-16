@@ -34,6 +34,7 @@ add_executable(${PROJECT_NAME}
     src/container.cpp
     src/endian.cpp
     src/error.cpp
+    src/event_bus.cpp
     src/event_loop.cpp
     src/event_queue.cpp
     src/math.cpp
