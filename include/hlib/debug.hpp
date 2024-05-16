@@ -23,6 +23,12 @@
 //
 #pragma once
 
-#define HLIB_STRINGIFY(x)           #x
-#define HLIB_STRINGIFY_NUMBER(x)    HLIB_STRINGIFY(x)
+#include "hlib/macro.hpp"
 
+#ifndef NDEBUG
+#define HLIB_DEBUG_HERE         (__FILE__ ":" HLIB_STRINGIFY_NUMBER(__LINE__))
+#define HLIB_DEBUG_HERE_STRING  std::string(HLIB_DEBUG_HERE)
+#else
+#define HLIB_DEBUG_HERE         ""
+#define HLIB_DEBUG_HERE_STRING  std::string()
+#endif
