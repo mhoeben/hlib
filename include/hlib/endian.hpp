@@ -25,6 +25,7 @@
 
 #include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
+#include "hlib/sink.hpp"
 #include <limits>
 
 namespace hlib
@@ -163,50 +164,39 @@ inline void* transform(void* data, T const& value) noexcept
 
 class Serializer final
 {
-public:
-    Serializer(void* data, [[maybe_unused]] std::size_t capacity = std::numeric_limits<std::size_t>::max());
+    HLIB_NOT_COPYABLE(Serializer);
+    HLIB_NOT_MOVABLE(Serializer);
 
-    void* data() const noexcept;
+public:
+    Serializer(Sink& sink) noexcept
+        : m_sink(sink)
+    {
+    }
 
     template<typename T, typename U = T>
-    inline Serializer& transform(T const& value) noexcept
+    typename std::enable_if<std::is_arithmetic<U>::value, Serializer&>::type
+        transform(T const& value) noexcept
     {
-        assert(sizeof(U) <= m_capacity);
+        assert(sizeof(U) <= m_sink.headroom());
 
-        m_data = be::transform(m_data, static_cast<U>(value));
-#ifndef NDEBUG
-        m_capacity -= sizeof(U);
-#endif
+        be::transform<T, U>(m_sink.produce(sizeof(U)), value);
+        return *this;
+    }
+
+    template<typename T>
+    typename std::enable_if<false == std::is_arithmetic<T>::value
+                         && true == has_size_method<T>::value
+                         && true == has_data_method<T>::value, Serializer&>::type
+        transform(T const& value) noexcept
+    {
+        assert(value.size() <= m_sink.headroom());
+
+        m_sink.produce(value.data(), value.size());
         return *this;
     }
 
 private:
-    void* m_data;
-#ifndef NDEBUG
-    std::size_t m_capacity;
-#endif
-};
-
-class BufferSerializer final
-{
-    HLIB_NOT_COPYABLE(BufferSerializer);
-    HLIB_NOT_MOVABLE(BufferSerializer);
-
-public:
-    BufferSerializer(Buffer& buffer);
-
-    Buffer& buffer() noexcept;
-
-    template<typename T, typename U = T>
-    BufferSerializer& transform(T const& value) noexcept
-    {
-        be::transform<U>(m_buffer.extend(sizeof(U)), static_cast<U>(value));
-        m_buffer.resize(m_buffer.size() + sizeof(U));
-        return *this;
-    }
-
-private:
-    Buffer& m_buffer;
+    Sink& m_sink;
 };
 
 //
@@ -346,68 +336,42 @@ inline T to(void const* data) noexcept
 
 class Deserializer final
 {
+    HLIB_NOT_COPYABLE(Deserializer);
+    HLIB_NOT_MOVABLE(Deserializer);
+
 public:
-    Deserializer(void* data, [[maybe_unused]] std::size_t size = std::numeric_limits<std::size_t>::max());
-
-    template<typename T>
-    inline Deserializer& transform(T& value) noexcept
+    Deserializer(Source& source) noexcept
+        : m_source(source)
     {
-        assert(sizeof(T) <= m_size);
+    }
 
-        m_data = be::transform<T>(m_data, value);
-#ifndef NDEBUG
-        m_size -= sizeof(T);
-#endif
+    template<typename T, typename U = T>
+    typename std::enable_if<std::is_arithmetic<U>::value, Deserializer&>::type
+        transform(T& value) noexcept
+    {
+        assert(sizeof(T) <= m_source.available());
+
+        be::transform<T, U>(m_source.consume(sizeof(U)), value);
         return *this;
     }
 
-    template<typename T, typename U>
-    inline Deserializer& transform(T& value) noexcept
+    template<typename T>
+    typename std::enable_if<false == std::is_arithmetic<T>::value
+                         && true == has_data_method<T>::value
+                         && true == has_resize_method<T>::value, Deserializer&>::type
+        transform(T& value, std::size_t size) noexcept
     {
-        U underlying;
-        transform(underlying);
-        value = static_cast<T>(underlying);
+        assert(size <= m_source.available());
+
+        std::size_t before_resize = value.size();
+        value.resize(before_resize + size);
+
+        m_source.consume(reinterpret_cast<uint8_t*>(value.data()) + before_resize, size);
         return *this;
     }
 
 private:
-    void* m_data;
-#ifndef NDEBUG
-    size_t m_size;
-#endif
-};
-
-class BufferDeserializer final
-{
-public:
-    BufferDeserializer(Buffer const& buffer, std::size_t offset = 0);
-
-    Buffer const& buffer() const noexcept;
-
-    template<typename T>
-    inline BufferDeserializer& transform(T& value)
-    {
-        if (m_offset + sizeof(T) > m_buffer.size()) {
-            throw std::out_of_range("transform()");
-        }
-
-        be::transform<T>(m_buffer.get(m_offset), value);
-        m_offset += sizeof(T);
-        return *this;
-    }
-
-    template<typename T, typename U>
-    inline BufferDeserializer& transform(T& value)
-    {
-        U underlying;
-        transform(underlying);
-        value = static_cast<T>(underlying);
-        return *this;
-    }
-
-private:
-    Buffer const& m_buffer;
-    std::size_t m_offset{ 0 };
+    Source& m_source;
 };
 
 } // namespace be
@@ -545,50 +509,39 @@ inline void* transform(void* data, T const& value) noexcept
 
 class Serializer final
 {
-public:
-    Serializer(void* data, [[maybe_unused]] std::size_t capacity = std::numeric_limits<std::size_t>::max());
+    HLIB_NOT_COPYABLE(Serializer);
+    HLIB_NOT_MOVABLE(Serializer);
 
-    void* data() const noexcept;
+public:
+    Serializer(Sink& sink) noexcept
+        : m_sink(sink)
+    {
+    }
 
     template<typename T, typename U = T>
-    inline Serializer& transform(T const& value) noexcept
+    typename std::enable_if<std::is_arithmetic<U>::value, Serializer&>::type
+        transform(T const& value) noexcept
     {
-        assert(sizeof(U) <= m_capacity);
+        assert(sizeof(U) <= m_sink.headroom());
 
-        m_data = le::transform(m_data, static_cast<U>(value));
-#ifndef NDEBUG
-        m_capacity -= sizeof(U);
-#endif
+        le::transform<T, U>(m_sink.produce(sizeof(U)), value);
+        return *this;
+    }
+
+    template<typename T>
+    typename std::enable_if<false == std::is_arithmetic<T>::value
+                         && true == has_size_method<T>::value
+                         && true == has_data_method<T>::value, Serializer&>::type
+        transform(T const& value) noexcept
+    {
+        assert(value.size() <= m_sink.headroom());
+
+        m_sink.produce(value.data(), value.size());
         return *this;
     }
 
 private:
-    void* m_data;
-#ifndef NDEBUG
-    std::size_t m_capacity;
-#endif
-};
-
-class BufferSerializer final
-{
-    HLIB_NOT_COPYABLE(BufferSerializer);
-    HLIB_NOT_MOVABLE(BufferSerializer);
-
-public:
-    BufferSerializer(Buffer& buffer);
-
-    Buffer& buffer() noexcept;
-
-    template<typename T, typename U = T>
-    BufferSerializer& transform(T const& value) noexcept
-    {
-        le::transform<U>(m_buffer.extend(sizeof(U)), static_cast<U>(value));
-        m_buffer.resize(m_buffer.size() + sizeof(U));
-        return *this;
-    }
-
-private:
-    Buffer& m_buffer;
+    Sink& m_sink;
 };
 
 //
@@ -728,68 +681,42 @@ inline T to(void const* data) noexcept
 
 class Deserializer final
 {
+    HLIB_NOT_COPYABLE(Deserializer);
+    HLIB_NOT_MOVABLE(Deserializer);
+
 public:
-    Deserializer(void* data, [[maybe_unused]] std::size_t size = std::numeric_limits<std::size_t>::max());
-
-    template<typename T>
-    inline Deserializer& transform(T& value) noexcept
+    Deserializer(Source& source) noexcept
+        : m_source(source)
     {
-        assert(sizeof(T) <= m_size);
+    }
 
-        m_data = le::transform<T>(m_data, value);
-#ifndef NDEBUG
-        m_size -= sizeof(T);
-#endif
+    template<typename T, typename U = T>
+    typename std::enable_if<std::is_arithmetic<U>::value, Deserializer&>::type
+        transform(T& value) noexcept
+    {
+        assert(sizeof(T) <= m_source.available());
+
+        le::transform<T, U>(m_source.consume(sizeof(U)), value);
         return *this;
     }
 
-    template<typename T, typename U>
-    inline Deserializer& transform(T& value) noexcept
+    template<typename T>
+    typename std::enable_if<false == std::is_arithmetic<T>::value
+                         && true == has_data_method<T>::value
+                         && true == has_resize_method<T>::value, Deserializer&>::type
+        transform(T& value, std::size_t size) noexcept
     {
-        U underlying;
-        transform(underlying);
-        value = static_cast<T>(underlying);
+        assert(size <= m_source.available());
+
+        std::size_t before_resize = value.size();
+        value.resize(before_resize + size);
+
+        m_source.consume(reinterpret_cast<uint8_t*>(value.data()) + before_resize, size);
         return *this;
     }
 
 private:
-    void* m_data;
-#ifndef NDEBUG
-    size_t m_size;
-#endif
-};
-
-class BufferDeserializer final
-{
-public:
-    BufferDeserializer(Buffer const& buffer, std::size_t offset = 0);
-
-    Buffer const& buffer() const noexcept;
-
-    template<typename T>
-    inline BufferDeserializer& transform(T& value)
-    {
-        if (m_offset + sizeof(T) > m_buffer.size()) {
-            throw std::out_of_range("transform()");
-        }
-
-        le::transform<T>(m_buffer.get(m_offset), value);
-        m_offset += sizeof(T);
-        return *this;
-    }
-
-    template<typename T, typename U>
-    inline BufferDeserializer& transform(T& value)
-    {
-        U underlying;
-        transform(underlying);
-        value = static_cast<T>(underlying);
-        return *this;
-    }
-
-private:
-    Buffer const& m_buffer;
-    std::size_t m_offset{ 0 };
+    Source& m_source;
 };
 
 } // namespace le

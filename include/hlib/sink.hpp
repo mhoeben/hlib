@@ -24,8 +24,10 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include "hlib/type_traits.hpp"
 #include <cstring>
 #include <limits>
+#include <memory>
 
 namespace hlib
 {
@@ -33,84 +35,143 @@ namespace hlib
 class Sink
 {
 public:
-    virtual std::size_t capacity() const noexcept = 0;
+    static constexpr std::size_t Unspecified = 0;
+    static constexpr std::size_t Infinite = std::numeric_limits<std::size_t>::max();
+
+public:
     virtual std::size_t size() const noexcept = 0;
-    virtual void* reserve(std::size_t size) noexcept = 0;
     virtual void* resize(std::size_t size) noexcept = 0;
 
-    std::size_t maximum() const noexcept
-    {
-        return m_maximum;
-    }
+    bool full() const noexcept;
+    std::size_t headroom() const noexcept;
+    std::size_t headroom(std::size_t limit) const noexcept;
 
-    void setMaximum(std::size_t maximum) noexcept
-    {
-        m_maximum = maximum;
-    }
-
-    bool full() const noexcept
-    {
-        return 0 == m_maximum || this->size() == m_maximum;
-    }
-
-    std::size_t headroom() const noexcept
-    {
-        assert(m_maximum > 0 && this->size() <= m_maximum);
-        return m_maximum - this->size();
-    }
-
-    std::size_t headroom(std::size_t limit) const noexcept
-    {
-        if (0 == m_maximum) {
-            return limit;
-        }
-
-        return std::min(headroom(), limit);
-    }
-
-    void* extend(std::size_t size) noexcept
-    {
-        assert(0 == m_maximum || this->size() + size <= m_maximum);
-
-        std::uint8_t* ptr = static_cast<std::uint8_t*>(reserve(this->size() + size));
-        if (nullptr == ptr) {
-            return nullptr;
-        }
-
-        return ptr + this->size();
-    }
-
-    void commit(std::size_t size) noexcept
-    {
-        assert(this->size() + size <= this->capacity());
-
-        (void)resize(this->size() + size);
-    }
-
-    void produce(void* data, std::size_t size)
-    {
-        assert(0 == m_maximum || this->size() + size < m_maximum);
-
-        void* ptr = this->resize(this->size() + size);
-        if (nullptr == ptr) {
-            throw std::bad_alloc();
-        }
-
-        memcpy(ptr, data, size);
-    }
+    void* produce(std::size_t size) noexcept;
+    std::size_t produce(void const* data, std::size_t size) noexcept;
 
 protected:
     Sink() = default;
-    Sink(std::size_t maximum)
-        : m_maximum{ maximum }
-    {
-    }
+    Sink(std::size_t maximum);
 
     ~Sink() = default;
 
 private:
     std::size_t m_maximum{ std::numeric_limits<std::size_t>::max() };
 };
+
+template<typename T,
+         typename = std::enable_if_t<true == has_size_method<T>::value
+                                  && true == has_resize_method<T>::value>>
+class SinkAdapter final : public Sink
+{
+    HLIB_NOT_COPYABLE(SinkAdapter);
+
+public:
+    SinkAdapter() noexcept = default;
+
+    SinkAdapter(std::size_t maximum) noexcept
+        : Sink(maximum)
+    {
+        if (Sink::Infinite != maximum) {
+            m_data.reserve(maximum);
+        }
+    }
+
+    SinkAdapter(SinkAdapter&& that) noexcept
+        : m_data(std::move(that.m_data))
+    {
+    }
+
+    SinkAdapter& operator=(SinkAdapter&& that) noexcept
+    {
+        m_data = std::move(that.m_data);
+        return *this;
+    }
+
+    T const& get() const noexcept
+    {
+        return m_data;
+    }
+
+    T& get() noexcept
+    {
+        return m_data;
+    }
+
+private:
+    T m_data;
+
+    std::size_t size() const noexcept
+    {
+        return m_data.size();
+    }
+
+    void* resize(std::size_t size) noexcept
+    {
+        m_data.resize(size);
+        return m_data.data();
+    }
+};
+
+template<typename T>
+SinkAdapter<T> make_sink(std::size_t maximum = Sink::Infinite)
+{
+    return SinkAdapter<T>(maximum);
+}
+
+template<typename T>
+std::shared_ptr<SinkAdapter<T>> make_shared_sink(std::size_t maximum = Sink::Infinite)
+{
+    return std::make_shared<SinkAdapter<T>>(maximum);
+}
+
+template<typename T>
+T const& get(Sink const& sink)
+{
+#ifdef HLIB_RTTI_ENABLED
+    SinkAdapter<T> const* adapter = dynamic_cast<SinkAdapter<T> const*>(&sink);
+    assert(nullptr != adapter);
+    return adapter->get();
+#else
+    return static_cast<SinkAdapter<T> const&>(sink).get();
+#endif
+}
+
+template<typename T>
+T& get(Sink& sink)
+{
+#ifdef HLIB_RTTI_ENABLED
+    SinkAdapter<T>* adapter = dynamic_cast<SinkAdapter<T>*>(&sink);
+    assert(nullptr != adapter);
+    return adapter->get();
+#else
+    return static_cast<SinkAdapter<T>&>(sink).get();
+#endif
+}
+
+template<typename T>
+T const& get(std::shared_ptr<Sink> const& sink)
+{
+#ifdef HLIB_RTTI_ENABLED
+    std::shared_ptr<SinkAdapter<T>> adapter = std::dynamic_pointer_cast<SinkAdapter<T>>(sink);
+    assert(nullptr != adapter);
+    return adapter->get();
+#else
+    return std::dynamic_pointer_cast<SinkAdapter<T>>(sink)->get();
+#endif
+}
+
+template<typename T>
+T& get(std::shared_ptr<Sink>& sink)
+{
+#ifdef HLIB_RTTI_ENABLED
+    std::shared_ptr<SinkAdapter<T>> adapter = std::dynamic_pointer_cast<SinkAdapter<T>>(sink);
+    assert(nullptr != adapter);
+    return adapter->get();
+#else
+    return std::dynamic_pointer_cast<SinkAdapter<T>>(sink)->get();
+#endif
+}
 
 } // namespace hlib
  

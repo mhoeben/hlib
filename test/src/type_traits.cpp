@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "test.hpp"
+#include "hlib/buffer.hpp"
 #include "hlib/type_traits.hpp"
 #include <array>
 #include <forward_list>
@@ -34,7 +35,72 @@
 
 using namespace hlib;
 
-TEST_CASE("IsAssociative", "[types]")
+TEST_CASE("Has Reserve Method", "[types]")
+{
+    REQUIRE(false == has_reserve_method<std::array<int, 1>>::value);
+    REQUIRE(false == has_reserve_method<std::forward_list<int>>::value);
+    REQUIRE(false == has_reserve_method<std::list<int>>::value);
+    REQUIRE(true == has_reserve_method<std::vector<int>>::value);
+
+    REQUIRE(false == has_reserve_method<std::map<int, int>>::value);
+    REQUIRE(false == has_reserve_method<std::set<int>>::value);
+    REQUIRE(false == has_reserve_method<std::multimap<int, int>>::value);
+    REQUIRE(false == has_reserve_method<std::multiset<int>>::value);
+    REQUIRE(true == has_reserve_method<std::unordered_map<int, int>>::value);
+    REQUIRE(true == has_reserve_method<std::unordered_set<int>>::value);
+    REQUIRE(true == has_reserve_method<std::unordered_multimap<int, int>>::value);
+    REQUIRE(true == has_reserve_method<std::unordered_multiset<int>>::value);
+
+    REQUIRE(true == has_reserve_method<Buffer>::value);
+    REQUIRE(true == has_reserve_method<std::string>::value);
+}
+
+TEST_CASE("Has Size Method", "[types]")
+{
+    struct Foo
+    {
+        std::size_t size() const noexcept;
+    };
+
+    struct FooBar : Foo
+    {
+    };
+
+    struct Baz
+    {
+    };
+
+    REQUIRE(true == has_size_method<Foo>::value);
+    REQUIRE(true == has_size_method<FooBar>::value);
+    REQUIRE(false == has_size_method<Baz>::value);
+
+    REQUIRE(true == has_size_method<std::array<int, 1>>::value);
+    REQUIRE(false == has_size_method<std::forward_list<int>>::value);
+    REQUIRE(true == has_size_method<std::list<int>>::value);
+    REQUIRE(true == has_size_method<std::vector<int>>::value);
+
+    REQUIRE(true == has_size_method<Buffer>::value);
+    REQUIRE(true == has_size_method<std::string>::value);
+}
+
+TEST_CASE("Is Pair Iterator", "[types]")
+{
+    REQUIRE(false == is_pair_iterator<std::array<int, 1>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::forward_list<int>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::list<int>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::vector<int>::iterator>::value);
+
+    REQUIRE(true  == is_pair_iterator<std::map<int, int>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::set<int>::iterator>::value);
+    REQUIRE(true  == is_pair_iterator<std::multimap<int, int>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::multiset<int>::iterator>::value);
+    REQUIRE(true  == is_pair_iterator<std::unordered_map<int, int>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::unordered_set<int>::iterator>::value);
+    REQUIRE(true  == is_pair_iterator<std::unordered_multimap<int, int>::iterator>::value);
+    REQUIRE(false == is_pair_iterator<std::unordered_multiset<int>::iterator>::value);
+}
+
+TEST_CASE("Is Associative", "[types]")
 {
     REQUIRE(false == is_associative<std::array<int, 1>>::value);
     REQUIRE(false == is_associative<std::forward_list<int>>::value);

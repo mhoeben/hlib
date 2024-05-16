@@ -39,9 +39,9 @@ enum FooBar
 
 TEST_CASE("Big Endian", "[endian]")
 {
-    Buffer buffer;
+    auto sink = make_sink<Buffer>(46);
 
-    be::BufferSerializer serializer(buffer);
+    be::Serializer serializer(sink);
     serializer.transform<std::int8_t>(-13)
               .transform<std::int16_t>(-11)
               .transform<std::int32_t>(-1971)
@@ -52,7 +52,9 @@ TEST_CASE("Big Endian", "[endian]")
               .transform<std::uint64_t>(13111971)
               .transform<float>(-3.14159f)
               .transform<double>(3.14159)
-              .transform<FooBar, uint8_t>(Bar);
+              .transform<FooBar, uint8_t>(Bar)
+              .transform(std::string("xyz"));
+
 
     std::int8_t i8;
     std::int16_t i16;
@@ -65,8 +67,11 @@ TEST_CASE("Big Endian", "[endian]")
     float f;
     double d;
     FooBar foo_bar;
+    std::string xyz;
 
-    be::BufferDeserializer deserializer(buffer);
+    auto source = make_source(std::move(get<Buffer>(sink)));
+
+    be::Deserializer deserializer(source);
     deserializer.transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
                 .transform<std::int32_t>(i32)
@@ -77,7 +82,8 @@ TEST_CASE("Big Endian", "[endian]")
                 .transform<std::uint64_t>(u64)
                 .transform<float>(f)
                 .transform<double>(d)
-                .transform<FooBar, uint8_t>(foo_bar);
+                .transform<FooBar, uint8_t>(foo_bar)
+                .transform<std::string>(xyz, 3);
 
     REQUIRE(-13 == i8);
     REQUIRE(-11 == i16);
@@ -90,13 +96,14 @@ TEST_CASE("Big Endian", "[endian]")
     REQUIRE(-3.14159f == f);
     REQUIRE( 3.14159 == d);
     REQUIRE( Bar == foo_bar);
+    REQUIRE("xyz" == xyz);
 }
 
 TEST_CASE("Little Endian", "[endian]")
 {
-    Buffer buffer;
+    auto sink = make_sink<Buffer>(46);
 
-    le::BufferSerializer serializer(buffer);
+    le::Serializer serializer(sink);
     serializer.transform<std::int8_t>(-13)
               .transform<std::int16_t>(-11)
               .transform<std::int32_t>(-1971)
@@ -107,7 +114,9 @@ TEST_CASE("Little Endian", "[endian]")
               .transform<std::uint64_t>(13111971)
               .transform<float>(-3.14159f)
               .transform<double>(3.14159)
-              .transform<FooBar, uint8_t>(Bar);
+              .transform<FooBar, uint8_t>(Bar)
+              .transform(std::string("xyz"));
+
 
     std::int8_t i8;
     std::int16_t i16;
@@ -119,9 +128,12 @@ TEST_CASE("Little Endian", "[endian]")
     std::uint64_t u64;
     float f;
     double d;
-
     FooBar foo_bar;
-    le::BufferDeserializer deserializer(buffer);
+    std::string xyz;
+
+    auto source = make_source(std::move(get<Buffer>(sink)));
+
+    le::Deserializer deserializer(source);
     deserializer.transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
                 .transform<std::int32_t>(i32)
@@ -132,7 +144,8 @@ TEST_CASE("Little Endian", "[endian]")
                 .transform<std::uint64_t>(u64)
                 .transform<float>(f)
                 .transform<double>(d)
-                .transform<FooBar, uint8_t>(foo_bar);
+                .transform<FooBar, uint8_t>(foo_bar)
+                .transform<std::string>(xyz, 3);
 
     REQUIRE(-13 == i8);
     REQUIRE(-11 == i16);
@@ -145,5 +158,6 @@ TEST_CASE("Little Endian", "[endian]")
     REQUIRE(-3.14159f == f);
     REQUIRE( 3.14159 == d);
     REQUIRE( Bar == foo_bar);
+    REQUIRE("xyz" == xyz);
 }
 

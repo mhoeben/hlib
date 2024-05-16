@@ -22,7 +22,9 @@
 // SOFTWARE.
 //
 #include "test.hpp"
+#include "hlib/buffer.hpp"
 #include "hlib/socket.hpp"
+#include "hlib/string.hpp"
 
 using namespace hlib;
 
@@ -31,10 +33,8 @@ TEST_CASE("Socket", "[socket]")
     auto event_loop = std::make_shared<EventLoop>();
 
     Socket server_connection(event_loop);
-    server_connection.receive(std::make_shared<BufferSink>(0), [&](auto const& sink) {
-        auto const& buffer = std::static_pointer_cast<BufferSink>(sink)->buffer();
-
-        REQUIRE("So Long, and Thanks for All the Fish" == to_string(*buffer));
+    server_connection.receive(make_shared_sink<Buffer>(0), [&](auto const& sink) {
+        REQUIRE("So Long, and Thanks for All the Fish" == to_string(get<Buffer>(sink)));
         event_loop->interrupt();
     });
 
@@ -42,16 +42,14 @@ TEST_CASE("Socket", "[socket]")
     server.listen(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 1, Socket::ReusePort);
     server.setAcceptCallback([&](UniqueHandle<int, -1> fd, SockAddr const& /*address*/) {
         server_connection.open(std::move(fd));
-        server_connection.send(std::make_shared<BufferSource>("Hello World!"), nullptr);
+        server_connection.send(make_shared_source<Buffer>("Hello World!"));
     });
 
     Socket client(event_loop);
     client.connect(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 0);
-    client.receive(std::make_shared<BufferSink>(0), [&](auto const& sink) {
-        auto const& buffer = std::static_pointer_cast<BufferSink>(sink)->buffer();
-
-        REQUIRE("Hello World!" == to_string(*buffer));
-        client.send(std::make_shared<BufferSource>("So Long, and Thanks for All the Fish"), nullptr);
+    client.receive(make_shared_sink<Buffer>(0), [&](auto const& sink) {
+        REQUIRE("Hello World!" == to_string(get<Buffer>(sink)));
+        client.send(make_shared_source<Buffer>("So Long, and Thanks for All the Fish"));
     });
 
     event_loop->dispatch();
@@ -62,10 +60,8 @@ TEST_CASE("Socket Fixed Size", "[socket]")
     auto event_loop = std::make_shared<EventLoop>();
 
     Socket server_connection(event_loop);
-    server_connection.receive(std::make_shared<BufferSink>(3), [&](auto const& sink) {
-        auto const& buffer = std::static_pointer_cast<BufferSink>(sink)->buffer();
-
-        REQUIRE("123" == to_string(*buffer));
+    server_connection.receive(make_shared_sink<std::string>(3), [&](std::shared_ptr<Sink> const& sink) {
+        REQUIRE("123" == get<std::string>(sink));
         event_loop->interrupt();
     });
 
@@ -73,16 +69,14 @@ TEST_CASE("Socket Fixed Size", "[socket]")
     server.listen(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 1, Socket::ReusePort);
     server.setAcceptCallback([&](UniqueHandle<int, -1> fd, SockAddr const& /*address*/) {
         server_connection.open(std::move(fd));
-        server_connection.send(std::make_shared<BufferSource>("test"), nullptr);
+        server_connection.send(make_shared_source<std::string>("test"));
     });
 
     Socket client(event_loop);
     client.connect(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 0);
-    client.receive(std::make_shared<BufferSink>(4), [&](auto const& sink) {
-        auto const& buffer = std::static_pointer_cast<BufferSink>(sink)->buffer();
-
-        REQUIRE("test" == to_string(*buffer));
-        client.send(std::make_shared<BufferSource>("123"), nullptr);
+    client.receive(make_shared_sink<std::string>(4), [&](auto const& sink) {
+        REQUIRE("test" == get<std::string>(*sink));
+        client.send(make_shared_source<std::string>("123"));
     });
 
     event_loop->dispatch();

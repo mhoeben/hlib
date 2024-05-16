@@ -27,6 +27,7 @@
 #include "hlib/event_loop.hpp"
 #include "hlib/file.hpp"
 #include <fcntl.h>
+#include <sys/ioctl.h>
 
 using namespace hlib;
 
@@ -35,18 +36,6 @@ using namespace hlib;
 //
 namespace
 {
-
-int get_option(int fd, int option) noexcept
-{
-    int result;
-    socklen_t optlen = sizeof(result);
-
-    if (getsockopt(fd, SOL_SOCKET, option, &result, &optlen) == -1) {
-        return -1;
-    }
-
-    return result;
-}
 
 bool set_option(int fd, int option, int value = 1) noexcept
 {
@@ -176,9 +165,25 @@ void Socket::onEvent(int fd, std::uint32_t events)
 
         assert(nullptr != m_receive_sink);
 
-        // Extend sink by headroom, limited by the socket's receive buffer size.
-        std::size_t headroom = m_receive_sink->headroom(m_receive_buffer_size);
-        void* ptr = m_receive_sink->extend(headroom);
+        // Get number of bytes available.
+        int available;
+        if (-1 == ioctl(fd, FIONREAD, &available)) {
+            lock.unlock();
+            callbackAndClose(errno);
+            return;
+        }
+
+        // Resize sink by headroom, limited by the available bytes in the receive buffer.
+        std::size_t headroom = m_receive_sink->headroom(available);
+        std::size_t unextended = m_receive_sink->size();
+        void* ptr = m_receive_sink->produce(headroom);
+        if (nullptr == ptr) {
+            lock.unlock();
+
+            // Something went wrong.
+            callbackAndClose(ENOMEM);
+            return;
+        }
 
         // Progressively receive to sink.
         ssize_t size = ::recv(fd, ptr, headroom, 0);
@@ -197,11 +202,13 @@ void Socket::onEvent(int fd, std::uint32_t events)
             return;
 
         default:
-            // Commit received bytes.
-            m_receive_sink->commit(size);
+            assert(size > 0);
+
+            // Resize to actual size.
+            m_receive_sink->resize(unextended + size);
 
             // All data received?
-            if (0 == m_receive_sink->maximum() || m_receive_sink->size() == m_receive_sink->maximum()) {
+            if (true == m_receive_sink->full()) {
                 completed();
             }
         }
@@ -332,12 +339,6 @@ Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
     // Store socket's file descriptor and signal it is connected.
     m_fd = std::move(fd);
     m_connected = 0 == get_socket_error(m_fd.get());
-
-    if (true == m_connected) {
-        // Get receive buffer size.
-        m_receive_buffer_size = std::max<std::size_t>(get_option(m_fd.get(), SO_RCVBUF), m_receive_buffer_size);
-    }
-
     return {};
 }
 
@@ -468,9 +469,6 @@ Result<> Socket::connect(SockAddr const& address, int type, int protocol, std::u
     // Commit file descriptor.
     m_fd = std::move(fd);
 
-    // Get receive buffer size.
-    m_receive_buffer_size = std::max<std::size_t>(get_option(m_fd.get(), SO_RCVBUF), m_receive_buffer_size);
-
     // Callback connected, if connected.
     if (true == m_connected && nullptr != m_on_connected) {
         m_on_connected();
@@ -520,6 +518,10 @@ void Socket::send(std::shared_ptr<Source> source, OnSent callback)
     }
 }
 
+void Socket::send(std::shared_ptr<Source> source)
+{
+    send(std::move(source), OnSent());
+}
 
 void Socket::close() noexcept
 {

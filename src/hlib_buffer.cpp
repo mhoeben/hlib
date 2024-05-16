@@ -74,6 +74,11 @@ Buffer::Buffer(std::string const& string)
     assign(string.data(), string.size());
 }
 
+Buffer::Buffer(char const* string)
+{
+    assign(string);
+}
+
 Buffer::Buffer(Buffer&& that) noexcept
     : m_data{ that.m_data }
     , m_capacity{ that.m_capacity }
@@ -100,6 +105,11 @@ Buffer& Buffer::operator =(Buffer&& that) noexcept
 }
 
 void const* Buffer::data() const noexcept
+{
+    return m_data;
+}
+
+void* Buffer::data() noexcept
 {
     return m_data;
 }
@@ -339,85 +349,6 @@ void Buffer::erase(std::size_t offset, std::size_t size) noexcept
 Buffer Buffer::copy()
 {
     return Buffer(m_data, m_size);
-}
-
-
-//
-// BufferSink Implementation
-//
-std::size_t BufferSink::capacity() const noexcept
-{
-    return m_buffer->capacity();
-}
-
-std::size_t BufferSink::size() const noexcept
-{
-    return m_buffer->size();
-}
-
-void* BufferSink::reserve(std::size_t size) noexcept
-{
-    return m_buffer->reserve(size);
-}
-
-void* BufferSink::resize(std::size_t size) noexcept
-{
-    return m_buffer->resize(size);
-}
-
-//
-// BufferSink Public
-//
-BufferSink::BufferSink(std::shared_ptr<Buffer> buffer) noexcept
-    : m_buffer(std::move(buffer))
-{
-}
-
-BufferSink::BufferSink(std::size_t maximum)
-    : Sink(maximum)
-    , m_buffer(std::make_shared<Buffer>(maximum))
-{
-}
-
-std::shared_ptr<Buffer> const& BufferSink::buffer() const noexcept
-{
-    return m_buffer;
-}
-
-//
-// BufferSource Implementation
-//
-std::size_t BufferSource::size() const noexcept
-{
-    return m_buffer->size();
-}
-
-void const* BufferSource::data() const noexcept
-{
-    return m_buffer->data();
-}
-
-//
-// BufferSource Public
-//
-BufferSource::BufferSource(std::shared_ptr<Buffer> buffer) noexcept
-    : m_buffer(std::move(buffer))
-{
-}
-
-BufferSource::BufferSource(void const* data, size_t size)
-    : m_buffer(std::make_shared<Buffer>(data, size))
-{
-}
-
-BufferSource::BufferSource(std::string const& string)
-    : m_buffer(std::make_shared<Buffer>(string))
-{
-}
-
-std::shared_ptr<Buffer> const& BufferSource::buffer() const noexcept
-{
-    return m_buffer;
 }
 
 //

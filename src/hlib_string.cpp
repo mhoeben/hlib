@@ -30,8 +30,10 @@
 #include <locale>
 #include <limits>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wunused-function"
+
+using namespace hlib;
 
 //
 // Public

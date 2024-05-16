@@ -60,7 +60,6 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/uuid.hpp
 
     src/hlib_buffer.cpp
-    src/hlib_endian.cpp
     src/hlib_error.cpp
     src/hlib_event_loop.cpp
     src/hlib_event_queue.cpp
@@ -70,8 +69,10 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_math.cpp
     src/hlib_scope_guard.cpp
     src/hlib_signal.cpp
+    src/hlib_sink.cpp
     src/hlib_sock_addr.cpp
     src/hlib_socket.cpp
+    src/hlib_source.cpp
     src/hlib_string.cpp
     src/hlib_subprocess.cpp
     src/hlib_test.cpp

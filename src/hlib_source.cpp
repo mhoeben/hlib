@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,51 +21,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#include "hlib/source.hpp"
+#include <cstring>
 
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <new>
-#include <stdexcept>
-#include <string>
+using namespace hlib;
 
-namespace hlib
+//
+// Public
+//
+std::size_t Source::available() const noexcept
 {
+    assert(m_progress <= size());
+    return size() - m_progress;
+}
 
-#define HLIB_NOT_COPYABLE(name) \
-    name(name const &) = delete; \
-    name& operator = (name const &) = delete
+bool Source::empty() const noexcept
+{
+    assert(m_progress <= size());
+    return m_progress == size();
+}
 
-#define HLIB_NOT_MOVABLE(name) \
-    name(name &&) = delete; \
-    name& operator = (name &&) = delete
+void const* Source::consume() noexcept
+{
+    assert(m_progress <= this->size());
 
-#if defined(__clang__)
-    #define HLIB_FALLTHROUGH [[clang::fallthrough]]
-#elif defined(__GNUC__) || defined(__GNUG__)
-    #if (__GNUC__ < 7)
-        #define HLIB_FALLTHROUGH
-    #else
-        #define HLIB_FALLTHROUGH __attribute__((fallthrough))
-    #endif
-#else
-    #error "Unsupported compiler."
-#endif
+    return static_cast<std::uint8_t const*>(this->data()) + m_progress;
+}
 
-#if defined(__cpp_rtti) && __cpp_rtti
-    #define HLIB_RTTI_ENABLED
-#else
-    #define HLIB_RTTI_DISABLED
-#endif
+void const* Source::consume(std::size_t size) noexcept
+{
+    assert(m_progress + size <= this->size());
 
-#define HASSERT(expression) assert((expression))
+    void const* data = consume();
+    m_progress += size;
+    return data;
+}
 
-#ifndef NDEBUG
-#define HVERIFY(expression) assert((expression))
-#else
-#define HVERIFY(expression) do { (void)(expression); } while (false)
-#endif
-
-} // namespace hlib
-
+void Source::consume(void* data, std::size_t size) noexcept
+{
+    memcpy(data, consume(size), size);
+}
