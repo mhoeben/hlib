@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,34 +24,40 @@
 #pragma once
 
 #include "hlib/base.hpp"
-#include "hlib/timer.hpp"
-#include <deque>
+#include "hlib/event_queue.hpp"
+#include <any>
 #include <mutex>
+#include <unordered_map>
 
 namespace hlib
 {
 
-class EventLoop;
-
-class EventQueue final
+class EventBus final
 {
-    HLIB_NOT_COPYABLE(EventQueue);
-    HLIB_NOT_MOVABLE(EventQueue);
+    HLIB_NOT_COPYABLE(EventBus);
+    HLIB_NOT_MOVABLE(EventBus);
+ 
+public:
+    typedef std::function<void(std::any data)> Callback;
 
 public:
-    typedef std::function<void()> Callback;
+    EventBus() = default;
 
-public:
-    EventQueue(std::weak_ptr<EventLoop> event_loop);
+    void subscribe(std::string tag, std::weak_ptr<EventQueue> queue, Callback callback);
+    void unsubscribe(std::string const& tag);
 
-    void push(Callback callback);
+    void raise(std::string const& tag, std::any data);
 
 private:
     std::mutex m_mutex;
-    std::deque<Callback> m_queue;
-    Timer m_timer;
 
-    void onTimer();
+    struct Subscription
+    {
+        std::weak_ptr<EventQueue> queue;
+        Callback callback;
+    };
+    std::unordered_map<std::string, Subscription> m_subscriptions;
 };
 
 } // namespace hlib
+
