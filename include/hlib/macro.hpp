@@ -23,50 +23,8 @@
 //
 #pragma once
 
-#include "hlib/base.hpp"
-#include "hlib/event_queue.hpp"
-#include <any>
-#include <list>
-#include <mutex>
-#include <string>
-#include <unordered_map>
+#define HLIB_STRINGIFY(x)           #x
+#define HLIB_STRINGIFY_NUMBER(x)    HLIB_STRINGIFY(x)
 
-namespace hlib
-{
-
-class EventBus final
-{
-    HLIB_NOT_COPYABLE(EventBus);
-    HLIB_NOT_MOVABLE(EventBus);
- 
-public:
-    typedef std::function<void(std::any data)> Callback;
-
-public:
-    EventBus() = default;
-
-    void subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback);
-    void unsubscribe(std::string const& name, std::string const& action);
-
-    void notify(std::string const& name, std::string const& action, std::any data = {});
-    void broadcast(std::string const& action, std::any data = {});
-
-private:
-    std::mutex m_mutex;
-
-    struct Subscription
-    {
-        std::weak_ptr<EventQueue> queue;
-        Callback callback;
-    };
-    std::unordered_map<
-        std::string, // action,
-        std::unordered_map<
-            std::string, // name,
-            Subscription
-        >
-    > m_actions;
-};
-
-} // namespace hlib
+#define HLIB_HERE   (__FILE__ ":" HLIB_STRINGIFY_NUMBER(__LINE__))
 

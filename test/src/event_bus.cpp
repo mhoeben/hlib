@@ -62,9 +62,9 @@ TEST_CASE("EventBus", "[events]")
     event_bus.subscribe("1", "test", event_queue_1, on_event_1);
     event_bus.subscribe("0", "exit", event_queue_0, on_exit);
 
-    event_bus.raise("0", "test", std::string("Hello world!"));
-    event_bus.raise("1", "test", 42);
-    event_bus.raise("exit", nullptr);
+    event_bus.notify("0", "test", std::string("Hello world!"));
+    event_bus.notify("1", "test", 42);
+    event_bus.broadcast("exit", {});
 
     thread.join();
 

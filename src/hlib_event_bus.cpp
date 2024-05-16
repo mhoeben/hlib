@@ -65,7 +65,7 @@ void EventBus::unsubscribe(std::string const& name, std::string const& action)
     }
 }
 
-void EventBus::raise(std::string const& name, std::string const& action, std::any data)
+void EventBus::notify(std::string const& name, std::string const& action, std::any data)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
@@ -96,7 +96,7 @@ void EventBus::raise(std::string const& name, std::string const& action, std::an
     queue->push(std::move(callback));
 }
 
-void EventBus::raise(std::string const& action, std::any data)
+void EventBus::broadcast(std::string const& action, std::any data)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
@@ -117,7 +117,7 @@ void EventBus::raise(std::string const& action, std::any data)
         }
 
         // Bind data to event queue callback.
-        EventQueue::Callback callback = std::bind(jt->second.callback, std::move(data));
+        EventQueue::Callback callback = std::bind(jt->second.callback, data);
 
         // Push callback on event queue.
         queue->push(std::move(callback));
