@@ -23,8 +23,6 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
-include(../cmake/codegen.cmake)
-
 project("hlib-tests")
 
 add_subdirectory(../third_party/catch2 catch2)
