@@ -34,6 +34,26 @@
 namespace hlib
 {
 
+//
+// The following is a useful convention:
+//
+// * Components subscribe with their name to events they export, for example:
+//
+//      subscribe("ipc", "send", callback);
+//
+// * Other components can address those exported events as follows:
+//
+//      notify("ipc", "send", data);
+//
+// * Components can also emit events to any component interested by broadcasting events.
+//   In this case the action is prefixed by the origin component's name:
+//
+//      broadcast("ipc", "ipc-receive", data);
+//
+// * Interested components anonymously subscribe to these events with their own name:
+//
+//     subscribe("component", "ipc-receive", callback);
+//
 class EventBus final
 {
     HLIB_NOT_COPYABLE(EventBus);

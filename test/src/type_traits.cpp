@@ -115,3 +115,26 @@ TEST_CASE("Is Associative", "[types]")
     REQUIRE(true == is_associative<std::unordered_set<int>>::value);
 }
 
+TEST_CASE("Is Smart Pointer", "[types]")
+{
+    REQUIRE(false == is_unique_ptr<int>::value);
+    REQUIRE(true  == is_unique_ptr<std::unique_ptr<int>>::value);
+    REQUIRE(false == is_unique_ptr<std::shared_ptr<int>>::value);
+    REQUIRE(false == is_unique_ptr<std::weak_ptr<int>>::value);
+
+    REQUIRE(false == is_shared_ptr<int>::value);
+    REQUIRE(false == is_shared_ptr<std::unique_ptr<int>>::value);
+    REQUIRE(true  == is_shared_ptr<std::shared_ptr<int>>::value);
+    REQUIRE(false == is_shared_ptr<std::weak_ptr<int>>::value);
+
+    REQUIRE(false == is_weak_ptr<int>::value);
+    REQUIRE(false == is_weak_ptr<std::unique_ptr<int>>::value);
+    REQUIRE(false == is_weak_ptr<std::shared_ptr<int>>::value);
+    REQUIRE(true  == is_weak_ptr<std::weak_ptr<int>>::value);
+
+    REQUIRE(false == is_smart_ptr<int>::value);
+    REQUIRE(true  == is_smart_ptr<std::unique_ptr<int>>::value);
+    REQUIRE(true  == is_smart_ptr<std::shared_ptr<int>>::value);
+    REQUIRE(true  == is_smart_ptr<std::weak_ptr<int>>::value);
+}
+

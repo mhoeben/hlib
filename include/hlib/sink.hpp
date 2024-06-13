@@ -35,8 +35,8 @@ namespace hlib
 class Sink
 {
 public:
-    static constexpr std::size_t Unspecified = 0;
-    static constexpr std::size_t Infinite = std::numeric_limits<std::size_t>::max();
+    static constexpr std::size_t UnspecifiedCapacity = 0;
+    static constexpr std::size_t InfiniteCapacity = std::numeric_limits<std::size_t>::max();
 
 public:
     virtual std::size_t size() const noexcept = 0;
@@ -56,24 +56,33 @@ protected:
     ~Sink() = default;
 
 private:
-    std::size_t m_maximum{ std::numeric_limits<std::size_t>::max() };
+    std::size_t const m_maximum{ InfiniteCapacity };
 };
 
-template<typename T,
-         typename = std::enable_if_t<true == has_size_method<T>::value
-                                  && true == has_resize_method<T>::value>>
+template<typename T>
 class SinkAdapter final : public Sink
 {
     HLIB_NOT_COPYABLE(SinkAdapter);
 
 public:
+    typedef T Type;
+
+public:
     SinkAdapter() noexcept = default;
 
-    SinkAdapter(std::size_t maximum) noexcept
+    SinkAdapter(std::size_t maximum, T data = T()) noexcept
         : Sink(maximum)
+        , m_data(std::move(data))
     {
-        if (Sink::Infinite != maximum) {
-            m_data.reserve(maximum);
+        if (Sink::InfiniteCapacity != maximum) {
+            if constexpr(true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
+                static_assert(true == has_reserve_method<typename T::element_type>::value);
+                m_data->reserve(maximum);
+            }
+            else {
+                static_assert(true == has_reserve_method<T>::value);
+                m_data.reserve(maximum);
+            }
         }
     }
 
@@ -103,26 +112,41 @@ private:
 
     std::size_t size() const noexcept
     {
-        return m_data.size();
+        if constexpr(true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
+            static_assert(true == has_size_method<typename T::element_type>::value);
+            return m_data->size();
+        }
+        else {
+            static_assert(true == has_size_method<T>::value);
+            return m_data.size();
+        }
     }
 
     void* resize(std::size_t size) noexcept
     {
-        m_data.resize(size);
-        return m_data.data();
+        if constexpr(true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
+            static_assert(true == has_resize_method<typename T::element_type>::value);
+            m_data->resize(size);
+            return m_data->data();
+        }
+        else {
+            static_assert(true == has_resize_method<T>::value);
+            m_data.resize(size);
+            return m_data.data();
+        }
     }
 };
 
 template<typename T>
-SinkAdapter<T> make_sink(std::size_t maximum = Sink::Infinite)
+SinkAdapter<T> make_sink(std::size_t maximum, T data = T())
 {
-    return SinkAdapter<T>(maximum);
+    return SinkAdapter<T>(maximum, std::move(data));
 }
 
 template<typename T>
-std::shared_ptr<SinkAdapter<T>> make_shared_sink(std::size_t maximum = Sink::Infinite)
+std::shared_ptr<SinkAdapter<T>> make_shared_sink(std::size_t maximum, T data = T())
 {
-    return std::make_shared<SinkAdapter<T>>(maximum);
+    return std::make_shared<SinkAdapter<T>>(maximum, std::move(data));
 }
 
 template<typename T>
@@ -150,7 +174,7 @@ T& get(Sink& sink)
 }
 
 template<typename T>
-T const& get(std::shared_ptr<Sink> const& sink)
+T const& get(std::shared_ptr<Sink const> const& sink)
 {
 #ifdef HLIB_RTTI_ENABLED
     std::shared_ptr<SinkAdapter<T>> adapter = std::dynamic_pointer_cast<SinkAdapter<T>>(sink);
@@ -162,7 +186,7 @@ T const& get(std::shared_ptr<Sink> const& sink)
 }
 
 template<typename T>
-T& get(std::shared_ptr<Sink>& sink)
+T& get(std::shared_ptr<Sink> const& sink)
 {
 #ifdef HLIB_RTTI_ENABLED
     std::shared_ptr<SinkAdapter<T>> adapter = std::dynamic_pointer_cast<SinkAdapter<T>>(sink);

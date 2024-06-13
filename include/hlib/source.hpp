@@ -51,12 +51,13 @@ private:
     std::size_t m_progress{ 0 };
 };
 
-template<typename T,
-         typename = std::enable_if_t<true == has_size_method<T>::value
-                                  && true == has_data_method<T>::value>>
+template<typename T>
 class SourceAdapter final : public Source
 {
     HLIB_NOT_COPYABLE(SourceAdapter);
+
+public:
+    typedef T Source;
 
 public:
     SourceAdapter(T data) noexcept
@@ -90,12 +91,26 @@ private:
 
     std::size_t size() const noexcept override
     {
-        return m_data.size();
+        if constexpr (true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
+            static_assert(true == has_size_method<typename T::element_type>::value);
+            return m_data->size();
+        }
+        else {
+            static_assert(true == has_size_method<T>::value);
+            return m_data.size();
+        }
     }
 
     void const* data() const noexcept override
     {
-        return m_data.data();
+        if constexpr (true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
+            static_assert(true == has_data_method<typename T::element_type>::value);
+            return m_data->data();
+        }
+        else {
+            static_assert(true == has_data_method<T>::value);
+            return m_data.data();
+        }
     }
 };
 

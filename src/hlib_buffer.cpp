@@ -35,6 +35,10 @@ bool Buffer::realloc(std::size_t capacity, bool shrink) noexcept
         return true;
     }
 
+    if (capacity > m_maximum) {
+        return false;
+    }
+
     void* data;
 
     if (capacity > 0) {
@@ -59,6 +63,12 @@ bool Buffer::realloc(std::size_t capacity, bool shrink) noexcept
 //
 // Buffer Public
 //
+Buffer::Buffer(std::size_t reservation, std::size_t maximum)
+    : m_maximum(maximum)
+{
+    reserve(std::min(reservation, maximum));
+}
+
 Buffer::Buffer(std::size_t reservation)
 {
     reserve(reservation);
@@ -81,6 +91,7 @@ Buffer::Buffer(char const* string)
 
 Buffer::Buffer(Buffer&& that) noexcept
     : m_data{ that.m_data }
+    , m_maximum{ that.m_maximum }
     , m_capacity{ that.m_capacity }
     , m_size{ that.m_size }
 {
@@ -98,6 +109,7 @@ Buffer& Buffer::operator =(Buffer&& that) noexcept
 {
     reset();
 
+    m_maximum = that.m_maximum;
     std::swap(m_data, that.m_data);
     std::swap(m_capacity, that.m_capacity);
     std::swap(m_size, that.m_size);

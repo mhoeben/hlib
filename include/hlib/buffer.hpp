@@ -26,6 +26,7 @@
 #include "hlib/base.hpp"
 #include "hlib/sink.hpp"
 #include "hlib/source.hpp"
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -37,7 +38,11 @@ class Buffer final
     HLIB_NOT_COPYABLE(Buffer);
 
 public:
+    static constexpr std::size_t InfiniteCapacity = std::numeric_limits<std::size_t>::max();
+
+public:
     Buffer() = default;
+    explicit Buffer(std::size_t reservation, std::size_t maximum);
     explicit Buffer(std::size_t reservation);
     Buffer(void const* data, size_t size);
     Buffer(std::string const& string);
@@ -95,6 +100,7 @@ public:
 
 private:
     void* m_data{ nullptr };
+    std::size_t m_maximum{ InfiniteCapacity };
     std::size_t m_capacity{ 0 };
     std::size_t m_size{ 0 };
 

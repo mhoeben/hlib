@@ -24,6 +24,7 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include <memory>
 #include <type_traits>
 
 namespace hlib
@@ -109,6 +110,34 @@ struct is_associative : std::false_type {};
 
 template <typename Container>
 struct is_associative<Container, std::void_t<typename Container::key_type>> : std::true_type {};
+
+// is_unique_ptr
+template<typename T>
+struct is_unique_ptr : std::false_type {};
+template<typename T>
+struct is_unique_ptr<std::unique_ptr<T>> : std::true_type {};
+
+// is_shared_ptr
+template<typename T>
+struct is_shared_ptr : std::false_type {};
+template<typename T>
+struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+
+// is_weak_ptr
+template<typename T>
+struct is_weak_ptr : std::false_type {};
+template<typename T>
+struct is_weak_ptr<std::weak_ptr<T>> : std::true_type {};
+
+// is_smart_ptr
+template<typename T>
+struct is_smart_ptr : std::false_type {};
+template<typename T>
+struct is_smart_ptr<std::unique_ptr<T>> : std::true_type {};
+template<typename T>
+struct is_smart_ptr<std::shared_ptr<T>> : std::true_type {};
+template<typename T>
+struct is_smart_ptr<std::weak_ptr<T>> : std::true_type {};
 
 } // namespace hlib
 

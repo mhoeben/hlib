@@ -32,3 +32,19 @@
 #define HLIB_DEBUG_HERE         ""
 #define HLIB_DEBUG_HERE_STRING  std::string()
 #endif
+
+#if defined(NDEBUG)
+#define HLIB_DEBUFFER() do { } while()
+#elif defined(__GNUC__) || defined(__clang__)
+#define HLIB_DEBUGGER() __builtin_debugtrap();
+#elif defined(_MSC_VER)
+#define HLIB_DEBUGGER() __debugbreak();
+#elif defined(__i386__) || defined(__x86_64__)
+#define HLIB_DEBUGGER() __asm__("int $3");
+#elif defined(__aarch64__)
+#define HLIB_DEBUGGER() __asm__("brk #0");
+#elif defined(__arm__)
+#define HLIB_DEBUFFER() __asm__("bkpt #0");
+#elif
+#error "Unsupported compiler or architecture"
+#endif
