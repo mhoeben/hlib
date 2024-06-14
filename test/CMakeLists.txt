@@ -23,7 +23,7 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
-project("hlib-tests")
+project("hlib_tests")
 
 add_subdirectory(../third_party/catch2 catch2)
 

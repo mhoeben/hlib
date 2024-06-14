@@ -1,4 +1,4 @@
 [submodule "third_party/catch2"]
-	path = third_party/catch2
+	path = subprojects/catch2
 	url = https://github.com/catchorg/Catch2.git
 	branch = 3f0283d

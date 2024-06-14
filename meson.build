@@ -141,3 +141,11 @@ hlib_dep = declare_dependency(
 #         description: 'Commonly used C++ classes'
 #     )
 # endif
+
+# Optionally build and run the unit test program
+run_tests = get_option('run_tests')
+if run_tests
+    catch2 = subproject('catch2')
+    subdir('test')
+endif
+

@@ -22,4 +22,6 @@
 # SOFTWARE.
 #
 
+# meson_options.txt
+option('run_tests', type: 'boolean', value: false, description: 'Run tests')
 
