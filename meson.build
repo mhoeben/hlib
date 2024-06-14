@@ -21,7 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-project('hlib', 'cpp', version: '0.0', default_options: ['cpp_std=c++17'])
+project('hlib',
+    'cpp',
+    version: '0.1',
+    default_options: ['cpp_std=c++17']
+)
 
 # Define sources
 sources = files(
@@ -79,7 +83,7 @@ sources = files(
     'src/hlib_uuid.cpp'
 )
 
-# Compiler options
+# Clang compiler options
 cpp_args = [
     '-Werror',
     '-Wall',
