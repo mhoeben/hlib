@@ -21,7 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-project('hlib', 'cpp', version: '0.0', default_options: ['cpp_std=c++17'])
+project('hlib',
+    'cpp',
+    version: '0.1',
+    default_options: ['cpp_std=c++17'],
+    license: 'MIT'
+)
 
 # Define sources
 sources = files(
@@ -121,3 +126,18 @@ hlib = library(
 # Set default build type
 default_options = ['buildtype=release']
 
+# Declare a dependency for use in subprojects.
+hlib_dep = declare_dependency(
+    include_directories: include_directories('include'),
+    link_with: hlib
+)
+
+# if not meson.is_subproject()
+#     install_headers('include/hlib/', subdir: 'hlib')
+# 
+#     pkgc = import('pkgconfig')
+#     pkgc.generate(name: 'mhoeben_hlib',
+#         version: meson.project_version(),
+#         description: 'Commonly used C++ classes'
+#     )
+# endif
