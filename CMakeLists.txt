@@ -26,7 +26,7 @@ cmake_minimum_required(VERSION 3.0)
 project("hlib" VERSION 0.1 LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type." FORCE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type." FORCE)
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
