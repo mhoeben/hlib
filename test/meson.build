@@ -82,8 +82,5 @@ hlib_tests = executable(
     ]
 )
 
-# Set default build type
-default_options = ['buildtype=release']
-
 # Run unit tests
 test('HLib unit tests', hlib_tests)

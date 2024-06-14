@@ -123,24 +123,21 @@ hlib = library(
     install: true
 )
 
-# Set default build type
-default_options = ['buildtype=release']
-
 # Declare a dependency for use in subprojects.
 hlib_dep = declare_dependency(
     include_directories: include_directories('include'),
     link_with: hlib
 )
 
-# if not meson.is_subproject()
-#     install_headers('include/hlib/', subdir: 'hlib')
-# 
-#     pkgc = import('pkgconfig')
-#     pkgc.generate(name: 'mhoeben_hlib',
-#         version: meson.project_version(),
-#         description: 'Commonly used C++ classes'
-#     )
-# endif
+if not meson.is_subproject()
+    install_headers('include/hlib/', subdir: 'hlib')
+
+    pkgconfig = import('pkgconfig')
+    pkgconfig.generate(name: 'hlib',
+        version: meson.project_version(),
+        description: 'HLib, a library with commonly used C++ functionality.'
+    )
+endif
 
 # Optionally build the unit test executable. 
 if get_option('hlib_build_tests')
