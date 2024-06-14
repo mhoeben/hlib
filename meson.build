@@ -142,9 +142,8 @@ hlib_dep = declare_dependency(
 #     )
 # endif
 
-# Optionally build and run the unit test program
-run_tests = get_option('run_tests')
-if run_tests
+# Optionally build the unit test executable. 
+if get_option('hlib_build_tests')
     catch2 = subproject('catch2')
     subdir('test')
 endif

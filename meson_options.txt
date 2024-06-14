@@ -23,5 +23,5 @@
 #
 
 # meson_options.txt
-option('run_tests', type: 'boolean', value: false, description: 'Run tests')
+option('hlib_build_tests', type: 'boolean', value: false, description: 'Build unit tests')
 

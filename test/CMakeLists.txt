@@ -25,7 +25,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project("hlib_tests")
 
-add_subdirectory(../third_party/catch2 catch2)
+add_subdirectory(../subprojects/catch2 catch2)
 
 add_executable(${PROJECT_NAME}
     src/buffer.cpp

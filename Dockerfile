@@ -53,5 +53,5 @@ VOLUME /workspace
 ENV CC=clang
 ENV CXX=clang++
 
-CMD meson setup build \
- && meson compile -C build
+CMD meson setup --wipe build -Dhlib_build_tests=true \
+ && meson test -C build
