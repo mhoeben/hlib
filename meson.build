@@ -84,7 +84,7 @@ sources = files(
     'src/hlib_uuid.cpp'
 )
 
-# Compiler options
+# Clang compiler options
 cpp_args = [
     '-Werror',
     '-Wall',
@@ -119,7 +119,7 @@ hlib = library(
     dependencies: [
         dependency('uuid')
     ],
-    pic:true,
+    pic: true,
     install: true
 )
 
