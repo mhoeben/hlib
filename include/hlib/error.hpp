@@ -96,6 +96,7 @@ std::error_code make_error_code(int posix_errno);
 
 std::system_error make_system_error(int posix_errno);
 std::system_error make_system_error(int posix_errno, std::string const& what);
+std::system_error make_system_error(int posix_errno, std::error_category& category, std::string const& what);
 
 } // namespace hlib
 

@@ -123,3 +123,8 @@ std::system_error hlib::make_system_error(int posix_errno, std::string const& wh
     return std::system_error(make_error_code(posix_errno), what);
 }
 
+std::system_error hlib::make_system_error(int posix_errno, std::error_category& category, std::string const& what)
+{
+    return std::system_error(posix_errno, category, what);
+}
+
