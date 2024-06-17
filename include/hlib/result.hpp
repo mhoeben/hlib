@@ -25,6 +25,7 @@
 
 #include "hlib/base.hpp"
 #include "hlib/error.hpp"
+#include <functional>
 
 namespace hlib
 {
@@ -171,6 +172,27 @@ T throw_or_value(Result<T> result)
     }
 
     return std::move(result.value());
+}
+
+template<typename T>
+T check(Result<T> result, std::function<void(Error&& error)> on_error)
+{
+    if (true == result.success()) {
+        return std::move(result.value());
+    }
+
+    on_error(std::move(result.error()));
+    std::terminate();
+}
+
+template<typename T>
+T check(Result<T> result, std::function<T(Error&& error)> on_error)
+{
+    if (true == result.success()) {
+        return std::move(result.value());
+    }
+
+    return on_error(std::move(result.error()));
 }
 
 } // namespace hlib
