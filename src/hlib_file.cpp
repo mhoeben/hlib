@@ -112,6 +112,58 @@ bool file::is_writable(std::filesystem::path const& filepath) noexcept
         || std::filesystem::perms::none != (std::filesystem::perms::others_write & permissions);
 }
 
+//
+// void const*
+//
+Result<std::size_t> file::read(std::istream& stream, void* data, std::size_t size, std::nothrow_t) noexcept
+{
+    stream.read(static_cast<char*>(data), size);
+    if (true == stream.fail()) {
+        return make_system_error(errno);
+    }
+
+    return stream.gcount();
+}
+
+std::istream& file::read(std::istream& stream, void* data, std::size_t& size)
+{
+    size = success_or_throw<>(read(stream, data, size, std::nothrow));
+    return stream;
+}
+
+Result<std::size_t> file::read(FILE* file, void* data, std::size_t size, std::nothrow_t) noexcept
+{
+    std::size_t count = fread(data, 1, size, file);
+    if (0 != ferror(file)) {
+        return make_system_error(errno);
+    }
+
+    return count;
+}
+
+std::size_t file::read(FILE* file, void* data, std::size_t size)
+{
+    return success_or_throw<std::size_t>(read(file, data, size, std::nothrow));
+}
+
+Result<size_t> file::read(int fd, void* data, std::size_t size, std::nothrow_t) noexcept
+{
+    ssize_t count = ::read(fd, data, size);
+    if (count < 0) {
+        return make_system_error(errno);
+    }
+
+    return count;
+}
+
+std::size_t file::read(int fd, void* data, std::size_t size)
+{
+    return success_or_throw<std::size_t>(read(fd, data, size, std::nothrow));
+}
+
+//
+// Buffer
+//
 Result<> file::read(std::istream& stream, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept
 {
     char* ptr = static_cast<char*>(buffer.extend(size, std::nothrow));
@@ -133,7 +185,7 @@ Result<> file::read(std::istream& stream, Buffer& buffer, std::size_t size, std:
 
 std::istream& file::read(std::istream& stream, Buffer& buffer, std::size_t size)
 {
-    throw_or_value<>(read(stream, buffer, size, std::nothrow));
+    success_or_throw<>(read(stream, buffer, size, std::nothrow));
     return stream;
 }
 
@@ -158,7 +210,7 @@ Result<Buffer> file::read(std::istream& stream, std::size_t batch_size, std::not
 
 Buffer file::read(std::istream& stream, std::size_t batch_size)
 {
-    return throw_or_value<Buffer>(read(stream, batch_size, std::nothrow));
+    return success_or_throw<Buffer>(read(stream, batch_size, std::nothrow));
 }
 
 Result<std::size_t> file::read(FILE* file, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept
@@ -168,7 +220,7 @@ Result<std::size_t> file::read(FILE* file, Buffer& buffer, std::size_t size, std
         return make_system_error(errno);
     }
 
-    size_t count = fread(ptr + buffer.size(), 1, size, file);
+    std::size_t count = fread(ptr + buffer.size(), 1, size, file);
     if (nullptr == buffer.resize(buffer.size() + count, std::nothrow)) {
         return make_system_error(errno);
     }
@@ -182,7 +234,7 @@ Result<std::size_t> file::read(FILE* file, Buffer& buffer, std::size_t size, std
 
 std::size_t file::read(FILE* file, Buffer& buffer, std::size_t size)
 {
-    return throw_or_value<std::size_t>(read(file, buffer, size, std::nothrow));
+    return success_or_throw<std::size_t>(read(file, buffer, size, std::nothrow));
 }
 
 Result<Buffer> file::read(FILE* file, std::size_t batch_size, std::nothrow_t) noexcept
@@ -206,7 +258,7 @@ Result<Buffer> file::read(FILE* file, std::size_t batch_size, std::nothrow_t) no
 
 Buffer file::read(FILE* file, std::size_t batch_size)
 {
-    return throw_or_value<Buffer>(read(file, batch_size, std::nothrow));
+    return success_or_throw<Buffer>(read(file, batch_size, std::nothrow));
 }
 
 Result<size_t> file::read(int fd, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept
@@ -230,7 +282,7 @@ Result<size_t> file::read(int fd, Buffer& buffer, std::size_t size, std::nothrow
 
 std::size_t file::read(int fd, Buffer& buffer, std::size_t size)
 {
-    return throw_or_value<std::size_t>(read(fd, buffer, size, std::nothrow));
+    return success_or_throw<std::size_t>(read(fd, buffer, size, std::nothrow));
 }
 
 Result<Buffer> file::read(int fd, std::size_t batch_size, std::nothrow_t) noexcept
@@ -254,7 +306,7 @@ Result<Buffer> file::read(int fd, std::size_t batch_size, std::nothrow_t) noexce
 
 Buffer file::read(int fd, std::size_t batch_size)
 {
-    return throw_or_value<Buffer>(read(fd, batch_size, std::nothrow));
+    return success_or_throw<Buffer>(read(fd, batch_size, std::nothrow));
 }
 
 Result<Buffer> file::read(std::string const& filepath, std::nothrow_t) noexcept
@@ -284,14 +336,66 @@ Result<Buffer> file::read(std::string const& filepath, std::nothrow_t) noexcept
 
 Buffer file::read(std::string const& filepath)
 {
-    return throw_or_value<Buffer>(read(filepath, std::nothrow));
+    return success_or_throw<Buffer>(read(filepath, std::nothrow));
 }
 
+//
+// void const*
+//
+Result<std::size_t> file::write(std::ostream& stream, void const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    stream.write(static_cast<char const*>(data), size);
+    if (true == stream.fail()) {
+        return make_system_error(errno);
+    }
+
+    return {};
+}
+
+std::ostream& file::write(std::ostream& stream, void const* data, std::size_t& size)
+{
+    size = success_or_throw(write(stream, data, size, std::nothrow));
+    return stream;
+}
+
+Result<std::size_t> file::write(FILE* file, void const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    std::size_t count = fwrite(data, 1, size, file);
+    if (0 != ferror(file)) {
+        return make_system_error(errno);
+    }
+
+    return count;
+}
+
+std::size_t file::write(FILE* file, void const* data, std::size_t size)
+{
+    return success_or_throw<std::size_t>(write(file, data, size, std::nothrow));
+}
+
+Result<std::size_t> file::write(int fd, void const* data, std::size_t size, std::nothrow_t) noexcept
+{
+    ssize_t count = write(fd, data, size);
+    if (-1 == count) {
+        return make_system_error(errno);
+    }
+
+    return count;
+}
+
+std::size_t file::write(int fd, void const* data, std::size_t size)
+{
+    return success_or_throw<std::size_t>(write(fd, data, size, std::nothrow));
+}
+
+//
+// Buffer
+//
 Result<> file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept
 {
     size = std::min(size, buffer.size() - offset);
 
-    std::streampos pos = stream.tellp();
+    std::streampos const pos = stream.tellp();
 
     stream.write(static_cast<char const*>(buffer.data()) + offset, size);
     if (true == stream.fail()) {
@@ -304,7 +408,7 @@ Result<> file::write(std::ostream& stream, Buffer const& buffer, std::size_t& of
 
 std::ostream& file::write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size)
 {
-    throw_or_value(write(stream, buffer, offset, size, std::nothrow));
+    success_or_throw(write(stream, buffer, offset, size, std::nothrow));
     return stream;
 }
 
@@ -324,7 +428,7 @@ Result<std::size_t> file::write(FILE* file, Buffer const& buffer, std::size_t& o
 {
     size = std::min(size, buffer.size() - offset);
 
-    size_t count = fwrite(static_cast<char const*>(buffer.data()) + offset, 1, size, file);
+    std::size_t count = fwrite(static_cast<char const*>(buffer.data()) + offset, 1, size, file);
     offset += count;
 
     if (0 != ferror(file)) {
@@ -336,7 +440,7 @@ Result<std::size_t> file::write(FILE* file, Buffer const& buffer, std::size_t& o
 
 std::size_t file::write(FILE* file, Buffer const& buffer, std::size_t& offset, std::size_t size)
 {
-    return throw_or_value<std::size_t>(write(file, buffer, offset, size, std::nothrow));
+    return success_or_throw<std::size_t>(write(file, buffer, offset, size, std::nothrow));
 }
 
 Result<std::size_t> file::write(FILE* file, Buffer const& buffer, std::nothrow_t) noexcept
@@ -368,7 +472,7 @@ Result<std::size_t> write(int fd, Buffer const& buffer, std::size_t& offset, std
 
 std::size_t write(int fd, Buffer const& buffer, std::size_t& offset, std::size_t size)
 {
-    return throw_or_value<std::size_t>(write(fd, buffer, offset, size, std::nothrow));
+    return success_or_throw<std::size_t>(write(fd, buffer, offset, size, std::nothrow));
 }
 
 Result<std::size_t> write(int fd, Buffer const& buffer, std::nothrow_t) noexcept
@@ -397,7 +501,7 @@ Result<> file::write(std::string const& filepath, Buffer const& buffer, std::not
 
 void file::write(std::string const& filepath, Buffer const& buffer)
 {
-    throw_or_value<>(write(filepath, buffer, std::nothrow));
+    success_or_throw<>(write(filepath, buffer, std::nothrow));
 }
 
 std::string file::get_mime_type_from_extension(std::string const& extension, std::string const& default_mime_type)
@@ -494,7 +598,7 @@ Result<> file::fd_set_non_blocking(int fd, bool enable, std::nothrow_t) noexcept
 
 void file::fd_set_non_blocking(int fd, bool enable)
 {
-    throw_or_value(fd_set_non_blocking(fd, enable, std::nothrow));
+    success_or_throw(fd_set_non_blocking(fd, enable, std::nothrow));
 }
 
 void file::fd_close(int fd) noexcept
@@ -636,7 +740,7 @@ Result<> file::Pipe::open(std::nothrow_t) noexcept
 
 void file::Pipe::open()
 {
-    throw_or_value(open(std::nothrow));
+    success_or_throw(open(std::nothrow));
 }
 
 void file::Pipe::close() noexcept

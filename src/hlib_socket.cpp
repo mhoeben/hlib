@@ -344,7 +344,7 @@ Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
 
 void Socket::open(UniqueHandle<int, -1> fd)
 {
-    throw_or_value<>(Socket::open(std::move(fd), std::nothrow));
+    success_or_throw<>(Socket::open(std::move(fd), std::nothrow));
 }
 
 Result<> Socket::listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options, std::nothrow_t) noexcept
@@ -408,7 +408,7 @@ Result<> Socket::listen(SockAddr const& address, int type, int protocol, int bac
 
 void Socket::listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options)
 {
-    throw_or_value<>(Socket::listen(address, type, protocol, backlog, options, std::nothrow));
+    success_or_throw<>(Socket::listen(address, type, protocol, backlog, options, std::nothrow));
 }
 
 Result<> Socket::connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept
@@ -479,7 +479,7 @@ Result<> Socket::connect(SockAddr const& address, int type, int protocol, std::u
 
 void Socket::connect(SockAddr const& address, int type, int protocol, std::uint32_t options)
 {
-    throw_or_value<>(connect(address, type, protocol, options, std::nothrow));
+    success_or_throw<>(connect(address, type, protocol, options, std::nothrow));
 }
 
 void Socket::receive(std::shared_ptr<Sink> sink, OnReceived callback)

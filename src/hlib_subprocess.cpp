@@ -545,27 +545,27 @@ Result<int> Subprocess::run(std::string const& command, std::vector<std::string>
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args)
 {
-    return throw_or_value(run(command, args, std::nothrow));
+    return success_or_throw(run(command, args, std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, Stream input)
 {
-    return throw_or_value(run(command, args, std::move(input), std::nothrow));
+    return success_or_throw(run(command, args, std::move(input), std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::string const& input)
 {
-    return throw_or_value(run(command, args, input, std::nothrow));
+    return success_or_throw(run(command, args, input, std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error)
 {
-    return throw_or_value(run(command, args, std::move(input), std::move(output), std::move(error), std::nothrow));
+    return success_or_throw(run(command, args, std::move(input), std::move(output), std::move(error), std::nothrow));
 }
 
 int Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error)
 {
-    return throw_or_value(run(command, args, input, std::move(output), std::move(error), std::nothrow));
+    return success_or_throw(run(command, args, input, std::move(output), std::move(error), std::nothrow));
 }
 
 Result<> Subprocess::kill(int signal, std::nothrow_t) noexcept
@@ -589,7 +589,7 @@ Result<> Subprocess::kill(std::nothrow_t) noexcept
 
 void Subprocess::kill(int signal)
 {
-    throw_or_value(kill(signal, std::nothrow));
+    success_or_throw(kill(signal, std::nothrow));
 }
 
 Result<int> Subprocess::wait(std::nothrow_t) noexcept
@@ -634,6 +634,6 @@ Result<int> Subprocess::wait(std::nothrow_t) noexcept
 
 int Subprocess::wait()
 {
-    return throw_or_value(wait(std::nothrow));
+    return success_or_throw(wait(std::nothrow));
 }
 

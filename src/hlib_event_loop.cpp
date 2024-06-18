@@ -188,7 +188,7 @@ Result<> EventLoop::modify(int fd, std::uint32_t events, std::nothrow_t) noexcep
 
 void EventLoop::modify(int fd, std::uint32_t events)
 {
-    throw_or_value<>(modify(fd, events, std::nothrow));
+    success_or_throw<>(modify(fd, events, std::nothrow));
 }
 
 void EventLoop::change(int fd, Callback callback)
@@ -242,7 +242,7 @@ Result<> EventLoop::interrupt(std::nothrow_t) noexcept
 
 void EventLoop::interrupt()
 {
-    throw_or_value<>(interrupt(std::nothrow));
+    success_or_throw<>(interrupt(std::nothrow));
 }
 
 void EventLoop::flush() noexcept

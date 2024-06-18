@@ -164,16 +164,6 @@ private:
     Value m_value;
 };
 
-template<typename T = void>
-T throw_or_value(Result<T> result)
-{
-    if (true == result.failure()) {
-        result.error().toss();
-    }
-
-    return std::move(result.value());
-}
-
 template<typename T>
 T check(Result<T> result, std::function<void(Error&& error)> on_error)
 {
@@ -193,6 +183,12 @@ T check(Result<T> result, std::function<T(Error&& error)> on_error)
     }
 
     return on_error(std::move(result.error()));
+}
+
+template<typename T = void>
+T success_or_throw(Result<T> result)
+{
+    return check(std::move(result), [](Error&& error) -> void { throw std::move(error); });
 }
 
 } // namespace hlib

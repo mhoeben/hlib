@@ -45,6 +45,21 @@ bool is_creatable(std::filesystem::path const& filepath) noexcept;
 bool is_readable(std::filesystem::path const& filepath) noexcept;
 bool is_writable(std::filesystem::path const& filepath) noexcept;
 
+//
+// void const*
+//
+Result<std::size_t> read(std::istream& stream, void* data, std::size_t size, std::nothrow_t) noexcept;
+std::istream&       read(std::istream& stream, void* data, std::size_t& size);
+
+Result<std::size_t> read(FILE* file, void* data, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  read(FILE* file, void* data, std::size_t size);
+
+Result<std::size_t> read(int fd, void* data, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  read(int fd, void* data, std::size_t size);
+
+//
+// Buffer
+//
 Result<>      read(std::istream& stream, Buffer& buffer, std::size_t size, std::nothrow_t) noexcept;
 std::istream& read(std::istream& stream, Buffer& buffer, std::size_t size);
 
@@ -66,6 +81,21 @@ Result<Buffer> read(int fd, std::size_t batch_size, std::nothrow_t) noexcept;
 Result<Buffer> read(std::string const& filepath, std::nothrow_t) noexcept;
        Buffer  read(std::string const& filepath);
 
+//
+// void const*
+//
+Result<std::size_t> write(std::ostream& stream, void const* data, std::size_t size, std::nothrow_t) noexcept;
+std::ostream&       write(std::ostream& stream, void const* data, std::size_t& size);
+
+Result<std::size_t> write(FILE* file, void const* data, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  write(FILE* file, void const* data, std::size_t size);
+
+Result<std::size_t> write(int fd, void const* data, std::size_t size, std::nothrow_t) noexcept;
+       std::size_t  write(int fd, void const* data, std::size_t size);
+
+//
+// Buffer
+//
 Result<>      write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size, std::nothrow_t) noexcept;
 std::ostream& write(std::ostream& stream, Buffer const& buffer, std::size_t& offset, std::size_t size);
 
