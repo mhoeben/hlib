@@ -214,7 +214,7 @@ std::function<T(Error&&)> set_error(Error& error, T default_value = T())
 {
     return [&error, default_value = std::move(default_value)](Error&& e) noexcept {
         error = std::move(e);
-        return default_value;
+        return std::move(default_value);
     };
 }
 
