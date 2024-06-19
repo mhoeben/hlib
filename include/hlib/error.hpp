@@ -92,6 +92,26 @@ private:
     Value m_value;
 };
 
+inline bool operator ==(bool is_set, Error const& error)
+{
+    return error.empty() != is_set;
+}
+
+inline bool operator !=(bool is_set, Error const& error)
+{
+    return error.empty() == is_set;
+}
+
+inline bool operator ==(Error const& error, bool is_set)
+{
+    return error.empty() != is_set;
+}
+
+inline bool operator !=(Error const& error, bool is_set)
+{
+    return error.empty() == is_set;
+}
+
 int get_socket_error(int fd) noexcept;
 
 std::string get_error_string(int error_no);

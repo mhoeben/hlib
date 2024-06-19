@@ -56,3 +56,19 @@ TEST_CASE("Error", "[error]")
     REQUIRE("bad alloc" == bad_alloc.what());
     REQUIRE_THROWS_AS(bad_alloc.toss(), std::bad_alloc);
 }
+
+TEST_CASE("Error Boolean", "[error]")
+{
+    Error error;
+    REQUIRE(false == error);
+    REQUIRE(true != error);
+    REQUIRE(error == false);
+    REQUIRE(error != true);
+
+    Error bad_alloc(std::bad_alloc{});
+    REQUIRE(true == bad_alloc);
+    REQUIRE(false != bad_alloc);
+    REQUIRE(bad_alloc == true);
+    REQUIRE(bad_alloc != false);
+}
+
