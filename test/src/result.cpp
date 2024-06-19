@@ -78,3 +78,15 @@ TEST_CASE("Result Integer", "[result]")
     REQUIRE_THROWS(result.error());
 }
 
+TEST_CASE("Result Check", "[result]")
+{
+    Result<int> int_result(13);
+    REQUIRE(13 == check<int>(int_result, [](Error&& error) { throw error; }));
+
+    Result<int> error_result = make_system_error(EINVAL);
+    REQUIRE_THROWS(check<int>(error_result, [](Error&& error) { throw error; }));
+
+    Error error;
+    REQUIRE(11 == check<int>(error_result, set_error<int>(error, 11)));
+}
+

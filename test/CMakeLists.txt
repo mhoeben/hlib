@@ -103,7 +103,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
     ../include
     ${CMAKE_CURRENT_BINARY_DIR}
-    ../third_party/catch2/src
+    ../subprojects/catch2/src
     ${CMAKE_CURRENT_BINARY_DIR}/catch2/generated-includes
 )
 

@@ -27,21 +27,32 @@
 
 using namespace hlib;
 
+TEST_CASE("Error Monostate", "[error]")
+{
+    Error error;
+    REQUIRE(true == error.empty());
+    REQUIRE_THROWS_AS(error.toss(), std::bad_variant_access);
+}
+
 TEST_CASE("Error", "[error]")
 {
     Error logic_error(std::logic_error("logic error"));
+    REQUIRE(false == logic_error.empty());
     REQUIRE("logic error" == logic_error.what());
-    REQUIRE_THROWS(logic_error.toss());
+    REQUIRE_THROWS_AS(logic_error.toss(), std::logic_error);
 
     Error runtime_error(std::runtime_error("runtime error"));
+    REQUIRE(false == runtime_error.empty());
     REQUIRE("runtime error" == runtime_error.what());
-    REQUIRE_THROWS(runtime_error.toss());
+    REQUIRE_THROWS_AS(runtime_error.toss(), std::runtime_error);
 
     Error system_error(make_system_error(EAGAIN, "system error"));
+    REQUIRE(false == system_error.empty());
     REQUIRE(true == contains(system_error.what(), "system error"));
-    REQUIRE_THROWS(system_error.toss());
+    REQUIRE_THROWS_AS(system_error.toss(), std::system_error);
 
     Error bad_alloc(std::bad_alloc{});
+    REQUIRE(false == bad_alloc.empty());
     REQUIRE("bad alloc" == bad_alloc.what());
-    REQUIRE_THROWS(bad_alloc.toss());
+    REQUIRE_THROWS_AS(bad_alloc.toss(), std::bad_alloc);
 }

@@ -37,6 +37,7 @@ class Error final
 {
 public:
     typedef std::variant<
+        std::monostate,
         std::exception,
             std::logic_error,
                 std::invalid_argument,
@@ -52,6 +53,8 @@ public:
     > Value;
 
 public:
+    Error() = default;
+
     template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
     Error(T const& value)
         : m_value(value)
@@ -77,6 +80,8 @@ public:
         m_value = std::move(value);
         return *this;
     }
+
+    bool empty() const noexcept;
 
     std::error_code code() const;
     std::string what() const;

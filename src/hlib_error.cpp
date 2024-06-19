@@ -43,8 +43,17 @@ Overloaded(Ts...) -> Overloaded<Ts...>;
 //
 // Public (Error)
 //
+bool Error::empty() const noexcept
+{
+    return std::holds_alternative<std::monostate>(m_value);
+}
+
 std::error_code Error::code() const
 {
+    if (true == empty()) {
+        return std::error_code();
+    }
+
     if (false == std::holds_alternative<std::system_error>(m_value)) {
         return std::error_code();
     }
@@ -54,7 +63,13 @@ std::error_code Error::code() const
 
 std::string Error::what() const
 {
+    assert(false == empty());
+
     return std::visit(Overloaded{
+        [](std::monostate const& /* e */) noexcept
+        {
+            return "";
+        },
         [](std::bad_alloc const& /* e */) noexcept
         {
             return "bad alloc";
@@ -71,6 +86,10 @@ std::string Error::what() const
 [[noreturn]] void Error::toss() const
 {
     std::visit(Overloaded{
+        [](std::monostate const& /* e */)
+        {
+            throw std::bad_variant_access();
+        },
         [](auto const& e)
         {
             throw e;

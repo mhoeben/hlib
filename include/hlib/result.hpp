@@ -185,6 +185,15 @@ T check(Result<T> result, std::function<T(Error&& error)> on_error)
     return on_error(std::move(result.error()));
 }
 
+template<typename T>
+std::function<T(Error&&)> set_error(Error& error, T default_value = T())
+{
+    return [&error, default_value = std::move(default_value)](Error&& e) noexcept {
+        error = std::move(e);
+        return default_value;
+    };
+}
+
 template<typename T = void>
 T success_or_throw(Result<T> result)
 {
