@@ -165,6 +165,30 @@ private:
 };
 
 template<typename T>
+inline bool operator ==(bool success, Result<T> const& result)
+{
+    return result.success() == success;
+}
+
+template<typename T>
+inline bool operator !=(bool success, Result<T> const& result)
+{
+    return result.success() != success;
+}
+
+template<typename T>
+inline bool operator ==(Result<T> const& result, bool success)
+{
+    return result.success() == success;
+}
+
+template<typename T>
+inline bool operator !=(Result<T> const& result, bool success)
+{
+    return result.success() != success;
+}
+
+template<typename T>
 T check(Result<T> result, std::function<void(Error&& error)> on_error)
 {
     if (true == result.success()) {

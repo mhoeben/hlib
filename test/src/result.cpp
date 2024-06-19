@@ -78,6 +78,21 @@ TEST_CASE("Result Integer", "[result]")
     REQUIRE_THROWS(result.error());
 }
 
+TEST_CASE("Result Boolean", "[result]")
+{
+    Result<> result;
+    REQUIRE(true == result);
+    REQUIRE(false != result);
+    REQUIRE(result == true);
+    REQUIRE(result != false);
+
+    Result<> error_result = Error(std::bad_alloc());
+    REQUIRE(false == error_result);
+    REQUIRE(true != error_result);
+    REQUIRE(error_result == false);
+    REQUIRE(error_result != true);
+}
+
 TEST_CASE("Result Check", "[result]")
 {
     Result<int> int_result(13);
