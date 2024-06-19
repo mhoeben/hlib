@@ -210,7 +210,16 @@ T check(Result<T> result, std::function<T(Error&& error)> on_error)
 }
 
 template<typename T>
-std::function<T(Error&&)> set_error(Error& error, T default_value = T())
+std::function<T(Error&&)> set_error(Error& error)
+{
+    return [&error](Error&& e) noexcept {
+        error = std::move(e);
+        return T();
+    };
+}
+
+template<typename T>
+std::function<T(Error&&)> set_error(Error& error, T default_value)
 {
     return [&error, default_value = std::move(default_value)](Error&& e) noexcept {
         error = std::move(e);
