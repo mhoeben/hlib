@@ -22,10 +22,12 @@
 // SOFTWARE.
 //
 #include "hlib/socket.hpp"
-#include "hlib/lock.hpp"
+#include "hlib/emitter.hpp"
 #include "hlib/error.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/file.hpp"
+#include "hlib/lock.hpp"
+#include "hlib/receiver.hpp"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
@@ -153,17 +155,17 @@ void Socket::onEvent(int fd, std::uint32_t events)
             // Completed receive, disable read event.
             updateEventsLocked(m_events & ~(EventLoop::Read));
 
-            auto sink = std::move(m_receive_sink);
+            auto receiver = std::move(m_receive_receiver);
             auto callback = std::move(m_receive_callback);
 
             lock.unlock();
 
             if (nullptr != callback) {
-                callback(sink);
+                callback(receiver);
             }
         };
 
-        assert(nullptr != m_receive_sink);
+        assert(nullptr != m_receive_receiver);
 
         // Get number of bytes available.
         int available;
@@ -173,10 +175,10 @@ void Socket::onEvent(int fd, std::uint32_t events)
             return;
         }
 
-        // Resize sink by headroom, limited by the available bytes in the receive buffer.
-        std::size_t headroom = m_receive_sink->headroom(available);
-        std::size_t unextended = m_receive_sink->size();
-        void* ptr = m_receive_sink->produce(headroom);
+        // Resize receiver by headroom, limited by the available bytes in the receive buffer.
+        std::size_t headroom = m_receive_receiver->headroom(available);
+        std::size_t unextended = m_receive_receiver->size();
+        void* ptr = m_receive_receiver->accept(headroom);
         if (nullptr == ptr) {
             lock.unlock();
 
@@ -185,7 +187,7 @@ void Socket::onEvent(int fd, std::uint32_t events)
             return;
         }
 
-        // Progressively receive to sink.
+        // Progressively receive to receiver.
         ssize_t size = ::recv(fd, ptr, headroom, 0);
         switch (size) {
         case -1:
@@ -205,10 +207,10 @@ void Socket::onEvent(int fd, std::uint32_t events)
             assert(size > 0);
 
             // Resize to actual size.
-            m_receive_sink->resize(unextended + size);
+            m_receive_receiver->resize(unextended + size);
 
             // All data received?
-            if (true == m_receive_sink->full()) {
+            if (true == m_receive_receiver->full()) {
                 completed();
             }
         }
@@ -217,12 +219,12 @@ void Socket::onEvent(int fd, std::uint32_t events)
     if (0 != (EventLoop::Write & events)) {
         HLIB_UNIQUE_LOCK(lock, m_mutex);
 
-        // Get source at the front of the queue.
+        // Get emitter at the front of the queue.
         assert(false == m_send_queue.empty());
-        Source& source = *m_send_queue.front().source;
+        Emitter& emitter = *m_send_queue.front().emitter;
 
-        // Progressively send from source.
-        ssize_t size = ::send(fd, source.consume(), source.available(), 0);
+        // Progressively send from emitter.
+        ssize_t size = ::send(fd, emitter.provide(), emitter.available(), 0);
         if (-1 == size) {
             lock.unlock();
 
@@ -231,11 +233,11 @@ void Socket::onEvent(int fd, std::uint32_t events)
             return;
         }
 
-        // Consume bytes sent.
-        (void)source.consume(size);
+        // Consume bytes sent from emitter.
+        (void)emitter.provide(size);
 
         // Everything sent?
-        if (true == source.empty()) {
+        if (true == emitter.empty()) {
             auto completed = m_send_queue.front();
             m_send_queue.pop_front();
 
@@ -246,9 +248,9 @@ void Socket::onEvent(int fd, std::uint32_t events)
 
             lock.unlock();
 
-            // Callback completed sink.
+            // Callback completed receiver.
             if (nullptr != completed.callback) {
-                completed.callback(completed.source);
+                completed.callback(completed.emitter);
             }
         }
     }
@@ -482,12 +484,12 @@ void Socket::connect(SockAddr const& address, int type, int protocol, std::uint3
     success_or_throw<>(connect(address, type, protocol, options, std::nothrow));
 }
 
-void Socket::receive(std::shared_ptr<Sink> sink, OnReceived callback)
+void Socket::receive(std::shared_ptr<Receiver> receiver, OnReceived callback)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
     std::uint32_t events = m_events;
-    if (nullptr != sink) {
+    if (nullptr != receiver) {
         events |= EventLoop::Read;
     }
     else {
@@ -498,11 +500,11 @@ void Socket::receive(std::shared_ptr<Sink> sink, OnReceived callback)
         updateEventsLocked(events);
     }
 
-    m_receive_sink = std::move(sink);
+    m_receive_receiver = std::move(receiver);
     m_receive_callback = std::move(callback);
 }
 
-void Socket::send(std::shared_ptr<Source> source, OnSent callback)
+void Socket::send(std::shared_ptr<Emitter> emitter, OnSent callback)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
@@ -511,16 +513,16 @@ void Socket::send(std::shared_ptr<Source> source, OnSent callback)
         events |= EventLoop::Write;
     }
 
-    m_send_queue.emplace_back(SendTuple{ std::move(source), std::move(callback) });
+    m_send_queue.emplace_back(SendTuple{ std::move(emitter), std::move(callback) });
 
     if (events != m_events) {
         updateEventsLocked(events);
     }
 }
 
-void Socket::send(std::shared_ptr<Source> source)
+void Socket::send(std::shared_ptr<Emitter> emitter)
 {
-    send(std::move(source), OnSent());
+    send(std::move(emitter), OnSent());
 }
 
 void Socket::close() noexcept
@@ -540,7 +542,7 @@ void Socket::close() noexcept
     m_connected = false;
     m_events = 0;
 
-    m_receive_sink.reset();
+    m_receive_receiver.reset();
     m_receive_callback = nullptr;
 
     m_send_queue.clear();

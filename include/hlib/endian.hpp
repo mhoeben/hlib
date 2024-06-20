@@ -25,7 +25,8 @@
 
 #include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
-#include "hlib/sink.hpp"
+#include "hlib/emitter.hpp"
+#include "hlib/receiver.hpp"
 #include <limits>
 
 namespace hlib
@@ -43,6 +44,8 @@ inline void* transform(void* data, T const& value) noexcept;
 template<>
 inline void* transform(void* data, std::int8_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)value;
@@ -52,6 +55,8 @@ inline void* transform(void* data, std::int8_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::int16_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  8);
@@ -62,6 +67,8 @@ inline void* transform(void* data, std::int16_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::int32_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >> 24);
@@ -74,6 +81,8 @@ inline void* transform(void* data, std::int32_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::int64_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >> 56);
@@ -90,6 +99,8 @@ inline void* transform(void* data, std::int64_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint8_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = value;
@@ -99,6 +110,8 @@ inline void* transform(void* data, std::uint8_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint16_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  8);
@@ -109,6 +122,8 @@ inline void* transform(void* data, std::uint16_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint32_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >> 24);
@@ -121,6 +136,8 @@ inline void* transform(void* data, std::uint32_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint64_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >> 56);
@@ -137,6 +154,8 @@ inline void* transform(void* data, std::uint64_t const& value) noexcept
 template<>
 inline void* transform(void* data, float const& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         float f;
@@ -148,6 +167,8 @@ inline void* transform(void* data, float const& value) noexcept
 template<>
 inline void* transform(void* data, double const& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         double f;
@@ -159,6 +180,8 @@ inline void* transform(void* data, double const& value) noexcept
 template<typename T, typename U>
 inline void* transform(void* data, T const& value) noexcept
 {
+    assert(nullptr != data);
+
     return transform(data, static_cast<U>(value));
 }
 
@@ -168,8 +191,8 @@ class Serializer final
     HLIB_NOT_MOVABLE(Serializer);
 
 public:
-    Serializer(Sink& sink) noexcept
-        : m_sink(sink)
+    Serializer(Receiver& receiver) noexcept
+        : m_receiver(receiver)
     {
     }
 
@@ -177,9 +200,9 @@ public:
     typename std::enable_if<std::is_arithmetic<U>::value, Serializer&>::type
         transform(T const& value) noexcept
     {
-        assert(sizeof(U) <= m_sink.headroom());
+        assert(sizeof(U) <= m_receiver.headroom());
 
-        be::transform<T, U>(m_sink.produce(sizeof(U)), value);
+        be::transform<T, U>(m_receiver.accept(sizeof(U)), value);
         return *this;
     }
 
@@ -189,14 +212,14 @@ public:
                          && true == has_data_method<T>::value, Serializer&>::type
         transform(T const& value) noexcept
     {
-        assert(value.size() <= m_sink.headroom());
+        assert(value.size() <= m_receiver.headroom());
 
-        m_sink.produce(value.data(), value.size());
+        memcpy(m_receiver.accept(value.size()), value.data(), value.size());
         return *this;
     }
 
 private:
-    Sink& m_sink;
+    Receiver& m_receiver;
 };
 
 //
@@ -208,6 +231,8 @@ inline void const* transform(void const* data, T& value) noexcept;
 template<>
 inline void const* transform(void const* data, std::int8_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = (int8_t)ptr[0];
     return ptr + sizeof(int8_t);
@@ -216,6 +241,8 @@ inline void const* transform(void const* data, std::int8_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::int16_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((int16_t)ptr[0] << 8)
           | ((int16_t)ptr[1] << 0);
@@ -225,6 +252,8 @@ inline void const* transform(void const* data, std::int16_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::int32_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((int32_t)ptr[0] << 24)
           | ((int32_t)ptr[1] << 16)
@@ -236,6 +265,8 @@ inline void const* transform(void const* data, std::int32_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::int64_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((int64_t)ptr[0] << 56)
           | ((int64_t)ptr[1] << 48)
@@ -251,6 +282,8 @@ inline void const* transform(void const* data, std::int64_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint8_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ptr[0];
     return ptr + sizeof(uint8_t);
@@ -259,6 +292,8 @@ inline void const* transform(void const* data, std::uint8_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint16_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((uint16_t)ptr[0] << 8)
           | ((uint16_t)ptr[1] << 0);
@@ -268,6 +303,8 @@ inline void const* transform(void const* data, std::uint16_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint32_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((uint32_t)ptr[0] << 24)
           | ((uint32_t)ptr[1] << 16)
@@ -279,6 +316,8 @@ inline void const* transform(void const* data, std::uint32_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint64_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((uint64_t)ptr[0] << 56)
           | ((uint64_t)ptr[1] << 48)
@@ -294,6 +333,8 @@ inline void const* transform(void const* data, std::uint64_t& value) noexcept
 template<>
 inline void const* transform(void const* data, float& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         uint32_t n;
@@ -307,6 +348,8 @@ inline void const* transform(void const* data, float& value) noexcept
 template<>
 inline void const* transform(void const* data, double& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         uint64_t n;
@@ -320,6 +363,8 @@ inline void const* transform(void const* data, double& value) noexcept
 template<typename T, typename U>
 inline void const* transform(void const* data, T& value) noexcept
 {
+    assert(nullptr != data);
+
     U underlying;
     data = transform<U>(data, underlying);
     value = static_cast<T>(underlying);
@@ -329,6 +374,8 @@ inline void const* transform(void const* data, T& value) noexcept
 template<typename T>
 inline T to(void const* data) noexcept
 {
+    assert(nullptr != data);
+
     T value;
     transform<T>(data, value);
     return value;
@@ -340,8 +387,8 @@ class Deserializer final
     HLIB_NOT_MOVABLE(Deserializer);
 
 public:
-    Deserializer(Source& source) noexcept
-        : m_source(source)
+    Deserializer(Emitter& emitter) noexcept
+        : m_emitter(emitter)
     {
     }
 
@@ -349,9 +396,9 @@ public:
     typename std::enable_if<std::is_arithmetic<U>::value, Deserializer&>::type
         transform(T& value) noexcept
     {
-        assert(sizeof(T) <= m_source.available());
+        assert(sizeof(T) <= m_emitter.available());
 
-        be::transform<T, U>(m_source.consume(sizeof(U)), value);
+        be::transform<T, U>(m_emitter.provide(sizeof(U)), value);
         return *this;
     }
 
@@ -361,17 +408,17 @@ public:
                          && true == has_resize_method<T>::value, Deserializer&>::type
         transform(T& value, std::size_t size) noexcept
     {
-        assert(size <= m_source.available());
+        assert(size <= m_emitter.available());
 
         std::size_t before_resize = value.size();
         value.resize(before_resize + size);
 
-        m_source.consume(reinterpret_cast<uint8_t*>(value.data()) + before_resize, size);
+        memcpy(reinterpret_cast<uint8_t*>(value.data()) + before_resize, m_emitter.provide(size), size);
         return *this;
     }
 
 private:
-    Source& m_source;
+    Emitter& m_emitter;
 };
 
 } // namespace be
@@ -388,6 +435,8 @@ inline void* transform(void* data, T const& value) noexcept;
 template<>
 inline void* transform(void* data, std::int8_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)value;
@@ -397,6 +446,8 @@ inline void* transform(void* data, std::int8_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::int16_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  0);
@@ -407,6 +458,8 @@ inline void* transform(void* data, std::int16_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::int32_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  0);
@@ -419,6 +472,8 @@ inline void* transform(void* data, std::int32_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::int64_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  0);
@@ -435,6 +490,8 @@ inline void* transform(void* data, std::int64_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint8_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = value;
@@ -444,6 +501,8 @@ inline void* transform(void* data, std::uint8_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint16_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  0);
@@ -454,6 +513,8 @@ inline void* transform(void* data, std::uint16_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint32_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  0);
@@ -466,6 +527,8 @@ inline void* transform(void* data, std::uint32_t const& value) noexcept
 template<>
 inline void* transform(void* data, std::uint64_t const& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t* ptr = (uint8_t*)data;
 
     ptr[0] = (uint8_t)(value >>  0);
@@ -482,6 +545,8 @@ inline void* transform(void* data, std::uint64_t const& value) noexcept
 template<>
 inline void* transform(void* data, float const& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         float f;
@@ -493,6 +558,8 @@ inline void* transform(void* data, float const& value) noexcept
 template<>
 inline void* transform(void* data, double const& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         double f;
@@ -504,6 +571,8 @@ inline void* transform(void* data, double const& value) noexcept
 template<typename T, typename U>
 inline void* transform(void* data, T const& value) noexcept
 {
+    assert(nullptr != data);
+
     return transform<U>(data, static_cast<U>(value));
 }
 
@@ -513,8 +582,8 @@ class Serializer final
     HLIB_NOT_MOVABLE(Serializer);
 
 public:
-    Serializer(Sink& sink) noexcept
-        : m_sink(sink)
+    Serializer(Receiver& receiver) noexcept
+        : m_receiver(receiver)
     {
     }
 
@@ -522,9 +591,9 @@ public:
     typename std::enable_if<std::is_arithmetic<U>::value, Serializer&>::type
         transform(T const& value) noexcept
     {
-        assert(sizeof(U) <= m_sink.headroom());
+        assert(sizeof(U) <= m_receiver.headroom());
 
-        le::transform<T, U>(m_sink.produce(sizeof(U)), value);
+        le::transform<T, U>(m_receiver.accept(sizeof(U)), value);
         return *this;
     }
 
@@ -534,14 +603,14 @@ public:
                          && true == has_data_method<T>::value, Serializer&>::type
         transform(T const& value) noexcept
     {
-        assert(value.size() <= m_sink.headroom());
+        assert(value.size() <= m_receiver.headroom());
 
-        m_sink.produce(value.data(), value.size());
+        memcpy(m_receiver.accept(value.size()), value.data(), value.size());
         return *this;
     }
 
 private:
-    Sink& m_sink;
+    Receiver& m_receiver;
 };
 
 //
@@ -553,6 +622,8 @@ inline void const* transform(void const* data, T& value) noexcept;
 template<>
 inline void const* transform(void const* data, std::int8_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = (int8_t)ptr[0];
     return ptr + sizeof(int8_t);
@@ -561,6 +632,8 @@ inline void const* transform(void const* data, std::int8_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::int16_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((int16_t)ptr[0] << 0)
           | ((int16_t)ptr[1] << 8);
@@ -570,6 +643,8 @@ inline void const* transform(void const* data, std::int16_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::int32_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((int32_t)ptr[0] <<  0)
           | ((int32_t)ptr[1] <<  8)
@@ -581,6 +656,8 @@ inline void const* transform(void const* data, std::int32_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::int64_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((int64_t)ptr[0] <<  0)
           | ((int64_t)ptr[1] <<  8)
@@ -596,6 +673,8 @@ inline void const* transform(void const* data, std::int64_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint8_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ptr[0];
     return ptr + sizeof(uint8_t);
@@ -604,6 +683,8 @@ inline void const* transform(void const* data, std::uint8_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint16_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((uint16_t)ptr[0] << 0)
           | ((uint16_t)ptr[1] << 8);
@@ -613,6 +694,8 @@ inline void const* transform(void const* data, std::uint16_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint32_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((uint32_t)ptr[0] <<  0)
           | ((uint32_t)ptr[1] <<  8)
@@ -624,6 +707,8 @@ inline void const* transform(void const* data, std::uint32_t& value) noexcept
 template<>
 inline void const* transform(void const* data, std::uint64_t& value) noexcept
 {
+    assert(nullptr != data);
+
     uint8_t const* ptr = (uint8_t const*)data;
     value = ((uint64_t)ptr[0] <<  0)
           | ((uint64_t)ptr[1] <<  8)
@@ -639,6 +724,8 @@ inline void const* transform(void const* data, std::uint64_t& value) noexcept
 template<>
 inline void const* transform(void const* data, float& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         uint32_t n;
@@ -652,6 +739,8 @@ inline void const* transform(void const* data, float& value) noexcept
 template<>
 inline void const* transform(void const* data, double& value) noexcept
 {
+    assert(nullptr != data);
+
     union
     {
         uint64_t n;
@@ -665,6 +754,8 @@ inline void const* transform(void const* data, double& value) noexcept
 template<typename T, typename U>
 inline void const* transform(void const* data, T& value) noexcept
 {
+    assert(nullptr != data);
+
     U underlying;
     data = transform<U>(data, underlying);
     value = static_cast<T>(underlying);
@@ -674,6 +765,8 @@ inline void const* transform(void const* data, T& value) noexcept
 template<typename T>
 inline T to(void const* data) noexcept
 {
+    assert(nullptr != data);
+
     T value;
     transform<T>(data, value);
     return value;
@@ -685,8 +778,8 @@ class Deserializer final
     HLIB_NOT_MOVABLE(Deserializer);
 
 public:
-    Deserializer(Source& source) noexcept
-        : m_source(source)
+    Deserializer(Emitter& emitter) noexcept
+        : m_emitter(emitter)
     {
     }
 
@@ -694,9 +787,9 @@ public:
     typename std::enable_if<std::is_arithmetic<U>::value, Deserializer&>::type
         transform(T& value) noexcept
     {
-        assert(sizeof(T) <= m_source.available());
+        assert(sizeof(T) <= m_emitter.available());
 
-        le::transform<T, U>(m_source.consume(sizeof(U)), value);
+        le::transform<T, U>(m_emitter.provide(sizeof(U)), value);
         return *this;
     }
 
@@ -706,17 +799,17 @@ public:
                          && true == has_resize_method<T>::value, Deserializer&>::type
         transform(T& value, std::size_t size) noexcept
     {
-        assert(size <= m_source.available());
+        assert(size <= m_emitter.available());
 
         std::size_t before_resize = value.size();
         value.resize(before_resize + size);
 
-        m_source.consume(reinterpret_cast<uint8_t*>(value.data()) + before_resize, size);
+        memcpy(reinterpret_cast<uint8_t*>(value.data()) + before_resize, m_emitter.provide(size), size);
         return *this;
     }
 
 private:
-    Source& m_source;
+    Emitter& m_emitter;
 };
 
 } // namespace le

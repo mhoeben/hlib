@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/debug.hpp
     include/hlib/endian.hpp
     include/hlib/error.hpp
+    include/hlib/emitter.hpp
     include/hlib/event_bus.hpp
     include/hlib/event_loop.hpp
     include/hlib/event_queue.hpp
@@ -45,6 +46,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/macro.hpp
     include/hlib/math.hpp
     include/hlib/memory.hpp
+    include/hlib/receiver.hpp
     include/hlib/result.hpp
     include/hlib/scope_guard.hpp
     include/hlib/signal.hpp
@@ -64,6 +66,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
 
     src/hlib_buffer.cpp
     src/hlib_error.cpp
+    src/hlib_emitter.cpp
     src/hlib_event_bus.cpp
     src/hlib_event_loop.cpp
     src/hlib_event_queue.cpp
@@ -71,12 +74,11 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_format.cpp
     src/hlib_format.hpp
     src/hlib_math.cpp
+    src/hlib_receiver.cpp
     src/hlib_scope_guard.cpp
     src/hlib_signal.cpp
-    src/hlib_sink.cpp
     src/hlib_sock_addr.cpp
     src/hlib_socket.cpp
-    src/hlib_source.cpp
     src/hlib_string.cpp
     src/hlib_subprocess.cpp
     src/hlib_test.cpp

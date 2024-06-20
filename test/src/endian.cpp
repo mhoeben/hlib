@@ -39,9 +39,9 @@ enum FooBar
 
 TEST_CASE("Big Endian", "[endian]")
 {
-    auto sink = make_sink<Buffer>(46);
+    auto receiver = make_receiver<Buffer>(46);
 
-    be::Serializer serializer(sink);
+    be::Serializer serializer(receiver);
     serializer.transform<std::int8_t>(-13)
               .transform<std::int16_t>(-11)
               .transform<std::int32_t>(-1971)
@@ -69,9 +69,9 @@ TEST_CASE("Big Endian", "[endian]")
     FooBar foo_bar;
     std::string xyz;
 
-    auto source = make_source(std::move(get<Buffer>(sink)));
+    auto emitter = make_emitter(std::move(get<Buffer>(receiver)));
 
-    be::Deserializer deserializer(source);
+    be::Deserializer deserializer(emitter);
     deserializer.transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
                 .transform<std::int32_t>(i32)
@@ -101,9 +101,9 @@ TEST_CASE("Big Endian", "[endian]")
 
 TEST_CASE("Little Endian", "[endian]")
 {
-    auto sink = make_sink<Buffer>(46);
+    auto receiver = make_receiver<Buffer>(46);
 
-    le::Serializer serializer(sink);
+    le::Serializer serializer(receiver);
     serializer.transform<std::int8_t>(-13)
               .transform<std::int16_t>(-11)
               .transform<std::int32_t>(-1971)
@@ -131,9 +131,9 @@ TEST_CASE("Little Endian", "[endian]")
     FooBar foo_bar;
     std::string xyz;
 
-    auto source = make_source(std::move(get<Buffer>(sink)));
+    auto emitter = make_emitter(std::move(get<Buffer>(receiver)));
 
-    le::Deserializer deserializer(source);
+    le::Deserializer deserializer(emitter);
     deserializer.transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
                 .transform<std::int32_t>(i32)
