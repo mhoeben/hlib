@@ -369,6 +369,20 @@ private:
     T m_value{ 0 };
 };
 
+template <typename T>
+struct Range final
+{
+    T min{};
+    T max{};
+
+    Range(T a_min, T a_max)
+        : min{ std::move(a_min) }
+        , max{ std::move(a_max) }
+    {
+        assert(min <= max);
+    }
+};
+
 } // namespace math
 } // namespace hlib
 
