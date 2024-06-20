@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/emitter.hpp"
+#include "hlib/source.hpp"
 #include <cstring>
 
 using namespace hlib;
@@ -29,31 +29,35 @@ using namespace hlib;
 //
 // Public
 //
-std::size_t Emitter::available() const noexcept
+std::size_t Source::available() const noexcept
 {
     assert(m_progress <= size());
     return size() - m_progress;
 }
 
-bool Emitter::empty() const noexcept
+bool Source::empty() const noexcept
 {
     assert(m_progress <= size());
     return m_progress == size();
 }
 
-void const* Emitter::provide() noexcept
+void const* Source::consume() noexcept
 {
     assert(m_progress <= this->size());
 
     return static_cast<std::uint8_t const*>(this->data()) + m_progress;
 }
 
-void const* Emitter::provide(std::size_t size) noexcept
+void const* Source::consume(std::size_t size) noexcept
 {
     assert(m_progress + size <= this->size());
 
-    void const* data = provide();
+    void const* data = consume();
     m_progress += size;
     return data;
 }
 
+void Source::consume(void* data, std::size_t size) noexcept
+{
+    memcpy(data, consume(size), size);
+}

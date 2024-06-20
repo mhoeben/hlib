@@ -26,14 +26,13 @@
 #include "hlib/base.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/memory.hpp"
+#include "hlib/sink.hpp"
 #include "hlib/sock_addr.hpp"
+#include "hlib/source.hpp"
 #include <list>
 
 namespace hlib
 {
-
-class Emitter;
-class Receiver;
 
 class Socket final
 {
@@ -46,8 +45,8 @@ public:
 
     typedef std::function<void(UniqueHandle<int, -1> fd, SockAddr const& address)> OnAccept;
     typedef std::function<void()> OnConnected;
-    typedef std::function<void(std::shared_ptr<Receiver> const& receiver)> OnReceived;
-    typedef std::function<void(std::shared_ptr<Emitter> const& emitter)> OnSent;
+    typedef std::function<void(std::shared_ptr<Sink> const& sink)> OnReceived;
+    typedef std::function<void(std::shared_ptr<Source> const& source)> OnSent;
     typedef std::function<void(int error)> OnClose;
 
 public:
@@ -75,9 +74,9 @@ public:
     Result<> connect(SockAddr const& address, int type, int protocol, std::uint32_t options, std::nothrow_t) noexcept;
     void connect(SockAddr const& address, int type, int protocol, std::uint32_t options);
 
-    void receive(std::shared_ptr<Receiver> receiver, OnReceived callback);
-    void send(std::shared_ptr<Emitter> emitter, OnSent callback);
-    void send(std::shared_ptr<Emitter> emitter);
+    void receive(std::shared_ptr<Sink> sink, OnReceived callback);
+    void send(std::shared_ptr<Source> source, OnSent callback);
+    void send(std::shared_ptr<Source> source);
 
     void close() noexcept;
 
@@ -94,12 +93,12 @@ private:
     bool m_connected{ false };
     std::uint32_t m_events{ 0 };
 
-    std::shared_ptr<Receiver> m_receive_receiver;
+    std::shared_ptr<Sink> m_receive_sink;
     OnReceived m_receive_callback;
 
     struct SendTuple
     {
-        std::shared_ptr<Emitter> emitter;
+        std::shared_ptr<Source> source;
         OnSent callback;
     };
     std::list<SendTuple> m_send_queue;

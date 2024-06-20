@@ -21,14 +21,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include "hlib/receiver.hpp"
+#include "hlib/sink.hpp"
 
 using namespace hlib;
 
 //
 // Implementation
 //
-Receiver::Receiver(std::size_t maximum)
+Sink::Sink(std::size_t maximum)
     : m_maximum{ maximum }
 {
 }
@@ -36,32 +36,32 @@ Receiver::Receiver(std::size_t maximum)
 //
 // Public
 //
-bool Receiver::full() const noexcept
+bool Sink::full() const noexcept
 {
-    return Receiver::UnspecifiedCapacity == m_maximum || this->size() == m_maximum;
+    return Sink::UnspecifiedCapacity == m_maximum || this->size() == m_maximum;
 }
 
-std::size_t Receiver::headroom() const noexcept
+std::size_t Sink::headroom() const noexcept
 {
     // Don't use headroom if the sink's maximum is unspecified.
-    assert(Receiver::UnspecifiedCapacity != m_maximum);
+    assert(Sink::UnspecifiedCapacity != m_maximum);
     assert(this->size() <= m_maximum);
 
     return m_maximum - this->size();
 }
 
-std::size_t Receiver::headroom(std::size_t limit) const noexcept
+std::size_t Sink::headroom(std::size_t limit) const noexcept
 {
-    if (Receiver::UnspecifiedCapacity == m_maximum) {
+    if (Sink::UnspecifiedCapacity == m_maximum) {
         return limit;
     }
 
     return std::min(headroom(), limit);
 }
 
-void* Receiver::accept(std::size_t size) noexcept
+void* Sink::produce(std::size_t size) noexcept
 {
-    assert(Receiver::UnspecifiedCapacity == m_maximum || this->size() + size <= m_maximum);
+    assert(Sink::UnspecifiedCapacity == m_maximum || this->size() + size <= m_maximum);
 
     std::size_t before_resize = this->size();
     std::uint8_t* ptr = static_cast<std::uint8_t*>(resize(before_resize + size));
@@ -70,5 +70,16 @@ void* Receiver::accept(std::size_t size) noexcept
     }
 
     return ptr + before_resize;
+}
+
+std::size_t Sink::produce(void const* data, std::size_t size) noexcept
+{
+    void* ptr = this->produce(size);
+    if (nullptr == ptr) {
+        return 0;
+    }
+
+    memcpy(ptr, data, size);
+    return this->size();
 }
 
