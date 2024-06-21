@@ -73,11 +73,11 @@ public:
     void* reserve(std::size_t capacity, std::nothrow_t) noexcept;
     void* reserve(std::size_t capacity);
 
-    void* resize(std::size_t size, std::nothrow_t) noexcept;
-    void* resize(std::size_t size);
-
     void* extend(std::size_t capacity, std::nothrow_t) noexcept;
     void* extend(std::size_t capacity);
+
+    void* resize(std::size_t size, std::nothrow_t) noexcept;
+    void* resize(std::size_t size);
 
     bool assign(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void assign(void const* data, std::size_t size);

@@ -831,3 +831,17 @@ hlib::Buffer hlib::base64_decode(std::string const& string)
     return buffer;
 }
 
+void hlib::memory_copy(void* dst, std::size_t dst_stride, void const* src, std::size_t src_stride,
+    std::size_t line_size, std::size_t lines)
+{
+    std::uint8_t*       d = static_cast<std::uint8_t      *>(dst);
+    std::uint8_t const* s = static_cast<std::uint8_t const*>(src);
+
+    for (std::size_t line = 0; line < lines; ++line) {
+        memcpy(d, s, line_size);
+
+        d += dst_stride;
+        s += src_stride;
+    }
+}
+

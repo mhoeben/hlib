@@ -218,6 +218,26 @@ void* Buffer::reserve(std::size_t capacity)
     return data;
 }
 
+void* Buffer::extend(std::size_t capacity, std::nothrow_t) noexcept
+{
+    assert(m_size <= m_capacity);
+
+    if (capacity > 0 && false == realloc(m_size + capacity, false)) {
+        return nullptr;
+    }
+
+    return static_cast<uint8_t*>(m_data) + m_size;
+}
+
+void* Buffer::extend(std::size_t capacity)
+{
+    void* data = extend(capacity, std::nothrow);
+    if (nullptr == data && capacity > 0) {
+        throw std::bad_alloc();
+    }
+    return data;
+}
+
 void* Buffer::resize(std::size_t size, std::nothrow_t) noexcept
 {
     assert(m_size <= m_capacity);
@@ -234,26 +254,6 @@ void* Buffer::resize(std::size_t size)
 {
     void* data = resize(size, std::nothrow);
     if (nullptr == data && size > 0) {
-        throw std::bad_alloc();
-    }
-    return data;
-}
-
-void* Buffer::extend(std::size_t capacity, std::nothrow_t) noexcept
-{
-    assert(m_size <= m_capacity);
-
-    if (capacity > 0 && false == realloc(m_size + capacity, false)) {
-        return nullptr;
-    }
-
-    return static_cast<uint8_t*>(m_data) + m_size;
-}
-
-void* Buffer::extend(std::size_t capacity)
-{
-    void* data = extend(capacity, std::nothrow);
-    if (nullptr == data && capacity > 0) {
         throw std::bad_alloc();
     }
     return data;

@@ -325,5 +325,8 @@ std::size_t base64_decode_get_size(std::size_t length) noexcept;
 bool base64_decode(Buffer& buffer, char const* data, std::size_t length) noexcept;
 Buffer base64_decode(std::string const& string);
 
+void memory_copy(void* dst, std::size_t dst_stride, void const* src, std::size_t src_stride,
+    std::size_t line_size, std::size_t lines);
+
 } // namespace hlib
 
