@@ -209,6 +209,14 @@ T check(Result<T> result, std::function<T(Error&& error)> on_error)
     return on_error(std::move(result.error()));
 }
 
+inline std::function<void(Error&&)> set_error(Error& error)
+{
+    return [&error](Error&& e) noexcept {
+        error = std::move(e);
+        return;
+    };
+}
+
 template<typename T>
 std::function<T(Error&&)> set_error(Error& error)
 {
@@ -225,6 +233,11 @@ std::function<T(Error&&)> set_error(Error& error, T default_value)
         error = std::move(e);
         return std::move(default_value);
     };
+}
+
+[[noreturn]] inline void toss_error(Error const& error)
+{
+    error.toss();
 }
 
 template<typename T = void>

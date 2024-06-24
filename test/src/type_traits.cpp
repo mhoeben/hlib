@@ -55,6 +55,23 @@ TEST_CASE("Has Reserve Method", "[types]")
     REQUIRE(true == has_reserve_method<std::string>::value);
 }
 
+TEST_CASE("Has Find Method", "[types]")
+{
+    REQUIRE(false == has_find_method<std::array<int, 1>>::value);
+    REQUIRE(false == has_find_method<std::forward_list<int>>::value);
+    REQUIRE(false == has_find_method<std::list<int>>::value);
+    REQUIRE(false == has_find_method<std::vector<int>>::value);
+
+    REQUIRE(true == has_find_method<std::map<int, int>>::value);
+    REQUIRE(true == has_find_method<std::set<int>>::value);
+    REQUIRE(true == has_find_method<std::multimap<int, int>>::value);
+    REQUIRE(true == has_find_method<std::multiset<int>>::value);
+    REQUIRE(true == has_find_method<std::unordered_map<int, int>>::value);
+    REQUIRE(true == has_find_method<std::unordered_set<int>>::value);
+    REQUIRE(true == has_find_method<std::unordered_multimap<int, int>>::value);
+    REQUIRE(true == has_find_method<std::unordered_multiset<int>>::value);
+}
+
 TEST_CASE("Has Size Method", "[types]")
 {
     struct Foo

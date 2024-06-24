@@ -73,6 +73,13 @@ bool contains(T const& container, typename T::value_type const& value)
 }
 
 template<typename T>
+std::enable_if_t<true == is_pair_iterator<typename T::const_iterator>::value, bool>
+    contains(T const& container, typename T::key_type const& key)
+{
+    return container.end() != container.find(key);
+}
+
+template<typename T>
 typename T::mapped_type& replace(T& container, typename T::key_type&& key, typename T::mapped_type&& value)
 {
     static_assert(true == is_associative<T>::value);

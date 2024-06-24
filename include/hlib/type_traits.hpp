@@ -86,6 +86,14 @@ struct has_data_method : std::false_type {};
 template<typename T>
 struct has_data_method<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {};
 
+// has_find_method
+template<typename T, typename = void>
+struct has_find_method : std::false_type {};
+
+template<typename T>
+struct has_find_method<T, std::void_t<decltype(std::declval<T>().find(std::declval<typename T::key_type>()))>> : std::true_type {};
+
+
 // is_pair_iterator
 template <typename T, typename = void>
 struct is_pair_iterator : std::false_type {};

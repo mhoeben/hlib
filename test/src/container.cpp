@@ -92,6 +92,11 @@ TEST_CASE("Container Contains", "[container]")
     REQUIRE(false == container::contains(map_int, { 3, 4 }));
     REQUIRE(false == container::contains(map_int, { 4, 1 }));
 
+    REQUIRE(true  == container::contains(map_int, 1));
+    REQUIRE(true  == container::contains(map_int, 2));
+    REQUIRE(true  == container::contains(map_int, 3));
+    REQUIRE(false == container::contains(map_int, 4));
+
     std::multimap<int, int> multimap_int{{ 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1}, { 3, 2 }};
     REQUIRE(true  == container::contains(multimap_int, { 1, 1 }));
     REQUIRE(true  == container::contains(multimap_int, { 1, 2 }));
@@ -103,6 +108,11 @@ TEST_CASE("Container Contains", "[container]")
     REQUIRE(true  == container::contains(multimap_int, { 3, 2 }));
     REQUIRE(false == container::contains(multimap_int, { 3, 3 }));
     REQUIRE(false == container::contains(multimap_int, { 4, 1 }));
+
+    REQUIRE(true  == container::contains(multimap_int, 1));
+    REQUIRE(true  == container::contains(multimap_int, 2));
+    REQUIRE(true  == container::contains(multimap_int, 3));
+    REQUIRE(false == container::contains(multimap_int, 4));
 
     std::multiset<int> multiset_int{ 1, 1, 2, 2, 3, 3 };
     REQUIRE(true  == container::contains(multiset_int, 1));
@@ -125,6 +135,11 @@ TEST_CASE("Container Contains", "[container]")
     REQUIRE(false == container::contains(u_map_int, { 3, 4 }));
     REQUIRE(false == container::contains(u_map_int, { 4, 1 }));
 
+    REQUIRE(true  == container::contains(u_map_int, 1));
+    REQUIRE(true  == container::contains(u_map_int, 2));
+    REQUIRE(true  == container::contains(u_map_int, 3));
+    REQUIRE(false == container::contains(u_map_int, 4));
+
     std::unordered_multimap<int, int> u_multimap_int{{ 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1}, { 3, 2 }};
     REQUIRE(true  == container::contains(u_multimap_int, { 1, 1 }));
     REQUIRE(true  == container::contains(u_multimap_int, { 1, 2 }));
@@ -136,6 +151,11 @@ TEST_CASE("Container Contains", "[container]")
     REQUIRE(true  == container::contains(u_multimap_int, { 3, 2 }));
     REQUIRE(false == container::contains(u_multimap_int, { 3, 3 }));
     REQUIRE(false == container::contains(u_multimap_int, { 4, 1 }));
+
+    REQUIRE(true  == container::contains(u_multimap_int, 1));
+    REQUIRE(true  == container::contains(u_multimap_int, 2));
+    REQUIRE(true  == container::contains(u_multimap_int, 3));
+    REQUIRE(false == container::contains(u_multimap_int, 4));
 
     std::unordered_multiset<int> u_multiset_int{ 1, 1, 2, 2, 3, 3 };
     REQUIRE(true  == container::contains(u_multiset_int, 1));
