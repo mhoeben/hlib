@@ -62,23 +62,27 @@ class EventBus final
 public:
     typedef std::function<void(std::any data)> Callback;
 
+    struct Subscription
+    {
+        std::weak_ptr<EventQueue> queue;
+        Callback callback;
+    };
+
 public:
     EventBus() = default;
 
-    void subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback);
+    Subscription get(std::string const& name, std::string const& action) const;
+
+    bool subscribe(std::string name, std::string action, Subscription subscription);
+    bool subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback);
     void unsubscribe(std::string const& name, std::string const& action);
 
     void notify(std::string const& name, std::string const& action, std::any data = {});
     void broadcast(std::string const& action, std::any data = {});
 
 private:
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
 
-    struct Subscription
-    {
-        std::weak_ptr<EventQueue> queue;
-        Callback callback;
-    };
     std::unordered_map<
         std::string, // action,
         std::unordered_map<

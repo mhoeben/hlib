@@ -23,17 +23,47 @@
 //
 #include "hlib/event_bus.hpp"
 #include "hlib/lock.hpp"
+#include <condition_variable>
 
 using namespace hlib;
 
 //
 // Public
 //
-void EventBus::subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback)
+EventBus::Subscription EventBus::get(std::string const& name, std::string const& action) const
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
 
-    m_actions[action][name] = Subscription{ std::move(queue), std::move(callback) };
+    // Find action.
+    auto it = m_actions.find(action);
+    if (m_actions.end() == it) {
+        return {};
+    }
+
+    // Find subscription by name.
+    auto jt = it->second.find(name);
+    if (it->second.end() == jt) {
+        return {};
+    }
+
+    return jt->second;
+}
+
+bool EventBus::subscribe(std::string name, std::string action, Subscription subscription)
+{
+    if (true == subscription.queue.expired() || nullptr == subscription.callback) {
+        return false;
+    }
+
+    HLIB_LOCK_GUARD(lock, m_mutex);
+
+    m_actions[action][name] = std::move(subscription);
+    return true;
+}
+
+bool EventBus::subscribe(std::string name, std::string action, std::weak_ptr<EventQueue> queue, Callback callback)
+{
+    return subscribe(std::move(name), std::move(action), { std::move(queue), std::move(callback) });
 }
 
 void EventBus::unsubscribe(std::string const& name, std::string const& action)
