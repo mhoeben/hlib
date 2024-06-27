@@ -44,6 +44,7 @@ sources = files(
     'include/hlib/macro.hpp',
     'include/hlib/math.hpp',
     'include/hlib/memory.hpp',
+    'include/hlib/pool.hpp',
     'include/hlib/result.hpp',
     'include/hlib/scope_guard.hpp',
     'include/hlib/signal.hpp',

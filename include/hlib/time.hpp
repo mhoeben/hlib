@@ -35,10 +35,10 @@ namespace hlib
 namespace time
 {
 
-typedef math::RatioValue<math::One, int64_t> Sec;
-typedef math::RatioValue<std::milli, int64_t> MSec;
-typedef math::RatioValue<std::micro, int64_t> USec;
-typedef math::RatioValue<std::nano, int64_t> NSec;
+typedef math::RatioValue<math::One, std::int64_t> Sec;
+typedef math::RatioValue<std::milli, std::int64_t> MSec;
+typedef math::RatioValue<std::micro, std::int64_t> USec;
+typedef math::RatioValue<std::nano, std::int64_t> NSec;
 
 class Clock;
 
@@ -52,13 +52,13 @@ public:
     Duration(std::time_t secs, long nsecs) noexcept;
     Duration(double secs) noexcept;
 
-    template<typename R, typename T = int64_t>
+    template<typename R, typename T = std::int64_t>
     Duration(math::RatioValue<R, T> const& value) noexcept
     {
         T const& ticks = value.value();
         tv_sec = (ticks * R::num) / R::den;
 
-        constexpr int64_t factor = (1000000000LL * R::num) / R::den;
+        constexpr std::int64_t factor = (1000000000LL * R::num) / R::den;
         tv_nsec = (ticks * factor) % 1000000000ULL;
     }
 
@@ -98,7 +98,7 @@ public:
     typename std::enable_if<!std::is_same<double, T>::value, T>::type
     to() const noexcept
     {
-        math::RatioValue<std::nano, int64_t> nsec(std::int64_t(tv_sec) * 1000000000LL + tv_nsec);
+        math::RatioValue<std::nano, std::int64_t> nsec(std::int64_t(tv_sec) * 1000000000LL + tv_nsec);
         return nsec.to<typename T::Ratio, typename T::Type>();
     }
 

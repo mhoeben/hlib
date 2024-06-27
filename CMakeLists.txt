@@ -46,6 +46,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/macro.hpp
     include/hlib/math.hpp
     include/hlib/memory.hpp
+    include/hlib/pool.hpp
     include/hlib/result.hpp
     include/hlib/scope_guard.hpp
     include/hlib/signal.hpp

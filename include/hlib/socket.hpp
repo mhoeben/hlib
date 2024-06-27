@@ -29,7 +29,7 @@
 #include "hlib/sink.hpp"
 #include "hlib/sock_addr.hpp"
 #include "hlib/source.hpp"
-#include <list>
+#include <deque>
 
 namespace hlib
 {
@@ -101,7 +101,7 @@ private:
         std::shared_ptr<Source> source;
         OnSent callback;
     };
-    std::list<SendTuple> m_send_queue;
+    std::deque<SendTuple> m_send_queue;
 
     void updateEventsLocked(std::uint32_t events) noexcept;
 
