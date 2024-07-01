@@ -49,7 +49,22 @@ public:
         Event event;
         State to;
         Callback callback;
+
+        Transition(State a_from, Event a_event, State a_to, Callback a_callback)
+            : from{ a_from }
+            , event{ a_event }
+            , to{ a_to }
+            , callback(std::move(a_callback))
+        {
+        }
+
+        Transition(State a_from, Event a_event, State a_to)
+            : Transition(a_from, a_event, a_to, {})
+        {
+        }
     };
+
+    FSM() = default;
 
     FSM(State initial, std::vector<Transition> const& transitions)
         : m_state{ initial }
