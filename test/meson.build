@@ -31,6 +31,7 @@ sources = files(
     'src/event_bus.cpp',
     'src/event_loop.cpp',
     'src/event_queue.cpp',
+    'src/fsm.cpp',
     'src/math.cpp',
     'src/result.cpp',
     'src/sock_addr.cpp',

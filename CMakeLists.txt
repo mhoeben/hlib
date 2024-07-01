@@ -41,6 +41,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/event_loop.hpp
     include/hlib/event_queue.hpp
     include/hlib/file.hpp
+    include/hlib/fsm.hpp
     include/hlib/latch.hpp
     include/hlib/lock.hpp
     include/hlib/macro.hpp
