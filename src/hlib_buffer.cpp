@@ -358,7 +358,7 @@ void Buffer::erase(std::size_t offset, std::size_t size) noexcept
     m_size -= size;
 }
 
-Buffer Buffer::copy()
+Buffer Buffer::copy() const
 {
     return Buffer(m_data, m_size);
 }

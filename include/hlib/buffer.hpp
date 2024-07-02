@@ -96,7 +96,7 @@ public:
 
     void erase(std::size_t offset, std::size_t size) noexcept;
 
-    Buffer copy();
+    Buffer copy() const;
 
 private:
     void* m_data{ nullptr };
