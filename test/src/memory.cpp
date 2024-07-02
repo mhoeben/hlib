@@ -41,6 +41,8 @@ TEST_CASE("Box", "[memory]")
     {
         Box<Primitive> primitive(Primitive{ 1311 }, destructor);
         REQUIRE(1311 == primitive->member);
+        REQUIRE(1311 == (*primitive).member);
+        REQUIRE(1311 == primitive.get().member);
     }
     REQUIRE(true == destructed);
 }

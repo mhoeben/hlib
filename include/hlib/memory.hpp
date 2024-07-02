@@ -77,14 +77,34 @@ public:
         return m_value;
     }
 
+    T const& operator*() const noexcept
+    {
+        return m_value;
+    }
+
     T& operator*() noexcept
     {
         return m_value;
     }
 
+    T const* operator->() const noexcept
+    {
+        return &m_value;
+    }
+
     T* operator->() noexcept
     {
         return &m_value;
+    }
+
+    T const& get() const noexcept
+    {
+        return m_value;
+    }
+
+    T& get() noexcept
+    {
+        return m_value;
     }
 
 private:
