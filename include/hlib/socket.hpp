@@ -43,7 +43,7 @@ public:
     static constexpr std::uint32_t ReuseAddr{ 0x01 };
     static constexpr std::uint32_t ReusePort{ 0x02 };
 
-    typedef std::function<void(UniqueHandle<int, -1> fd, SockAddr const& address)> OnAccept;
+    typedef std::function<void(Handle<int, -1> fd, SockAddr const& address)> OnAccept;
     typedef std::function<void()> OnConnected;
     typedef std::function<void(std::shared_ptr<Sink> const& sink)> OnReceived;
     typedef std::function<void(std::shared_ptr<Source> const& source)> OnSent;
@@ -53,7 +53,7 @@ public:
     std::shared_ptr<void> user;
 
     Socket(std::weak_ptr<EventLoop> event_loop) noexcept;
-    Socket(std::weak_ptr<EventLoop> event_loop, UniqueHandle<int, -1> fd) noexcept;
+    Socket(std::weak_ptr<EventLoop> event_loop, Handle<int, -1> fd) noexcept;
     ~Socket();
 
     int fd() const noexcept;
@@ -65,8 +65,8 @@ public:
     void setConnectedCallback(OnConnected callback) noexcept;
     void setCloseCallback(OnClose callback) noexcept;
 
-    Result<> open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept;
-    void open(UniqueHandle<int, -1> fd);
+    Result<> open(Handle<int, -1> fd, std::nothrow_t) noexcept;
+    void open(Handle<int, -1> fd);
 
     Result<> listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options, std::nothrow_t) noexcept;
     void listen(SockAddr const& address, int type, int protocol, int backlog, std::uint32_t options);
@@ -82,7 +82,7 @@ public:
 
 private:
     std::weak_ptr<EventLoop> m_event_loop;
-    UniqueHandle<int, -1> m_fd;
+    Handle<int, -1> m_fd;
 
     OnAccept m_on_accept;
     OnConnected m_on_connected;

@@ -65,7 +65,7 @@ public:
     public:
         Stream() noexcept;
         Stream(int fd) noexcept;
-        Stream(UniqueHandle<int, -1>&& fd) noexcept;
+        Stream(Handle<int, -1>&& fd) noexcept;
         Stream(std::string const& filename);
         Stream(std::string const& filename, int flags, mode_t mode = S_IRUSR|S_IWUSR);
         Stream(std::shared_ptr<Buffer> buffer) noexcept;
@@ -79,7 +79,7 @@ public:
         void setUpdateCallback(OnUpdate on_update) noexcept;
 
     private:
-        UniqueHandle<int, -1> m_fd;
+        Handle<int, -1> m_fd;
         std::shared_ptr<Buffer> m_buffer;
         OnUpdate m_on_update;
 

@@ -33,6 +33,7 @@ sources = files(
     'src/event_queue.cpp',
     'src/fsm.cpp',
     'src/math.cpp',
+    'src/memory.cpp',
     'src/result.cpp',
     'src/sock_addr.cpp',
     'src/socket.cpp',

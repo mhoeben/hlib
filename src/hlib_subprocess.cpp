@@ -83,7 +83,7 @@ Subprocess::Stream::Stream(int fd) noexcept
 {
 }
 
-Subprocess::Stream::Stream(UniqueHandle<int, -1>&& fd) noexcept
+Subprocess::Stream::Stream(Handle<int, -1>&& fd) noexcept
     : m_fd(std::move(fd))
 {
 }

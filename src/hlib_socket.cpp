@@ -85,7 +85,7 @@ void Socket::onAccept(int fd, std::uint32_t events)
     socklen_t length = address.length();
 
     // Accept socket and peer address.
-    UniqueHandle<int, -1> socket(
+    Handle<int, -1> socket(
         accept(fd, static_cast<sockaddr*>(address), &length),
         file::fd_close
     );
@@ -272,7 +272,7 @@ Socket::Socket(std::weak_ptr<EventLoop> event_loop) noexcept
 {
 }
 
-Socket::Socket(std::weak_ptr<EventLoop> event_loop, UniqueHandle<int, -1> fd) noexcept
+Socket::Socket(std::weak_ptr<EventLoop> event_loop, Handle<int, -1> fd) noexcept
     : Socket(std::move(event_loop))
 {
     open(std::move(fd));
@@ -320,7 +320,7 @@ void Socket::setCloseCallback(OnClose callback) noexcept
     m_on_close = std::move(callback);
 }
 
-Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
+Result<> Socket::open(Handle<int, -1> fd, std::nothrow_t) noexcept
 {
     using namespace std::placeholders;
 
@@ -342,7 +342,7 @@ Result<> Socket::open(UniqueHandle<int, -1> fd, std::nothrow_t) noexcept
     return {};
 }
 
-void Socket::open(UniqueHandle<int, -1> fd)
+void Socket::open(Handle<int, -1> fd)
 {
     success_or_throw<>(Socket::open(std::move(fd), std::nothrow));
 }
@@ -356,7 +356,7 @@ Result<> Socket::listen(SockAddr const& address, int type, int protocol, int bac
     m_events = EventLoop::Read;
 
     // Create socket.
-    UniqueHandle<int, -1> fd(
+    Handle<int, -1> fd(
         ::socket(address.family(), type, protocol),
         file::fd_close
     );
@@ -423,7 +423,7 @@ Result<> Socket::connect(SockAddr const& address, int type, int protocol, std::u
     m_events = events;
 
     // Create socket.
-    UniqueHandle<int, -1> fd(
+    Handle<int, -1> fd(
         ::socket(address.family(), type, protocol),
         file::fd_close
     );

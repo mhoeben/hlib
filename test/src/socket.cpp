@@ -40,7 +40,7 @@ TEST_CASE("Socket", "[socket]")
 
     Socket server(event_loop);
     server.listen(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 1, Socket::ReusePort);
-    server.setAcceptCallback([&](UniqueHandle<int, -1> fd, SockAddr const& /*address*/) {
+    server.setAcceptCallback([&](Handle<int, -1> fd, SockAddr const& /*address*/) {
         server_connection.open(std::move(fd));
         server_connection.send(make_shared_source<Buffer>("Hello World!"));
     });
@@ -67,7 +67,7 @@ TEST_CASE("Socket Fixed Size", "[socket]")
 
     Socket server(event_loop);
     server.listen(SockAddr("0.0.0.0:6502"), SOCK_STREAM, 0, 1, Socket::ReusePort);
-    server.setAcceptCallback([&](UniqueHandle<int, -1> fd, SockAddr const& /*address*/) {
+    server.setAcceptCallback([&](Handle<int, -1> fd, SockAddr const& /*address*/) {
         server_connection.open(std::move(fd));
         server_connection.send(make_shared_source<std::string>("test"));
     });

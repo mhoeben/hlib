@@ -71,7 +71,7 @@ public:
     void flush() noexcept;
 
 private:
-    UniqueHandle<int, -1> m_fd;
+    Handle<int, -1> m_fd;
     file::Pipe m_pipe;
     bool m_interrupt{ false };
 

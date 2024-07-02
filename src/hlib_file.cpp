@@ -613,13 +613,13 @@ void file::fd_close(int fd) noexcept
 //
 // Public (File)
 //
-file::Handle::Handle() noexcept
+file::File::File() noexcept
     : m_handle(&fclose)
 {
 }
 
-file::Handle::Handle(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept
-    : Handle()
+file::File::File(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept
+    : File()
 {
     Result<> result = open(filepath, mode, std::nothrow);
     if (true == result.failure()) {
@@ -627,29 +627,29 @@ file::Handle::Handle(std::string const& filepath, std::string const& mode, std::
     }
 }
 
-file::Handle::Handle(std::string const& filepath, std::string const& mode)
-    : Handle()
+file::File::File(std::string const& filepath, std::string const& mode)
+    : File()
 {
     open(filepath, mode);
 }
 
-file::Handle::Handle(Handle&& that) noexcept
+file::File::File(File&& that) noexcept
     : m_handle(std::move(that.m_handle))
 {
 }
 
-file::Handle& file::Handle::operator =(Handle&& that) noexcept
+file::File& file::File::operator =(File&& that) noexcept
 {
     m_handle = std::move(that.m_handle);
     return *this;
 }
 
-file::Handle::operator FILE*() const noexcept
+file::File::operator FILE*() const noexcept
 {
     return m_handle.get();
 }
 
-Result<> file::Handle::open(std::string const& filepath, std::string const& mode, std::nothrow_t) noexcept
+Result<> file::File::open(std::string const& filepath, std::string const& mode, std::nothrow_t) noexcept
 {
     close();
 
@@ -661,7 +661,7 @@ Result<> file::Handle::open(std::string const& filepath, std::string const& mode
     return {};
 }
 
-void file::Handle::open(std::string const& filepath, std::string const& mode)
+void file::File::open(std::string const& filepath, std::string const& mode)
 {
     std::error_code error_code;
 
@@ -671,7 +671,7 @@ void file::Handle::open(std::string const& filepath, std::string const& mode)
     }
 }
 
-void file::Handle::close() noexcept
+void file::File::close() noexcept
 {
     if (nullptr == m_handle.get()) {
         return;
@@ -681,7 +681,7 @@ void file::Handle::close() noexcept
     return;
 }
 
-FILE* file::Handle::release() noexcept
+FILE* file::File::release() noexcept
 {
     return m_handle.release();
 }
@@ -690,7 +690,7 @@ FILE* file::Handle::release() noexcept
 // Public (Pipe)
 //
 file::Pipe::Pipe() noexcept
-    : m_fds { UniqueHandle<int, -1>(&fd_close), UniqueHandle<int, -1>(&fd_close) }
+    : m_fds { Handle<int, -1>(&fd_close), Handle<int, -1>(&fd_close) }
 {
 }
 

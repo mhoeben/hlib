@@ -125,17 +125,17 @@ void fd_set_non_blocking(int fd, bool enable);
 
 void fd_close(int fd) noexcept;
 
-class Handle final
+class File final
 {
-    HLIB_NOT_COPYABLE(Handle);
+    HLIB_NOT_COPYABLE(File);
 
 public:
-    Handle() noexcept;
-    Handle(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept;
-    Handle(std::string const& filepath, std::string const& mode);
-    Handle(Handle&& that) noexcept;
+    File() noexcept;
+    File(std::string const& filepath, std::string const& mode, std::error_code& error_code) noexcept;
+    File(std::string const& filepath, std::string const& mode);
+    File(File&& that) noexcept;
 
-    Handle& operator =(Handle&& that) noexcept;
+    File& operator =(File&& that) noexcept;
 
     operator FILE*() const noexcept;
 
@@ -145,7 +145,7 @@ public:
     FILE* release() noexcept;
 
 private:
-    UniqueHandle<FILE*, nullptr> m_handle;
+    Handle<FILE*, nullptr> m_handle;
 };
 
 class Pipe final
@@ -162,21 +162,21 @@ public:
     int operator[](std::size_t index) const noexcept;
 
     template<std::size_t index>
-    UniqueHandle<int, -1> const& get() const noexcept
+    Handle<int, -1> const& get() const noexcept
     {
         static_assert(index <= 1);
         return m_fds[index];
     }
 
     template<std::size_t index>
-    UniqueHandle<int, -1>& get() noexcept
+    Handle<int, -1>& get() noexcept
     {
         static_assert(index <= 1);
         return m_fds[index];
     }
 
     template<std::size_t index>
-    void set(UniqueHandle<int, -1>&& fd) noexcept
+    void set(Handle<int, -1>&& fd) noexcept
     {
         static_assert(index <= -1);
         m_fds[index] = std::move(fd);
@@ -194,7 +194,7 @@ public:
     void close() noexcept;
 
 private:
-    std::array<UniqueHandle<int, -1>, 2> m_fds;
+    std::array<Handle<int, -1>, 2> m_fds;
 };
 
 } // namespace file

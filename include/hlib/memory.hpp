@@ -44,43 +44,91 @@ bool with_weak_ptr_locked(std::weak_ptr<T> const& weak_ptr, Lambda lambda)
     return true;
 }
 
-template<typename T, T invalid_handle = 0>
-class UniqueHandle final
+template<typename T>
+class Box final
 {
     static_assert(true == std::is_trivial<T>::value, "T must be a trivial type");
 
-    HLIB_NOT_COPYABLE(UniqueHandle);
+    HLIB_NOT_COPYABLE(Box);
+    HLIB_NOT_MOVABLE(Box);
+
+public:
+    typedef std::function<void(T&)> Destructor;
+
+public:
+    Box(T const& value, Destructor destructor)
+        : m_value{ value }
+        , m_destructor(std::move(destructor))
+    {
+    }
+
+    ~Box()
+    {
+        m_destructor(m_value);
+    }
+
+    operator T const&() const noexcept
+    {
+        return m_value;
+    }
+
+    operator T&() noexcept
+    {
+        return m_value;
+    }
+
+    T& operator*() noexcept
+    {
+        return m_value;
+    }
+
+    T* operator->() noexcept
+    {
+        return &m_value;
+    }
+
+private:
+    T m_value;
+    Destructor m_destructor;
+};
+
+template<typename T, T invalid_handle = 0>
+class Handle final
+{
+    static_assert(true == std::is_trivial<T>::value, "T must be a trivial type");
+
+    HLIB_NOT_COPYABLE(Handle);
 
 public:
     typedef T Type;
     typedef std::function<void(T)> Destructor;
 
 public:
-    UniqueHandle(Destructor destructor) noexcept
+    Handle(Destructor destructor) noexcept
         : m_destructor(std::move(destructor))
     {
         assert(nullptr != m_destructor);
     }
 
-    UniqueHandle(T handle, Destructor destructor) noexcept
+    Handle(T handle, Destructor destructor) noexcept
         : m_handle{ handle }
         , m_destructor(std::move(destructor))
     {
     }
 
-    UniqueHandle(UniqueHandle&& that) noexcept
+    Handle(Handle&& that) noexcept
         : m_handle{ that.m_handle }
         , m_destructor(std::move(that.m_destructor))
     {
         that.m_handle = invalid_handle;
     }
 
-    ~UniqueHandle()
+    ~Handle()
     {
         reset();
     }
 
-    UniqueHandle& operator=(UniqueHandle&& that) noexcept
+    Handle& operator=(Handle&& that) noexcept
     {
         reset();
 
@@ -94,12 +142,22 @@ public:
         return m_handle;
     }
 
+    T& operator *() noexcept
+    {
+        return m_handle;
+    }
+
     T const& operator ->() const noexcept
     {
         return m_handle;
     }
 
-    bool operator ==(UniqueHandle const& that) const noexcept
+    T& operator ->() noexcept
+    {
+        return m_handle;
+    }
+
+    bool operator ==(Handle const& that) const noexcept
     {
         return m_handle == that.m_handle;
     }
@@ -109,7 +167,7 @@ public:
         return m_handle == that;
     }
 
-    bool operator !=(UniqueHandle const& that) const noexcept
+    bool operator !=(Handle const& that) const noexcept
     {
         return m_handle != that.m_handle;
     }
@@ -120,6 +178,11 @@ public:
     }
 
     T const& get() const noexcept
+    {
+        return m_handle;
+    }
+
+    T& get() noexcept
     {
         return m_handle;
     }
@@ -138,7 +201,7 @@ public:
         m_handle = std::move(handle);
     }
 
-    void swap(UniqueHandle& that) noexcept
+    void swap(Handle& that) noexcept
     {
         std::swap(m_handle, that.m_handle);
         std::swap(m_destructor, that.m_destructor);
