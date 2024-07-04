@@ -160,6 +160,27 @@ public:
         return std::get<1>(m_value);
     }
 
+    template<typename F, typename R = std::invoke_result_t<F, T&&>>
+    Result<typename R::Type> then(F&& on_success)
+    {
+        if (true == failure()) {
+            return error();
+        }
+
+        return on_success(std::move(value()));
+    }
+
+    template<typename F>
+    Result<T>& otherwise(F&& on_error)
+    {
+        if (true == success()) {
+            return *this;
+        }
+
+        on_error(error());
+        return *this;
+    }
+
 private:
     Value m_value;
 };

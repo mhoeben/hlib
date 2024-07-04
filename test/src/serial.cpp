@@ -22,7 +22,7 @@
 // SOFTWARE.
 //
 #include "test.hpp"
-#include "hlib/endian.hpp"
+#include "hlib/serial.hpp"
 
 using namespace hlib;
 
@@ -37,7 +37,7 @@ enum FooBar
 
 } // namespace
 
-TEST_CASE("Big Endian", "[endian]")
+TEST_CASE("Big Endian", "[serial]")
 {
     auto sink = make_sink<Buffer>(46);
 
@@ -99,7 +99,7 @@ TEST_CASE("Big Endian", "[endian]")
     REQUIRE("xyz" == xyz);
 }
 
-TEST_CASE("Little Endian", "[endian]")
+TEST_CASE("Little Endian", "[serial]")
 {
     auto sink = make_sink<Buffer>(46);
 

@@ -30,7 +30,6 @@ add_subdirectory(../subprojects/catch2 catch2)
 add_executable(${PROJECT_NAME}
     src/buffer.cpp
     src/container.cpp
-    src/endian.cpp
     src/error.cpp
     src/event_bus.cpp
     src/event_loop.cpp
@@ -39,6 +38,7 @@ add_executable(${PROJECT_NAME}
     src/math.cpp
     src/memory.cpp
     src/result.cpp
+    src/serial.cpp
     src/sock_addr.cpp
     src/socket.cpp
     src/string.cpp

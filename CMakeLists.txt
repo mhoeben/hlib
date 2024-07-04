@@ -35,7 +35,6 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/base.hpp
     include/hlib/buffer.hpp
     include/hlib/debug.hpp
-    include/hlib/endian.hpp
     include/hlib/error.hpp
     include/hlib/event_bus.hpp
     include/hlib/event_loop.hpp
@@ -49,6 +48,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/memory.hpp
     include/hlib/pool.hpp
     include/hlib/result.hpp
+    include/hlib/serial.hpp
     include/hlib/scope_guard.hpp
     include/hlib/signal.hpp
     include/hlib/sink.hpp

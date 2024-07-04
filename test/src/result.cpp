@@ -105,3 +105,30 @@ TEST_CASE("Result Check", "[result]")
     REQUIRE(11 == check<int>(error_result, set_error<int>(error, 11)));
 }
 
+TEST_CASE("Result Then", "[result]")
+{
+    Error error;
+
+    auto result = Result(13.f).then([](float value) {
+        return Result<int>(value);
+    }).then([](int value) {
+        return Result(std::to_string(value));
+    }).otherwise([&](Error const& e) {
+        error = e;
+    });
+    REQUIRE(true == error.empty());
+    REQUIRE(true == result.success());
+    REQUIRE("13" == result.value());
+
+    result = Result(11.f).then([](float /* value */) {
+        return Result<int>(std::bad_alloc());
+    }).then([](int value) {
+        FAIL();
+        return Result(std::to_string(value));
+    }).otherwise([&](Error const& e) {
+        error = e;
+    });
+
+    REQUIRE(false == error.empty());
+}
+
