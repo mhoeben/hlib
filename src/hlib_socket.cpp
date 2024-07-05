@@ -222,7 +222,7 @@ void Socket::onEvent(int fd, std::uint32_t events)
         Source& source = *m_send_queue.front().source;
 
         // Progressively send from source.
-        ssize_t size = ::send(fd, source.consume(), source.available(), 0);
+        ssize_t size = ::send(fd, source.peek(source.available()), source.available(), 0);
         if (-1 == size) {
             lock.unlock();
 

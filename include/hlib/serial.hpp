@@ -24,8 +24,8 @@
 #pragma once
 
 #include "hlib/base.hpp"
-#include "hlib/buffer.hpp"
 #include "hlib/sink.hpp"
+#include "hlib/source.hpp"
 #include <limits>
 
 namespace hlib
@@ -39,6 +39,15 @@ namespace be
 //
 template<typename T>
 inline void* transform(void* data, T const& value) noexcept;
+
+template<>
+inline void* transform(void* data, bool const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)value;
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
 inline void* transform(void* data, std::int8_t const& value) noexcept
@@ -195,6 +204,15 @@ public:
         return *this;
     }
 
+    Serializer& transform(char const* value) noexcept
+    {
+        std::size_t size = strlen(value) + 1;
+        assert(size <= m_sink.headroom());
+
+        m_sink.produce(value, size);
+        return *this;
+    }
+
 private:
     Sink& m_sink;
 };
@@ -204,6 +222,14 @@ private:
 //
 template<typename T>
 inline void const* transform(void const* data, T& value) noexcept;
+
+template<>
+inline void const* transform(void const* data, bool& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = !!ptr[0];
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
 inline void const* transform(void const* data, std::int8_t& value) noexcept
@@ -291,6 +317,14 @@ inline void const* transform(void const* data, std::uint64_t& value) noexcept
     return ptr + sizeof(uint64_t);
 }
 
+template<typename T>
+inline typename std::enable_if<std::is_enum<T>::value, void const*>::type
+transform(void const* data, T* value) noexcept
+{
+    (void)value;
+    return data;
+}
+
 template<>
 inline void const* transform(void const* data, float& value) noexcept
 {
@@ -370,6 +404,18 @@ public:
         return *this;
     }
 
+    Deserializer& transform(char const*& value)
+    {
+        assert(1 <= m_source.available());
+        value = static_cast<char const*>(m_source.peek(1));
+
+        while (0 == *static_cast<char const*>(m_source.consume(1))) {
+            assert(1 <= m_source.available());
+        }
+
+        return *this;
+    }
+
 private:
     Source& m_source;
 };
@@ -384,6 +430,15 @@ namespace le
 //
 template<typename T>
 inline void* transform(void* data, T const& value) noexcept;
+
+template<>
+inline void* transform(void* data, bool const& value) noexcept
+{
+    uint8_t* ptr = (uint8_t*)data;
+
+    ptr[0] = (uint8_t)value;
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
 inline void* transform(void* data, std::int8_t const& value) noexcept
@@ -540,6 +595,15 @@ public:
         return *this;
     }
 
+    Serializer& transform(char const* value) noexcept
+    {
+        std::size_t size = strlen(value) + 1;
+        assert(size <= m_sink.headroom());
+
+        m_sink.produce(value, size);
+        return *this;
+    }
+
 private:
     Sink& m_sink;
 };
@@ -549,6 +613,14 @@ private:
 //
 template<typename T>
 inline void const* transform(void const* data, T& value) noexcept;
+
+template<>
+inline void const* transform(void const* data, bool& value) noexcept
+{
+    uint8_t const* ptr = (uint8_t const*)data;
+    value = !!ptr[0];
+    return ptr + sizeof(uint8_t);
+}
 
 template<>
 inline void const* transform(void const* data, std::int8_t& value) noexcept
@@ -712,6 +784,18 @@ public:
         value.resize(before_resize + size);
 
         m_source.consume(reinterpret_cast<uint8_t*>(value.data()) + before_resize, size);
+        return *this;
+    }
+
+    Deserializer& transform(char const*& value)
+    {
+        assert(1 <= m_source.available());
+        value = static_cast<char const*>(m_source.peek(1));
+
+        while (0 == *static_cast<char const*>(m_source.consume(1))) {
+            assert(1 <= m_source.available());
+        }
+
         return *this;
     }
 

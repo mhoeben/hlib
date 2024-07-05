@@ -41,18 +41,17 @@ bool Source::empty() const noexcept
     return m_progress == size();
 }
 
-void const* Source::consume() noexcept
+void const* Source::peek(std::size_t size) noexcept
 {
-    assert(m_progress <= this->size());
+    assert(m_progress + size <= this->size());
+    (void)size;
 
     return static_cast<std::uint8_t const*>(this->data()) + m_progress;
 }
 
 void const* Source::consume(std::size_t size) noexcept
 {
-    assert(m_progress + size <= this->size());
-
-    void const* data = consume();
+    void const* data = peek(size);
     m_progress += size;
     return data;
 }
@@ -61,3 +60,4 @@ void Source::consume(void* data, std::size_t size) noexcept
 {
     memcpy(data, consume(size), size);
 }
+

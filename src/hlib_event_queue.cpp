@@ -55,7 +55,7 @@ EventQueue::EventQueue(std::weak_ptr<EventLoop> event_loop)
 void EventQueue::push(Callback callback)
 {
     HLIB_LOCK_GUARD(lock, m_mutex);
-    m_queue.emplace_back(callback);
+    m_queue.emplace_back(std::move(callback));
     m_timer.set({ 0, 1 }, { 0, 1 });
 }
 

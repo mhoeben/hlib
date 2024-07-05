@@ -22,6 +22,7 @@
 // SOFTWARE.
 //
 #include "test.hpp"
+#include "hlib/buffer.hpp"
 #include "hlib/serial.hpp"
 
 using namespace hlib;
@@ -39,10 +40,11 @@ enum FooBar
 
 TEST_CASE("Big Endian", "[serial]")
 {
-    auto sink = make_sink<Buffer>(46);
+    auto sink = make_sink<Buffer>(54);
 
     be::Serializer serializer(sink);
-    serializer.transform<std::int8_t>(-13)
+    serializer.transform<bool>(true)
+              .transform<std::int8_t>(-13)
               .transform<std::int16_t>(-11)
               .transform<std::int32_t>(-1971)
               .transform<std::int64_t>(-13111971)
@@ -53,9 +55,10 @@ TEST_CASE("Big Endian", "[serial]")
               .transform<float>(-3.14159f)
               .transform<double>(3.14159)
               .transform<FooBar, uint8_t>(Bar)
-              .transform(std::string("xyz"));
+              .transform(std::string("xyz"))
+              .transform("foobar");
 
-
+    bool b;
     std::int8_t i8;
     std::int16_t i16;
     std::int32_t i32;
@@ -68,11 +71,13 @@ TEST_CASE("Big Endian", "[serial]")
     double d;
     FooBar foo_bar;
     std::string xyz;
+    char const* foobar;
 
     auto source = make_source(std::move(get<Buffer>(sink)));
 
     be::Deserializer deserializer(source);
-    deserializer.transform<std::int8_t>(i8)
+    deserializer.transform<bool>(b)
+                .transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
                 .transform<std::int32_t>(i32)
                 .transform<std::int64_t>(i64)
@@ -83,8 +88,10 @@ TEST_CASE("Big Endian", "[serial]")
                 .transform<float>(f)
                 .transform<double>(d)
                 .transform<FooBar, uint8_t>(foo_bar)
-                .transform<std::string>(xyz, 3);
+                .transform<std::string>(xyz, 3)
+                .transform(foobar);
 
+    REQUIRE(true == b);
     REQUIRE(-13 == i8);
     REQUIRE(-11 == i16);
     REQUIRE(-1971 == i32);
@@ -97,14 +104,16 @@ TEST_CASE("Big Endian", "[serial]")
     REQUIRE( 3.14159 == d);
     REQUIRE( Bar == foo_bar);
     REQUIRE("xyz" == xyz);
+    REQUIRE(0 == strcmp("foobar", foobar));
 }
 
 TEST_CASE("Little Endian", "[serial]")
 {
-    auto sink = make_sink<Buffer>(46);
+    auto sink = make_sink<Buffer>(54);
 
     le::Serializer serializer(sink);
-    serializer.transform<std::int8_t>(-13)
+    serializer.transform<bool>(true)
+              .transform<std::int8_t>(-13)
               .transform<std::int16_t>(-11)
               .transform<std::int32_t>(-1971)
               .transform<std::int64_t>(-13111971)
@@ -115,9 +124,10 @@ TEST_CASE("Little Endian", "[serial]")
               .transform<float>(-3.14159f)
               .transform<double>(3.14159)
               .transform<FooBar, uint8_t>(Bar)
-              .transform(std::string("xyz"));
+              .transform(std::string("xyz"))
+              .transform("foobar");
 
-
+    bool b;
     std::int8_t i8;
     std::int16_t i16;
     std::int32_t i32;
@@ -130,11 +140,13 @@ TEST_CASE("Little Endian", "[serial]")
     double d;
     FooBar foo_bar;
     std::string xyz;
+    char const* foobar;
 
     auto source = make_source(std::move(get<Buffer>(sink)));
 
     le::Deserializer deserializer(source);
-    deserializer.transform<std::int8_t>(i8)
+    deserializer.transform<bool>(b)
+                .transform<std::int8_t>(i8)
                 .transform<std::int16_t>(i16)
                 .transform<std::int32_t>(i32)
                 .transform<std::int64_t>(i64)
@@ -145,8 +157,10 @@ TEST_CASE("Little Endian", "[serial]")
                 .transform<float>(f)
                 .transform<double>(d)
                 .transform<FooBar, uint8_t>(foo_bar)
-                .transform<std::string>(xyz, 3);
+                .transform<std::string>(xyz, 3)
+                .transform(foobar);
 
+    REQUIRE(true == b);
     REQUIRE(-13 == i8);
     REQUIRE(-11 == i16);
     REQUIRE(-1971 == i32);
@@ -159,5 +173,6 @@ TEST_CASE("Little Endian", "[serial]")
     REQUIRE( 3.14159 == d);
     REQUIRE( Bar == foo_bar);
     REQUIRE("xyz" == xyz);
+    REQUIRE(0 == strcmp("foobar", foobar));
 }
 

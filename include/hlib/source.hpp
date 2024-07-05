@@ -39,7 +39,7 @@ public:
     std::size_t available() const noexcept;
     bool empty() const noexcept;
 
-    void const* consume() noexcept;
+    void const* peek(std::size_t size) noexcept;
     void const* consume(std::size_t size) noexcept;
     void consume(void* data, std::size_t size) noexcept;
 
@@ -92,24 +92,40 @@ private:
     std::size_t size() const noexcept override
     {
         if constexpr (true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
-            static_assert(true == has_size_method<typename T::element_type>::value);
-            return m_data->size();
+            if constexpr (true == has_size_method<typename T::element_type>::value) {
+                return m_data->size();
+            }
+            else {
+                return m_data->size;
+            }
         }
         else {
-            static_assert(true == has_size_method<T>::value);
-            return m_data.size();
+            if constexpr (true == has_size_method<T>::value) {
+                return m_data.size();
+            }
+            else {
+                return m_data.size;
+            }
         }
     }
 
     void const* data() const noexcept override
     {
         if constexpr (true == is_unique_ptr<T>::value || true == is_shared_ptr<T>::value) {
-            static_assert(true == has_data_method<typename T::element_type>::value);
-            return m_data->data();
+            if constexpr (true == has_data_method<typename T::element_type>::value) {
+                return m_data->data();
+            }
+            else {
+                return m_data->data;
+            }
         }
         else {
-            static_assert(true == has_data_method<T>::value);
-            return m_data.data();
+            if constexpr (true == has_data_method<T>::value) {
+                return m_data.data();
+            }
+            else {
+                return m_data.data;
+            }
         }
     }
 };
@@ -118,6 +134,12 @@ template<typename T>
 SourceAdapter<T> make_source(T data)
 {
     return SourceAdapter<T>(std::move(data));
+}
+
+template<typename T>
+SourceAdapter<T const&> make_source_ref(T const& data)
+{
+    return SourceAdapter<T const&>(data);
 }
 
 template<typename T>
