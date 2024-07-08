@@ -409,7 +409,7 @@ public:
         assert(1 <= m_source.available());
         value = static_cast<char const*>(m_source.peek(1));
 
-        while (0 == *static_cast<char const*>(m_source.consume(1))) {
+        while (0 != *static_cast<char const*>(m_source.consume(1))) {
             assert(1 <= m_source.available());
         }
 
@@ -792,7 +792,7 @@ public:
         assert(1 <= m_source.available());
         value = static_cast<char const*>(m_source.peek(1));
 
-        while (0 == *static_cast<char const*>(m_source.consume(1))) {
+        while (0 != *static_cast<char const*>(m_source.consume(1))) {
             assert(1 <= m_source.available());
         }
 
