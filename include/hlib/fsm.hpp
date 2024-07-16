@@ -67,7 +67,8 @@ public:
     FSM() = default;
 
     FSM(State initial, std::vector<Transition> const& transitions)
-        : m_state{ initial }
+        : m_initial{ initial }
+        , m_state{ m_initial }
     {
         for (auto const& transition : transitions) {
             m_transitions.emplace(combine(transition.from, transition.event), std::make_pair(transition.to, transition.callback));
@@ -79,7 +80,12 @@ public:
         return m_state;
     }
 
-    bool apply(Event event)
+    void reset() noexcept
+    {
+        m_state = m_initial;
+    }
+
+    bool apply(Event event) noexcept
     {
         std::uint64_t const key = combine(m_state, event);
 
@@ -100,10 +106,11 @@ public:
     }
 
 private:
+    State m_initial = State();
+    State m_state = State();
     std::unordered_map<std::uint64_t, std::pair<State, Callback>> m_transitions;
-    State m_state;
 
-    static constexpr std::uint64_t combine(State state, Event event)
+    static constexpr std::uint64_t combine(State state, Event event) noexcept
     {
         return (static_cast<std::uint64_t>(state))
              | (static_cast<std::uint64_t>(event) << 32);
