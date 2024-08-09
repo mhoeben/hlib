@@ -34,102 +34,66 @@ TEST_CASE("Subprocess", "[subprocess]")
     REQUIRE(Subprocess::Idle == process.state());
     REQUIRE(-1 == process.pid());
     REQUIRE(0 == process.returnCode());
-    REQUIRE(true == process.output().empty());
-    REQUIRE(true == process.error().empty());
+    REQUIRE(nullptr == process.output());
+    REQUIRE(nullptr == process.error());
 }
 
 TEST_CASE("Subprocess Echo", "[subprocess]")
 {
-    Subprocess process("echo", { "Hello World!" });
-    REQUIRE(0 == process.returnCode());
-    REQUIRE("Hello World!\n" == to_string(process.output()));
-    REQUIRE(true == process.error().empty());
-    REQUIRE(Subprocess::Exited == process.state());
-
-    process.run("echo", { "Good", "morning" });
-    REQUIRE(0 == process.returnCode());
-    REQUIRE("Good morning\n" == to_string(process.output()));
-    REQUIRE(true == process.error().empty());
-    REQUIRE(Subprocess::Exited == process.state());
+    auto process = std::make_unique<Subprocess>();
+    process->run("echo", { "Hello",  "World!" });
+    REQUIRE(0 == process->returnCode());
+    REQUIRE(nullptr != process->output());
+    REQUIRE(nullptr != process->error());
+    REQUIRE("Hello World!\n" == to_string(*process->output()));
+    REQUIRE(true == process->error()->empty());
+    REQUIRE(Subprocess::Exited == process->state());
 }
 
-TEST_CASE("Subprocess StdIn to StdOut", "[subprocess]")
+TEST_CASE("Subprocess Stdin to Stdout", "[subprocess]")
 {
-    Subprocess process("cat", { "-" }, "Hello World!");
-    REQUIRE(0 == process.returnCode());
-    REQUIRE("Hello World!" == to_string(process.output()));
-    REQUIRE(true == process.error().empty());
-    REQUIRE(Subprocess::Exited == process.state());
-
-    process.run("cat", { "-" }, "Good morning");
-    REQUIRE(0 == process.returnCode());
-    REQUIRE("Good morning" == to_string(process.output()));
-    REQUIRE(true == process.error().empty());
-    REQUIRE(Subprocess::Exited == process.state());
-
+    auto process = std::make_unique<Subprocess>();
+    process->run("cat", { "-" }, "Hello World!");
+    REQUIRE(0 == process->returnCode());
+    REQUIRE(nullptr != process->output());
+    REQUIRE(nullptr != process->error());
+    REQUIRE("Hello World!" == to_string(*process->output()));
+    REQUIRE(true == process->error()->empty());
+    REQUIRE(Subprocess::Exited == process->state());
 }
 
-TEST_CASE("Subprocess Stdin to Null", "[subprocess]")
-{
-    Subprocess process("cat", { "-" }, "Touching the void", { "/dev/null", O_WRONLY }, {});
-    REQUIRE(0 == process.returnCode());
-    REQUIRE(true == process.output().empty());
-    REQUIRE(true == process.error().empty());
-    REQUIRE(Subprocess::Exited == process.state());
-}
-
-TEST_CASE("Subprocess EventLoop", "[subprocess]")
+TEST_CASE("Subprocess EventLoop No Data", "[subprocess]")
 {
     auto event_loop = std::make_shared<EventLoop>();
+    auto process = std::make_unique<Subprocess>(event_loop);
 
-    auto on_output = [&event_loop](int fd, std::uint32_t events)
+    REQUIRE_NOTHROW(process->run("cat", { "-" }));
+    REQUIRE_NOTHROW(process->close());
+    REQUIRE_NOTHROW(process->wait());
+}
+
+TEST_CASE("Subprocess EventLoop With Data", "[subprocess]")
+{
+    auto event_loop = std::make_shared<EventLoop>();
+    auto process = std::make_unique<Subprocess>(event_loop);
+
+    Buffer result;
+
+    auto on_written = [&](std::shared_ptr<Source> const& /* source */)
     {
-        if (0 == (EventLoop::Read & events)) {
-            return;
-        }
-
-        char buffer[20];
-        REQUIRE(13 == ::read(fd, buffer, sizeof(buffer)));
-
+        process->close();
+    };
+    auto on_read = [&](std::shared_ptr<Sink> const& sink)
+    {
+        result = std::move(std::static_pointer_cast<SinkAdapter<Buffer>>(sink)->get());
         event_loop->interrupt();
     };
 
-    file::Pipe output_pipe;
-    output_pipe.open();
-
-    event_loop->add(
-        *output_pipe.get<0>(),
-        EventLoop::Read,
-        std::bind(on_output, std::placeholders::_1, std::placeholders::_2)
-    );
-
-    Subprocess process(event_loop);
-    REQUIRE(Subprocess::Idle == process.state());
-
-    process.setOutput(std::move(output_pipe.get<1>()));
-    process.run("echo", { "Hello World!" });
-
-    REQUIRE(Subprocess::Running == process.state());
-
-    event_loop->dispatch();
-
-    process.wait();
-
-    REQUIRE(Subprocess::Exited == process.state());
-}
-
-TEST_CASE("Subprocess EventLoop Buffer", "[subprocess]")
-{
-    auto event_loop = std::make_shared<EventLoop>();
-
-    Subprocess process(event_loop);
-    process.setOutput(Subprocess::Stream(std::make_shared<Buffer>(), std::bind([&event_loop] {
-        event_loop->interrupt();
-    })));
-    process.run("echo", { "Hello World!" });
-
-    event_loop->dispatch();
-
-    process.wait();
+    REQUIRE_NOTHROW(process->run("cat", { "-" }));
+    REQUIRE_NOTHROW(process->write(make_shared_source_buffer("Hello world!"), on_written));
+    REQUIRE_NOTHROW(process->read(make_shared_sink_buffer(), on_read));
+    REQUIRE_NOTHROW(event_loop->dispatch());
+    REQUIRE_NOTHROW(process->wait());
+    REQUIRE("Hello world!" == to_string(result));
 }
 

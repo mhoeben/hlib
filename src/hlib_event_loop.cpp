@@ -205,7 +205,9 @@ void EventLoop::change(int fd, Callback callback)
 
 void EventLoop::remove(int fd)
 {
-    assert(-1 != fd);
+    if (-1 == fd) {
+        return;
+    }
 
     HLIB_UNIQUE_LOCK(lock, m_mutex);
 

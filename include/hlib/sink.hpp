@@ -35,7 +35,7 @@ namespace hlib
 class Sink
 {
 public:
-    static constexpr std::size_t UnspecifiedCapacity = 0;
+    static constexpr std::size_t MinimalCapacity = 0;
     static constexpr std::size_t InfiniteCapacity = std::numeric_limits<std::size_t>::max();
 
 public:
@@ -56,7 +56,7 @@ protected:
     ~Sink() = default;
 
 private:
-    std::size_t const m_maximum{ InfiniteCapacity };
+    std::size_t const m_maximum{ MinimalCapacity };
 };
 
 template<typename T>

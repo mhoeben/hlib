@@ -38,13 +38,13 @@ Sink::Sink(std::size_t maximum)
 //
 bool Sink::full() const noexcept
 {
-    return Sink::UnspecifiedCapacity == m_maximum || this->size() == m_maximum;
+    return Sink::MinimalCapacity == m_maximum || this->size() == m_maximum;
 }
 
 std::size_t Sink::headroom() const noexcept
 {
-    // Don't use headroom if the sink's maximum is unspecified.
-    assert(Sink::UnspecifiedCapacity != m_maximum);
+    // MinimalCapacity requires specifying a limit, see headroom(limit).
+    assert(Sink::MinimalCapacity != m_maximum);
     assert(this->size() <= m_maximum);
 
     return m_maximum - this->size();
@@ -52,8 +52,8 @@ std::size_t Sink::headroom() const noexcept
 
 std::size_t Sink::headroom(std::size_t limit) const noexcept
 {
-    if (Sink::UnspecifiedCapacity == m_maximum) {
-        return limit;
+    if (Sink::MinimalCapacity == m_maximum) {
+        return this->size() + limit;
     }
 
     return std::min(headroom(), limit);
@@ -61,7 +61,7 @@ std::size_t Sink::headroom(std::size_t limit) const noexcept
 
 void* Sink::produce(std::size_t size) noexcept
 {
-    assert(Sink::UnspecifiedCapacity == m_maximum || this->size() + size <= m_maximum);
+    assert(Sink::MinimalCapacity == m_maximum || this->size() + size <= m_maximum);
 
     std::size_t before_resize = this->size();
     std::uint8_t* ptr = static_cast<std::uint8_t*>(resize(before_resize + size));

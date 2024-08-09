@@ -24,11 +24,12 @@
 #pragma once
 
 #include "hlib/base.hpp"
-#include "hlib/sink.hpp"
 #include "hlib/source.hpp"
+#include "hlib/sink.hpp"
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 
 namespace hlib
 {
@@ -45,7 +46,7 @@ public:
     explicit Buffer(std::size_t reservation, std::size_t maximum);
     explicit Buffer(std::size_t reservation);
     Buffer(void const* data, size_t size);
-    Buffer(std::string const& string);
+    Buffer(std::string_view const& string);
     Buffer(char const* string);
     Buffer(Buffer&& that) noexcept;
     ~Buffer();
@@ -81,22 +82,36 @@ public:
 
     bool assign(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void assign(void const* data, std::size_t size);
-    bool assign(std::string const& string, std::nothrow_t) noexcept;
-    void assign(std::string const& string);
+    bool assign(std::string_view const& string, std::nothrow_t) noexcept;
+    void assign(std::string_view const& string);
 
     bool append(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void append(void const* data, std::size_t size);
-    bool append(std::string const& string, std::nothrow_t) noexcept;
-    void append(std::string const& string);
+    bool append(std::string_view const& string, std::nothrow_t) noexcept;
+    void append(std::string_view const& string);
 
     bool insert(std::size_t offset, void const* data, std::size_t size, std::nothrow_t) noexcept;
     void insert(std::size_t offset, void const* data, std::size_t size);
-    bool insert(std::size_t offset, std::string const& string, std::nothrow_t) noexcept;
-    void insert(std::size_t offset, std::string const& string);
+    bool insert(std::size_t offset, std::string_view const& string, std::nothrow_t) noexcept;
+    void insert(std::size_t offset, std::string_view const& string);
 
     void erase(std::size_t offset, std::size_t size) noexcept;
 
+    bool copy(Buffer& buffer, std::nothrow_t) const noexcept;
+    void copy(Buffer& buffer) const;
     Buffer copy() const;
+
+    bool copy(std::size_t offset, std::size_t size, Buffer& buffer, std::nothrow_t) const noexcept;
+    void copy(std::size_t offset, std::size_t size, Buffer& buffer) const;
+    Buffer copy(std::size_t offset, std::size_t size) const;
+
+    bool extract(std::size_t offset, std::size_t size, Buffer& buffer, std::nothrow_t) noexcept;
+    void extract(std::size_t offset, std::size_t size, Buffer& buffer);
+    Buffer extract(std::size_t offset, std::size_t size);
+
+    bool extract(std::size_t offset, std::string_view const& sentinel, bool include_sentinel, Buffer& buffer, std::nothrow_t) noexcept;
+    void extract(std::size_t offset, std::string_view const& sentinel, bool include_sentinel, Buffer& buffer);
+    Buffer extract(std::size_t offset, std::string_view const& sentinel, bool include_sentinel);
 
 private:
     void* m_data{ nullptr };
@@ -155,6 +170,10 @@ private:
 };
 
 std::string to_string(Buffer const& buffer);
+
+std::shared_ptr<SourceAdapter<Buffer>> make_shared_source_buffer();
+std::shared_ptr<SourceAdapter<Buffer>> make_shared_source_buffer(std::string_view const& string);
+std::shared_ptr<SinkAdapter<Buffer>> make_shared_sink_buffer(std::size_t maximum = Sink::MinimalCapacity);
 
 } // namespace hlib
 

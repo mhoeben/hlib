@@ -25,9 +25,11 @@
 
 #include "hlib/base.hpp"
 #include "hlib/buffer.hpp"
-#include "hlib/event_loop.hpp"
+#include "hlib/fdio.hpp"
 #include "hlib/memory.hpp"
 #include "hlib/result.hpp"
+#include "hlib/sink.hpp"
+#include "hlib/source.hpp"
 #include <csignal>
 #include <fcntl.h>
 #include <set>
@@ -53,107 +55,75 @@ public:
         Failed
     };
 
-    class Stream
-    {
-        friend class Subprocess;
-
-        HLIB_NOT_COPYABLE(Stream);
-
-    public:
-        typedef std::function<void(std::uint32_t events)> OnUpdate;
-
-    public:
-        Stream() noexcept;
-        Stream(int fd) noexcept;
-        Stream(Handle<int, -1>&& fd) noexcept;
-        Stream(std::string const& filename);
-        Stream(std::string const& filename, int flags, mode_t mode = S_IRUSR|S_IWUSR);
-        Stream(std::shared_ptr<Buffer> buffer) noexcept;
-        Stream(std::shared_ptr<Buffer> buffer, OnUpdate on_update) noexcept;
-        Stream(Stream&& that) noexcept;
-
-        Stream& operator =(Stream&& that) noexcept;
-
-        bool valid() const noexcept;
-
-        void setUpdateCallback(OnUpdate on_update) noexcept;
-
-    private:
-        Handle<int, -1> m_fd;
-        std::shared_ptr<Buffer> m_buffer;
-        OnUpdate m_on_update;
-
-        void update(std::uint32_t events);
-    };
-
 public:
+    // Subprocess can be run with an internal event loop or external event loop.
+    //
+    // When running with an internal event loop, one can pass input to stdin
+    // and get the subprocess's output using output() and error(). Progressive
+    // read(), write() and close() options are not available. In this mode run()
+    // returns only when the subprocess finishes and the caller does not have to
+    // call wait() explicitely.
+    //
+    // When running from an external event loop, the run() method returns immediately.
+    // Input shall be passed using the write() method and output/error data obtained
+    // through read() methods. When all input has been submitted, close() shall be
+    // called. input() and output() methods are not available in this mode. Once
+    // input has closed, the user shall call wait() for the process to finish.
+    //
+    // kill() methods can be used in both modes.
+    //
     Subprocess();
-    Subprocess(std::weak_ptr<EventLoop> event_loop);
     Subprocess(std::string const& command, std::vector<std::string> const& args);
-    Subprocess(std::string const& command, std::vector<std::string> const& args, Stream input);
-    Subprocess(std::string const& command, std::vector<std::string> const& args, std::string const& input);
-    Subprocess(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error);
-    Subprocess(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error);
-    Subprocess(Subprocess&& that) noexcept;
-
-    Subprocess& operator =(Subprocess&& that) noexcept;
+    Subprocess(std::string const& command, std::vector<std::string> const& args, Buffer&& input);
+    Subprocess(std::weak_ptr<EventLoop> event_loop);
 
     State state() const noexcept;
     int pid() const noexcept;
     int returnCode() const noexcept;
-    Buffer& output() const noexcept;
-    Buffer& error() const noexcept;
+    Buffer* output() const noexcept;
+    Buffer* error() const noexcept;
 
-    void setInput(Stream input) noexcept;
-    void setOutput(Stream output) noexcept;
-    void setError(Stream error) noexcept;
-    void setCloseFDs(bool enable, std::set<int> exceptions = { STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO });
+    void setCloseFDs(bool enable, std::set<int> exceptions);
 
     Result<int> run(std::string const& command, std::vector<std::string> const& args, std::nothrow_t) noexcept;
-    Result<int> run(std::string const& command, std::vector<std::string> const& args, Stream input, std::nothrow_t) noexcept;
-    Result<int> run(std::string const& command, std::vector<std::string> const& args, std::string const& input, std::nothrow_t) noexcept;
-    Result<int> run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error, std::nothrow_t) noexcept;
-    Result<int> run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error, std::nothrow_t) noexcept;
+    Result<int> run(std::string const& command, std::vector<std::string> const& args, Buffer&& input, std::nothrow_t) noexcept;
 
     int run(std::string const& command, std::vector<std::string> const& args);
-    int run(std::string const& command, std::vector<std::string> const& args, Stream input);
-    int run(std::string const& command, std::vector<std::string> const& args, std::string const& input);
-    int run(std::string const& command, std::vector<std::string> const& args, Stream input, Stream output, Stream error);
-    int run(std::string const& command, std::vector<std::string> const& args, std::string const& input, Stream output, Stream error);
+    int run(std::string const& command, std::vector<std::string> const& args, Buffer&& input);
+
+    void write(std::shared_ptr<Source> source, FileDescriptorIO::OnWritten callback);
+    void write(std::shared_ptr<Source> source);
+    void read(std::shared_ptr<Sink> sink, FileDescriptorIO::OnRead callback, bool read_stderr = false);
+    void close();
+
+    Result<int> wait(std::nothrow_t) noexcept;
+    int wait();
 
     Result<> kill(int signal, std::nothrow_t) noexcept;
     Result<> kill(std::nothrow_t) noexcept;
     void kill(int signal = SIGKILL);
 
-    Result<int> wait(std::nothrow_t) noexcept;
-    int wait();
-
 private:
     std::weak_ptr<EventLoop> m_event_loop_extern;
-    std::shared_ptr<EventLoop> m_event_loop_private;
+    std::shared_ptr<EventLoop> m_event_loop_intern;
 
     State m_state{ State::Idle };
     int m_pid{ -1 };
     int m_return_code{ 0 };
 
-    std::size_t m_input_offset{ 0 };
-    Stream m_input;
-    Stream m_output;
-    Stream m_error;
+    std::shared_ptr<Source> m_stdin_source;
+    std::shared_ptr<Sink> m_stdout_sink;
+    std::shared_ptr<Sink> m_stderr_sink;
+
+    std::unique_ptr<FileDescriptorIO> m_stdin;
+    std::unique_ptr<FileDescriptorIO> m_stdout;
+    std::unique_ptr<FileDescriptorIO> m_stderr;
 
     bool m_close_fds{ true };
     std::set<int> m_close_fds_exceptions{ STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO };
 
-    // These allow for the output and error buffers to be available
-    // after the process finishes.
-    std::shared_ptr<Buffer> m_output_buffer;
-    std::shared_ptr<Buffer> m_error_buffer;
-
-    void onInput(int fd, std::uint32_t events);
-    void onOutput(int fd, std::uint32_t events);
-    void onError(int fd, std::uint32_t events);
-    void onStreamUpdate(std::uint32_t events);
-
+    void onWritten(std::shared_ptr<Source> const& source);
+    void onClose(int error);
     Result<int> run(std::vector<char const*> argv);
 };
 

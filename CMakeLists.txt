@@ -39,6 +39,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/event_bus.hpp
     include/hlib/event_loop.hpp
     include/hlib/event_queue.hpp
+    include/hlib/fdio.hpp
     include/hlib/file.hpp
     include/hlib/fsm.hpp
     include/hlib/latch.hpp
@@ -70,6 +71,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_event_bus.cpp
     src/hlib_event_loop.cpp
     src/hlib_event_queue.cpp
+    src/hlib_fdio.cpp
     src/hlib_file.cpp
     src/hlib_format.cpp
     src/hlib_format.hpp

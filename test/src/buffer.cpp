@@ -71,6 +71,19 @@ TEST_CASE("Buffer", "[buffer]")
     REQUIRE(4 == buffer.size());
     REQUIRE(data + buffer.size() == extended);
     REQUIRE(0 == memcmp("abgh", buffer.data(), 4));
+
+    REQUIRE_NOTHROW(buffer.assign("foo bar baz"));
+    REQUIRE("foo bar baz" == to_string(buffer.copy()));
+    REQUIRE("bar" == to_string(buffer.copy(4, 3)));
+    REQUIRE(" baz" == to_string(buffer.extract(7, 4)));
+    REQUIRE("foo bar" == to_string(buffer));
+    REQUIRE("foo" == to_string(buffer.extract(0, " bar", false)));
+    REQUIRE(" bar" == to_string(buffer));
+
+    REQUIRE_NOTHROW(buffer.assign("foo\nbar\nbaz\n"));
+    REQUIRE("foo\n" == to_string(buffer.extract(0, "foo\n", true)));
+    REQUIRE("bar\n" == to_string(buffer.extract(0, "bar\n", true)));
+    REQUIRE("baz\n" == to_string(buffer.extract(0, "baz\n", true)));
 }
 
 TEST_CASE("Buffer Empty", "[buffer]")

@@ -79,7 +79,7 @@ Buffer::Buffer(void const* data, std::size_t size)
     assign(data, size);
 }
 
-Buffer::Buffer(std::string const& string)
+Buffer::Buffer(std::string_view const& string)
 {
     assign(string.data(), string.size());
 }
@@ -144,7 +144,7 @@ bool Buffer::empty() const noexcept
 void const* Buffer::get(std::size_t index, std::nothrow_t) const noexcept
 {
     assert(index < m_capacity);
-    return static_cast<uint8_t*>(m_data) + index;
+    return static_cast<std::uint8_t*>(m_data) + index;
 }
 
 void const* Buffer::get(std::size_t index) const
@@ -153,7 +153,7 @@ void const* Buffer::get(std::size_t index) const
         throw std::out_of_range("Buffer::get() failed");
     }
 
-    return static_cast<uint8_t*>(m_data) + index;
+    return static_cast<std::uint8_t*>(m_data) + index;
 }
 
 std::byte Buffer::operator[](std::size_t index) const noexcept
@@ -226,7 +226,7 @@ void* Buffer::extend(std::size_t capacity, std::nothrow_t) noexcept
         return nullptr;
     }
 
-    return static_cast<uint8_t*>(m_data) + m_size;
+    return static_cast<std::uint8_t*>(m_data) + m_size;
 }
 
 void* Buffer::extend(std::size_t capacity)
@@ -272,12 +272,12 @@ void Buffer::assign(void const* data, std::size_t size)
     }
 }
 
-bool Buffer::assign(std::string const& string, std::nothrow_t) noexcept
+bool Buffer::assign(std::string_view const& string, std::nothrow_t) noexcept
 {
     return assign(string.data(), string.size(), std::nothrow);
 }
 
-void Buffer::assign(std::string const& string)
+void Buffer::assign(std::string_view const& string)
 {
     assign(string.data(), string.size());
 }
@@ -294,12 +294,12 @@ void Buffer::append(void const* data, std::size_t size)
     }
 }
 
-bool Buffer::append(std::string const& string, std::nothrow_t) noexcept
+bool Buffer::append(std::string_view const& string, std::nothrow_t) noexcept
 {
     return append(string.data(), string.size(), std::nothrow);
 }
 
-void Buffer::append(std::string const& string)
+void Buffer::append(std::string_view const& string)
 {
     append(string.data(), string.size());
 }
@@ -317,7 +317,7 @@ bool Buffer::insert(std::size_t offset, void const* data, std::size_t size, std:
         return false;
     }
 
-    uint8_t* ptr = static_cast<uint8_t*>(m_data);
+    std::uint8_t* ptr = static_cast<std::uint8_t*>(m_data);
 
     // Move tail. Note that when inserting at the tail, this is a NOP.
     memmove(ptr + offset + size, ptr + offset, m_size - offset);
@@ -337,12 +337,12 @@ void Buffer::insert(std::size_t offset, void const* data, std::size_t size)
     }
 }
 
-bool Buffer::insert(std::size_t offset, std::string const& string, std::nothrow_t) noexcept
+bool Buffer::insert(std::size_t offset, std::string_view const& string, std::nothrow_t) noexcept
 {
     return insert(offset, string.data(), string.size(), std::nothrow);
 }
 
-void Buffer::insert(std::size_t offset, std::string const& string)
+void Buffer::insert(std::size_t offset, std::string_view const& string)
 {
     insert(offset, string.data(), string.size());
 }
@@ -352,15 +352,117 @@ void Buffer::erase(std::size_t offset, std::size_t size) noexcept
     assert(offset + size <= m_size);
     assert(m_size <= m_capacity);
 
-    uint8_t* ptr = static_cast<uint8_t*>(m_data);
+    std::uint8_t* ptr = static_cast<std::uint8_t*>(m_data);
 
     memmove(ptr + offset, ptr + offset + size, m_size - (offset + size));
     m_size -= size;
 }
 
+bool Buffer::copy(Buffer& buffer, std::nothrow_t) const noexcept
+{
+    return buffer.assign(m_data, m_size, std::nothrow);
+}
+
+void Buffer::copy(Buffer& buffer) const
+{
+    if (false == copy(buffer, std::nothrow)) {
+        throw std::bad_alloc();
+    }
+}
+
 Buffer Buffer::copy() const
 {
     return Buffer(m_data, m_size);
+}
+
+bool Buffer::copy(std::size_t offset, std::size_t size, Buffer& buffer, std::nothrow_t) const noexcept
+{
+    assert(offset + size <= m_size);
+
+    std::uint8_t const* ptr = static_cast<std::uint8_t*>(m_data);
+    return buffer.assign(ptr + offset, size, std::nothrow);
+}
+
+void Buffer::copy(std::size_t offset, std::size_t size, Buffer& buffer) const
+{
+    if (false == copy(offset, size, buffer, std::nothrow)) {
+        throw std::bad_alloc();
+    }
+}
+
+Buffer Buffer::copy(std::size_t offset, std::size_t size) const
+{
+    Buffer buffer;
+    copy(offset, size, buffer);
+    return buffer;
+}
+
+bool Buffer::extract(std::size_t offset, std::size_t size, Buffer& buffer, std::nothrow_t) noexcept
+{
+    assert(offset + size <= m_size);
+
+    std::uint8_t const* ptr = static_cast<std::uint8_t*>(m_data);
+
+    if (false == buffer.assign(ptr + offset, size, std::nothrow)) {
+        return false;
+    }
+    erase(offset, size);
+    return true;
+}
+
+void Buffer::extract(std::size_t offset, std::size_t size, Buffer& buffer)
+{
+    if (false == extract(offset, size, buffer, std::nothrow)) {
+        throw std::bad_alloc();
+    }
+}
+
+Buffer Buffer::extract(std::size_t offset, std::size_t size)
+{
+    Buffer buffer;
+    extract(offset, size, buffer);
+    return buffer;
+}
+
+bool Buffer::extract(std::size_t offset, std::string_view const& sentinel, bool include_sentinel, Buffer& buffer, std::nothrow_t) noexcept
+{
+    assert(offset <= m_size);
+
+    std::string_view view(static_cast<char const*>(m_data), m_size);
+    std::size_t position = view.find(sentinel, offset);
+
+    if (position != std::string_view::npos) {
+        assert(position >= offset);
+        std::size_t size = position - offset;
+
+        if (true == include_sentinel) {
+            size += sentinel.size();
+        }
+
+        if (false == buffer.assign(view.data() + offset, size, std::nothrow)) {
+            return false;
+        }
+        erase(offset, size);
+        return true;
+   }
+    else {
+        buffer.clear();
+        return true;
+    }
+}
+
+void Buffer::extract(std::size_t offset, std::string_view const& sentinel, bool include_sentinel, Buffer& buffer)
+{
+    if (false == extract(offset, sentinel, include_sentinel, buffer, std::nothrow)) {
+        throw std::bad_alloc();
+    }
+}
+
+Buffer Buffer::extract(std::size_t offset, std::string_view const& sentinel, bool include_sentinel)
+{
+    Buffer buffer;
+    extract(offset, sentinel, include_sentinel, buffer);
+    return buffer;
 }
 
 //
@@ -370,4 +472,20 @@ std::string hlib::to_string(Buffer const& buffer)
 {
     return std::string(static_cast<char const*>(buffer.data()), buffer.size());
 }
+
+std::shared_ptr<SourceAdapter<Buffer>> hlib::make_shared_source_buffer()
+{
+    return make_shared_source<Buffer>(Buffer());
+}
+
+std::shared_ptr<SourceAdapter<Buffer>> hlib::make_shared_source_buffer(std::string_view const& string)
+{
+    return make_shared_source<Buffer>(Buffer(string));
+}
+
+std::shared_ptr<SinkAdapter<Buffer>> hlib::make_shared_sink_buffer(std::size_t maximum)
+{
+    return make_shared_sink<Buffer>(maximum);
+}
+
 
