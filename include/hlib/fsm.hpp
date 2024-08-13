@@ -23,6 +23,7 @@
 //
 #pragma once
 
+#include <any>
 #include <functional>
 #include <unordered_map>
 
@@ -41,16 +42,17 @@ class FSM final
                   "The underlying type of Event must not be larger than 32 bits");
 
 public:
-    typedef std::function<void(State from, Event event, State to)> Callback;
+    typedef std::function<void(State from, Event event, State to, std::any const& data)> TransitionCallback;
+    typedef std::function<void(State state, Event event)> InvalidTransitionCallback;
 
     struct Transition
     {
         State from;
         Event event;
         State to;
-        Callback callback;
+        TransitionCallback callback;
 
-        Transition(State a_from, Event a_event, State a_to, Callback a_callback)
+        Transition(State a_from, Event a_event, State a_to, TransitionCallback a_callback)
             : from{ a_from }
             , event{ a_event }
             , to{ a_to }
@@ -75,6 +77,26 @@ public:
         }
     }
 
+    FSM(State initial, std::vector<Transition> const& transitions, TransitionCallback on_before_transition)
+        : FSM(initial, transitions)
+    {
+        m_on_before_transition = std::move(on_before_transition);
+    }
+
+    FSM(State initial, std::vector<Transition> const& transitions, InvalidTransitionCallback on_invalid_transition)
+        : FSM(initial, transitions)
+    {
+        m_on_invalid_transition = std::move(on_invalid_transition);
+    }
+
+    FSM(State initial, std::vector<Transition> const& transitions,
+            TransitionCallback on_before_transition, InvalidTransitionCallback on_invalid_transition)
+        : FSM(initial, transitions)
+    {
+        m_on_before_transition = std::move(on_before_transition);
+        m_on_invalid_transition = std::move(on_invalid_transition);
+    }
+
     State state() const noexcept
     {
         return m_state;
@@ -85,30 +107,44 @@ public:
         m_state = m_initial;
     }
 
-    bool apply(Event event) noexcept
+    bool apply(Event event, std::any const& data) noexcept
     {
         std::uint64_t const key = combine(m_state, event);
 
         auto it = m_transitions.find(key);
         if (m_transitions.end() == it) {
+            if (nullptr != m_on_invalid_transition) {
+                m_on_invalid_transition(m_state, event);
+            }
+
             return false;
         }
 
         State from = m_state;
         State to = it->second.first;
 
+        if (nullptr != m_on_before_transition) {
+            m_on_before_transition(from, event, to, data);
+        }
         if (nullptr != it->second.second) {
-            it->second.second(from, event, to);
+            it->second.second(from, event, to, data);
         }
 
         m_state = to;
         return true;
     }
 
+    bool apply(Event event) noexcept
+    {
+        return apply(event, std::any());
+    }
+
 private:
     State m_initial = State();
     State m_state = State();
-    std::unordered_map<std::uint64_t, std::pair<State, Callback>> m_transitions;
+    std::unordered_map<std::uint64_t, std::pair<State, TransitionCallback>> m_transitions;
+    TransitionCallback m_on_before_transition;
+    InvalidTransitionCallback m_on_invalid_transition;
 
     static constexpr std::uint64_t combine(State state, Event event) noexcept
     {
