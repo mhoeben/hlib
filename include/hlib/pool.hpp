@@ -24,9 +24,11 @@
 #pragma once
 
 #include "hlib/base.hpp"
+#include "hlib/lock.hpp"
 #include <cassert>
 #include <deque>
 #include <functional>
+#include <mutex>
 
 namespace hlib
 {
@@ -54,6 +56,8 @@ public:
 
     void add(T&& element)
     {
+        HLIB_LOCK_GUARD(lock, m_mutex);
+
         if (0 != m_maximum && m_count >= m_maximum) {
             throw std::overflow_error("Maximum pool capacity reached");
         }
@@ -63,7 +67,12 @@ public:
 
     T get()
     {
+        HLIB_UNIQUE_LOCK(lock, m_mutex);
+
         if (true == m_pool.empty()) {
+            // Unlock to call factory unlocked.
+            lock.unlock();
+
             add(m_factory());
         }
 
@@ -74,12 +83,15 @@ public:
 
     void put(T&& element)
     {
+        HLIB_LOCK_GUARD(lock, m_mutex);
+
         m_pool.emplace_back(std::move(element));
         assert(0 == m_maximum || m_pool.size() <= m_maximum);
     }
 
 private:
     Factory const m_factory;
+    std::mutex m_mutex;
     std::size_t const m_maximum;
     std::size_t m_count;
     std::deque<T> m_pool;
