@@ -46,11 +46,13 @@ TEST_CASE("FSM", "[fsm]")
     State previous = Begin;
     State current = Begin;
     Event last_event;
+    std::any last_data;
 
-    auto set = [&](State from, Event event, State to) noexcept {
+    auto set = [&](State from, Event event, State to, std::any const& data) noexcept {
         previous = from;
         current = to;
         last_event = event;
+        last_data = data;
     };
 
     FSM<State, Event> fsm(current, {

@@ -353,7 +353,8 @@ struct RatioValue final
     }
 
     template<typename TRatioValue>
-    typename std::enable_if<!IsRatio<TRatioValue>::value, TRatioValue>::type
+    typename std::enable_if<!IsRatio<TRatioValue>::value
+                         && !std::is_floating_point<TRatioValue>::value, TRatioValue>::type
     to() const noexcept
     {
         return to<typename TRatioValue::Ratio, typename TRatioValue::Type>();
@@ -363,6 +364,13 @@ struct RatioValue final
     explicit operator RatioValue<TRatio, TType>() const noexcept
     {
         return to<TRatio, TType>();
+    }
+
+    template<typename FloatType>
+    typename std::enable_if<std::is_floating_point<FloatType>::value, FloatType>::type
+    to() const noexcept
+    {
+        return static_cast<FloatType>(m_value) * static_cast<FloatType>(Ratio::num) / static_cast<FloatType>(Ratio::den);
     }
 
 private:

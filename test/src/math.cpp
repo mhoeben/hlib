@@ -83,3 +83,8 @@ TEST_CASE("RatioValue and Fraction", "[math]")
     REQUIRE(60 == (RatioValue<>(40) / Fraction<>(2, 3)).value());
 }
 
+TEST_CASE("RatioValue and double", "[math]")
+{
+    REQUIRE(10.0 == RatioValue<std::deca>(1).to<double>());
+    REQUIRE(100.0 == RatioValue<std::hecto>(1).to<double>());
+}
