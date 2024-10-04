@@ -34,7 +34,7 @@
 #endif
 
 #if defined(NDEBUG)
-#define HLIB_DEBUFFER() do { } while()
+#define HLIB_DEBUGGER() do { } while()
 #elif defined(__GNUC__) || defined(__clang__)
 #define HLIB_DEBUGGER() __builtin_debugtrap();
 #elif defined(_MSC_VER)

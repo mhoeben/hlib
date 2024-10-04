@@ -29,6 +29,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include "hlib/debug.hpp"
 
 namespace hlib
 {

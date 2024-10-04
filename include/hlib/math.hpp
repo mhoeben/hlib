@@ -180,7 +180,7 @@ struct RatioValue final
 
     template <typename FloatType, typename = std::enable_if_t<std::is_floating_point<FloatType>::value>>
     constexpr RatioValue(FloatType value)
-        : m_value { value * static_cast<FloatType>(Ratio::den) / static_cast<FloatType>(Ratio::num) }
+        : m_value { static_cast<T>(value * static_cast<FloatType>(Ratio::den) / static_cast<FloatType>(Ratio::num)) }
     {
     }
 
@@ -318,27 +318,31 @@ struct RatioValue final
         return *this = *this / that;
     }
 
-    template<typename N = int, typename D = N>
+    template <typename N, typename D,
+              typename = typename std::enable_if<std::is_integral<N>::value && std::is_integral<D>::value>::type>
     RatioValue operator *(Fraction<N, D> const& that) const noexcept
     {
         assert(0 != that.d);
         return RatioValue((m_value * that.n) / that.d);
     }
 
-    template<typename N = int, typename D = N>
+    template <typename N, typename D,
+              typename = typename std::enable_if<std::is_integral<N>::value && std::is_integral<D>::value>::type>
     RatioValue operator /(Fraction<N, D> const& that) const noexcept
     {
         assert(0 != that.n);
         return RatioValue((m_value * that.d) / that.n);
     }
 
-    template<typename N = int, typename D = N>
+    template <typename N, typename D,
+              typename = typename std::enable_if<std::is_integral<N>::value && std::is_integral<D>::value>::type>
     RatioValue& operator *=(Fraction<N, D> const& that) const noexcept
     {
         return *this = *this * that;
     }
 
-    template<typename N = int, typename D = N>
+    template <typename N, typename D,
+              typename = typename std::enable_if<std::is_integral<N>::value && std::is_integral<D>::value>::type>
     RatioValue& operator /=(Fraction<N, D> const& that) const noexcept
     {
         return *this = *this / that;
