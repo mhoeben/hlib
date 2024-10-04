@@ -159,14 +159,13 @@ T fraction_to(Fraction<N, D> const& fraction) noexcept
 
 typedef std::ratio<1, 1> One;
 
-
 template<typename T>
 struct IsRatio : std::false_type {};
 
 template<intmax_t Num, intmax_t Den>
 struct IsRatio<std::ratio<Num, Den>> : std::true_type {};
 
-template<typename R = One, typename T = int>
+template<typename R = One, typename T = int, typename = std::enable_if_t<std::is_integral<T>::value>>
 struct RatioValue final
 {
     typedef R Ratio;
@@ -176,6 +175,12 @@ struct RatioValue final
 
     explicit constexpr RatioValue(T value)
         : m_value{ value }
+    {
+    }
+
+    template <typename FloatType, typename = std::enable_if_t<std::is_floating_point<FloatType>::value>>
+    constexpr RatioValue(FloatType value)
+        : m_value { value * static_cast<FloatType>(Ratio::den) / static_cast<FloatType>(Ratio::num) }
     {
     }
 
