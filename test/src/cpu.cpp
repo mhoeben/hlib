@@ -29,6 +29,7 @@ using namespace hlib;
 
 TEST_CASE("CPU", "[cpu]")
 {
+    REQUIRE(cpu_get_ticks_per_second().value() > 0);   
     REQUIRE(cpu_get_count().value() > 0);   
     REQUIRE(cpu_get_frequency(0).value() > 0);   
     REQUIRE(cpu_get_cache_size(0, 0).value() > 0);   
@@ -38,7 +39,7 @@ TEST_CASE("CPUMonitor", "[cpu]")
 {
     CPUMonitor cpu_monitor;
     REQUIRE(true == cpu_monitor.initialize().success());
-    REQUIRE(cpu_monitor.nr() > 0);
+    REQUIRE(cpu_monitor.count() > 0);
     usleep(100);
     REQUIRE(true == cpu_monitor.update().success());
     REQUIRE(cpu_monitor.total() > 0);

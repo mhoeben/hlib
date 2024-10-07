@@ -30,9 +30,10 @@
 namespace hlib
 {
 
+Result<int> cpu_get_ticks_per_second() noexcept;
 Result<int> cpu_get_count() noexcept;
-Result<int> cpu_get_frequency(int nr) noexcept;
-Result<std::size_t> cpu_get_cache_size(int nr, int cache_index) noexcept;
+Result<int> cpu_get_frequency(int cpu) noexcept;
+Result<std::size_t> cpu_get_cache_size(int cpu, int cache_index) noexcept;
 
 class CPUMonitor final
 {
@@ -57,27 +58,28 @@ public:
 public:
     CPUMonitor() = default;
 
-    int nr() const noexcept;
+    int count() const noexcept;
 
-    Statistics const& previous(int nr) const noexcept;
-    Statistics const& current(int nr) const noexcept;
+    Statistics const& previous(int cpu) const noexcept;
+    Statistics const& current(int cpu) const noexcept;
 
-    std::int64_t user(int nr = -1) const noexcept;
-    std::int64_t nice(int nr = -1) const noexcept;
-    std::int64_t system(int nr = -1) const noexcept;
-    std::int64_t idle(int nr = -1) const noexcept;
-    std::int64_t iowait(int nr = -1) const noexcept;
-    std::int64_t irq(int nr = -1) const noexcept;
-    std::int64_t softirq(int nr = -1) const noexcept;
-    std::int64_t steal(int nr = -1) const noexcept;
-    std::int64_t guestNice(int nr = -1) const noexcept;
-    std::int64_t total(int nr = -1) const noexcept;
+    std::int64_t user(int cpu = -1) const noexcept;
+    std::int64_t nice(int cpu = -1) const noexcept;
+    std::int64_t system(int cpu = -1) const noexcept;
+    std::int64_t idle(int cpu = -1) const noexcept;
+    std::int64_t iowait(int cpu = -1) const noexcept;
+    std::int64_t irq(int cpu = -1) const noexcept;
+    std::int64_t softirq(int cpu = -1) const noexcept;
+    std::int64_t steal(int cpu = -1) const noexcept;
+    std::int64_t guestNice(int cpu = -1) const noexcept;
+    std::int64_t total(int cpu = -1) const noexcept;
+    std::int64_t busy(int cpu = -1) const noexcept;
 
     Result<> initialize() noexcept;
     Result<> update() noexcept;
 
 private:
-    int m_nr{};
+    int m_count{};
 
     Statistics m_total_previous{};
     Statistics m_total_current{};

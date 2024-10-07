@@ -59,6 +59,16 @@ Result<std::string> read(std::string const& filepath, bool trim = false) noexcep
 //
 // Public
 //
+Result<int> hlib::cpu_get_ticks_per_second() noexcept
+{
+    int result = sysconf(_SC_CLK_TCK);
+    if (-1 == result) {
+        return Error(make_system_error(errno));
+    }
+
+    return static_cast<int>(result);
+}
+
 Result<int> hlib::cpu_get_count() noexcept
 {
     int result = sysconf(_SC_NPROCESSORS_CONF);
@@ -69,11 +79,11 @@ Result<int> hlib::cpu_get_count() noexcept
     return static_cast<int>(result);
 }
 
-Result<int> hlib::cpu_get_frequency(int nr) noexcept
+Result<int> hlib::cpu_get_frequency(int cpu) noexcept
 {
-    assert(nr < sysconf(_SC_NPROCESSORS_CONF));
+    assert(cpu < sysconf(_SC_NPROCESSORS_CONF));
 
-    Result<std::string> file = read(format("/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", nr), true);
+    Result<std::string> file = read(format("/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", cpu), true);
     if (true == file.failure()) {
         return file.error();
     }
@@ -84,11 +94,11 @@ Result<int> hlib::cpu_get_frequency(int nr) noexcept
     return frequency.value();
 }
 
-Result<std::size_t> hlib::cpu_get_cache_size(int nr, int cache_index) noexcept
+Result<std::size_t> hlib::cpu_get_cache_size(int cpu, int cache_index) noexcept
 {
-    assert(nr < sysconf(_SC_NPROCESSORS_CONF));
+    assert(cpu < sysconf(_SC_NPROCESSORS_CONF));
 
-    Result<std::string> file = read(format("/sys/devices/system/cpu/cpu%d/cache/index%d/size", nr, cache_index), true);
+    Result<std::string> file = read(format("/sys/devices/system/cpu/cpu%d/cache/index%d/size", cpu, cache_index), true);
     if (true == file.failure()) {
         return file.error();
     }
@@ -125,7 +135,7 @@ CPUMonitor::Statistics CPUMonitor::parse(std::string const& line) const noexcept
         std::optional<std::int64_t> result = string_to<std::int64_t>(columns[index]);
         assert(std::nullopt != result);
         total += result.value();
-        return total;
+        return result.value();
     };
 
     Statistics statistics{
@@ -148,113 +158,118 @@ CPUMonitor::Statistics CPUMonitor::parse(std::string const& line) const noexcept
 //
 // Public (CPUMonitor)
 //
-int CPUMonitor::nr() const noexcept
+int CPUMonitor::count() const noexcept
 {
-    return m_nr;
+    return m_count;
 }
 
-CPUMonitor::Statistics const& CPUMonitor::previous(int nr) const noexcept
+CPUMonitor::Statistics const& CPUMonitor::previous(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0 ? m_total_previous : m_cpu_previous[nr];
+    assert(cpu < m_count);
+    return cpu < 0 ? m_total_previous : m_cpu_previous[cpu];
 }
 
-CPUMonitor::Statistics const& CPUMonitor::current(int nr) const noexcept
+CPUMonitor::Statistics const& CPUMonitor::current(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0 ? m_total_current : m_cpu_current[nr];
+    assert(cpu < m_count);
+    return cpu < 0 ? m_total_current : m_cpu_current[cpu];
 }
 
-std::int64_t CPUMonitor::user(int nr) const noexcept
+std::int64_t CPUMonitor::user(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.user - m_total_previous.user
-        : m_cpu_current[nr].user - m_cpu_current[nr].user;
+        : m_cpu_current[cpu].user - m_cpu_previous[cpu].user;
 }
 
-std::int64_t CPUMonitor::nice(int nr) const noexcept
+std::int64_t CPUMonitor::nice(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.nice - m_total_previous.nice
-        : m_cpu_current[nr].nice - m_cpu_current[nr].nice;
+        : m_cpu_current[cpu].nice - m_cpu_previous[cpu].nice;
 }
 
-std::int64_t CPUMonitor::system(int nr) const noexcept
+std::int64_t CPUMonitor::system(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.system - m_total_previous.system
-        : m_cpu_current[nr].system - m_cpu_current[nr].system;
+        : m_cpu_current[cpu].system - m_cpu_previous[cpu].system;
 }
 
-std::int64_t CPUMonitor::idle(int nr) const noexcept
+std::int64_t CPUMonitor::idle(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.idle - m_total_previous.idle
-        : m_cpu_current[nr].idle - m_cpu_current[nr].idle;
+        : m_cpu_current[cpu].idle - m_cpu_previous[cpu].idle;
 }
 
-std::int64_t CPUMonitor::iowait(int nr) const noexcept
+std::int64_t CPUMonitor::iowait(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.iowait - m_total_previous.iowait
-        : m_cpu_current[nr].iowait - m_cpu_current[nr].iowait;
+        : m_cpu_current[cpu].iowait - m_cpu_previous[cpu].iowait;
 }
 
-std::int64_t CPUMonitor::irq(int nr) const noexcept
+std::int64_t CPUMonitor::irq(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.irq - m_total_previous.irq
-        : m_cpu_current[nr].irq - m_cpu_current[nr].irq;
+        : m_cpu_current[cpu].irq - m_cpu_previous[cpu].irq;
 }
 
-std::int64_t CPUMonitor::softirq(int nr) const noexcept
+std::int64_t CPUMonitor::softirq(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.softirq - m_total_previous.softirq
-        : m_cpu_current[nr].softirq - m_cpu_current[nr].softirq;
+        : m_cpu_current[cpu].softirq - m_cpu_previous[cpu].softirq;
 }
 
-std::int64_t CPUMonitor::steal(int nr) const noexcept
+std::int64_t CPUMonitor::steal(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.steal - m_total_previous.steal
-        : m_cpu_current[nr].steal - m_cpu_current[nr].steal;
+        : m_cpu_current[cpu].steal - m_cpu_previous[cpu].steal;
 }
 
-std::int64_t CPUMonitor::guestNice(int nr) const noexcept
+std::int64_t CPUMonitor::guestNice(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.guest_nice - m_total_previous.guest_nice
-        : m_cpu_current[nr].guest_nice - m_cpu_current[nr].guest_nice;
+        : m_cpu_current[cpu].guest_nice - m_cpu_previous[cpu].guest_nice;
 }
 
-std::int64_t CPUMonitor::total(int nr) const noexcept
+std::int64_t CPUMonitor::total(int cpu) const noexcept
 {
-    assert(nr < m_nr);
-    return nr < 0
+    assert(cpu < m_count);
+    return cpu < 0
         ? m_total_current.total - m_total_previous.total
-        : m_cpu_current[nr].total - m_cpu_current[nr].total;
+        : m_cpu_current[cpu].total - m_cpu_previous[cpu].total;
+}
+
+std::int64_t CPUMonitor::busy(int cpu) const noexcept
+{
+    return total(cpu) - (idle(cpu) + iowait(cpu));
 }
 
 Result<> CPUMonitor::initialize() noexcept
 {
-    Result<int> nr = cpu_get_count();
-    if (true == nr.failure()) {
-        return nr.error();
+    Result<int> cpu = cpu_get_count();
+    if (true == cpu.failure()) {
+        return cpu.error();
     }
-    m_nr = static_cast<std::int64_t>(nr.value());
+    m_count = static_cast<std::int64_t>(cpu.value());
 
-    m_cpu_previous.resize(m_nr, {});
-    m_cpu_current.resize(m_nr, {});
+    m_cpu_previous.resize(m_count, {});
+    m_cpu_current.resize(m_count, {});
 
     return update();
 }
@@ -267,14 +282,14 @@ Result<> CPUMonitor::update() noexcept
     }
 
     std::vector<std::string> lines = split(file.value(), '\n');
-    assert(lines.size() >= static_cast<std::size_t>(m_nr + 1));
+    assert(lines.size() >= static_cast<std::size_t>(m_count + 1));
 
     m_total_previous = m_total_current;
     m_total_current = parse(lines[0]);
 
-    for (int cpu = 0; cpu < m_nr; ++cpu) {
+    for (int cpu = 0; cpu < m_count; ++cpu) {
         m_cpu_previous[cpu] = m_cpu_current[cpu];
-        m_cpu_current[cpu] = parse(lines[cpu]);
+        m_cpu_current[cpu] = parse(lines[cpu + 1]);
     }
 
     return {};

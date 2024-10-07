@@ -35,6 +35,7 @@ Usage::Option::Option(char tag_short, std::string tag_long, std::string descript
     , m_description(std::move(description))
     , m_callback(std::move(callback))
 {
+    (void)m_short;
 }
 
 Usage::Option::Option(char tag_short, std::string description, Callback callback)
@@ -59,6 +60,7 @@ Usage::Argument::Argument(std::string tag, std::string description, bool optiona
     , m_description(std::move(description))
     , m_optional{ optional }
 {
+    (void)m_optional;
 }
 
 Usage::Argument::Argument(std::string tag, std::string description, Callback callback, bool optional)
