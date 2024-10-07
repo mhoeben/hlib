@@ -523,7 +523,7 @@ std::string file::get_mime_type_from_extension(std::string const& extension, std
         { "bmp",  "image/bmp" }
     };
 
-    auto it = table.find(strip_left(extension, "."));
+    auto it = table.find(trim_left(extension, "."));
     return table.end() != it ? it->second : default_mime_type;
 }
 

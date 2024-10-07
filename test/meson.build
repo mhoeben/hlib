@@ -26,6 +26,7 @@
 sources = files(
     'src/buffer.cpp',
     'src/container.cpp',
+    'src/cpu.cpp',
     'src/error.cpp',
     'src/event_bus.cpp',
     'src/event_loop.cpp',
@@ -43,7 +44,8 @@ sources = files(
     'src/test.hpp',
     'src/time.cpp',
     'src/type_traits.cpp',
-    'src/uri.cpp'
+    'src/uri.cpp',
+    'src/usage.cpp'
 )
 
 # Clang compiler options

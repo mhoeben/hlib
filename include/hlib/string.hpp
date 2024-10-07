@@ -287,9 +287,9 @@ std::size_t count(std::string const& string, char character);
 std::string to_upper(std::string string);
 std::string to_lower(std::string string);
 
-std::string strip_left(std::string string, std::string const& chars = " \t\v\f\r\n");
-std::string strip_right(std::string string, std::string const& chars = " \t\v\f\r\n");
-std::string strip(std::string, std::string const& chars = " \t\v\f\r\n");
+std::string trim_left(std::string string, std::string const& chars = " \t\v\f\r\n");
+std::string trim_right(std::string string, std::string const& chars = " \t\v\f\r\n");
+std::string trim(std::string, std::string const& chars = " \t\v\f\r\n");
 
 std::vector<std::string> split(std::string const& string, std::function<bool(char)> const& is_delimiter, bool filter_empty = false);
 std::vector<std::string> split(std::string const& string, char delimiter, bool filter_empty = false);

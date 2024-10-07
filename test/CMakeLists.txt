@@ -30,6 +30,7 @@ add_subdirectory(../subprojects/catch2 catch2)
 add_executable(${PROJECT_NAME}
     src/buffer.cpp
     src/container.cpp
+    src/cpu.cpp
     src/error.cpp
     src/event_bus.cpp
     src/event_loop.cpp
@@ -48,6 +49,7 @@ add_executable(${PROJECT_NAME}
     src/time.cpp
     src/type_traits.cpp
     src/uri.cpp
+    src/usage.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

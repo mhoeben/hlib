@@ -36,7 +36,7 @@ namespace
 
 std::vector<std::string> parse_tags(std::string const& tags)
 {
-    return container::for_each(split(tags, ','), [](std::string& tag) { return strip(tag); });
+    return container::for_each(split(tags, ','), [](std::string& tag) { return trim(tag); });
 }
 
 } // namespace

@@ -32,6 +32,7 @@ project('hlib',
 sources = files(
     'include/hlib/base.hpp',
     'include/hlib/buffer.hpp',
+    'include/hlib/cpu.hpp',
     'include/hlib/debug.hpp',
     'include/hlib/error.hpp',
     'include/hlib/event_bus.hpp',
@@ -61,10 +62,12 @@ sources = files(
     'include/hlib/timer.hpp',
     'include/hlib/type_traits.hpp',
     'include/hlib/uri.hpp',
+    'include/hlib/usage.hpp',
     'include/hlib/utility.hpp',
     'include/hlib/uuid.hpp',
 
     'src/hlib_buffer.cpp',
+    'src/hlib_cpu.cpp',
     'src/hlib_error.cpp',
     'src/hlib_event_bus.cpp',
     'src/hlib_event_loop.cpp',
@@ -86,6 +89,7 @@ sources = files(
     'src/hlib_time.cpp',
     'src/hlib_timer.cpp',
     'src/hlib_uri.cpp',
+    'src/hlib_usage.cpp',
     'src/hlib_utility.cpp',
     'src/hlib_uuid.cpp'
 )
@@ -110,8 +114,8 @@ cpp_args = [
     '-Wno-variadic-macros',
     '-Wformat-nonliteral',
     '-Wctor-dtor-privacy',
-    '-Wsign-promo',
-    '-Wstring-conversion'
+    '-Wsign-promo'
+    # '-Wstring-conversion'
 ]
 
 # Define the library

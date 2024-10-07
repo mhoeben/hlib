@@ -258,12 +258,12 @@ TEST_CASE("String C++20", "[string]")
     REQUIRE(2 == count("foobar", 'o'));
 }
 
-TEST_CASE("String Strip", "[string]")
+TEST_CASE("String Trim", "[string]")
 {
-    REQUIRE("foo" == strip(" \tfoo\r\n"));
-    REQUIRE("foo bar" == strip(" \tfoo bar\r\n"));
-    REQUIRE("foo-bar" == strip("*#*foo-bar#*#", "#*-"));
-    REQUIRE(true == strip(" \t\f\v\r\n").empty());
+    REQUIRE("foo" == trim(" \tfoo\r\n"));
+    REQUIRE("foo bar" == trim(" \tfoo bar\r\n"));
+    REQUIRE("foo-bar" == trim("*#*foo-bar#*#", "#*-"));
+    REQUIRE(true == trim(" \t\f\v\r\n").empty());
 }
 
 TEST_CASE("String Split", "[string]")

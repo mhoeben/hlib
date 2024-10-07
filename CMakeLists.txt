@@ -34,6 +34,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/base.hpp
     include/hlib/buffer.hpp
+    include/hlib/cpu.hpp
     include/hlib/debug.hpp
     include/hlib/error.hpp
     include/hlib/event_bus.hpp
@@ -62,11 +63,13 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     include/hlib/time.hpp
     include/hlib/timer.hpp
     include/hlib/type_traits.hpp
+    include/hlib/usage.hpp
     include/hlib/uri.hpp
     include/hlib/utility.hpp
     include/hlib/uuid.hpp
 
     src/hlib_buffer.cpp
+    src/hlib_cpu.cpp
     src/hlib_error.cpp
     src/hlib_event_bus.cpp
     src/hlib_event_loop.cpp
@@ -88,6 +91,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
     src/hlib_test.cpp
     src/hlib_time.cpp
     src/hlib_timer.cpp
+    src/hlib_usage.cpp
     src/hlib_uri.cpp
     src/hlib_utility.cpp
     src/hlib_uuid.cpp

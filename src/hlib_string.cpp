@@ -544,12 +544,12 @@ std::string hlib::to_lower(std::string string)
     return string;
 }
 
-std::string hlib::strip_left(std::string string, std::string const& chars)
+std::string hlib::trim_left(std::string string, std::string const& chars)
 {
     return string.erase(0, string.find_first_not_of(chars));
 }
 
-std::string hlib::strip_right(std::string string, std::string const& chars)
+std::string hlib::trim_right(std::string string, std::string const& chars)
 {
     std::string::size_type pos = 0;
 
@@ -564,10 +564,10 @@ std::string hlib::strip_right(std::string string, std::string const& chars)
     return string;
 }
 
-std::string hlib::strip(std::string string, std::string const& chars)
+std::string hlib::trim(std::string string, std::string const& chars)
 {
-    string = strip_left(std::move(string), chars);
-    string = strip_right(std::move(string), chars);
+    string = trim_left(std::move(string), chars);
+    string = trim_right(std::move(string), chars);
     return string;
 }
 
