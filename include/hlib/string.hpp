@@ -291,6 +291,9 @@ std::string trim_left(std::string string, std::string const& chars = " \t\v\f\r\
 std::string trim_right(std::string string, std::string const& chars = " \t\v\f\r\n");
 std::string trim(std::string, std::string const& chars = " \t\v\f\r\n");
 
+std::string fill_left(std::string const& string, std::size_t length, char c = ' ');
+std::string fill_right(std::string const& string, std::size_t length, char c = ' ');
+
 std::vector<std::string> split(std::string const& string, std::function<bool(char)> const& is_delimiter, bool filter_empty = false);
 std::vector<std::string> split(std::string const& string, char delimiter, bool filter_empty = false);
 

@@ -608,6 +608,18 @@ std::vector<std::string> hlib::split(std::string const& string, char delimiter, 
     return split(string, [delimiter](char c) noexcept { return delimiter == c; }, filter_empty);
 }
 
+std::string hlib::fill_left(std::string const& string, std::size_t length, char c)
+{
+    length = std::max(string.length(), length);
+    return std::string(length - string.length(), c) + string;
+}
+
+std::string hlib::fill_right(std::string const& string, std::size_t length, char c)
+{
+    length = std::max(string.length(), length);
+    return string + std::string(length - string.length(), c);
+}
+
 std::string hlib::join(std::vector<std::string> const& vector, std::string const& separator)
 {
     if (true == vector.empty()) {

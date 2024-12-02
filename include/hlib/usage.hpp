@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2024 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 #pragma once
 
 #include "hlib/result.hpp"
-#include <functional>
 #include <optional>
 #include <string>
 #include <variant>
@@ -36,54 +35,138 @@ namespace hlib
 class Usage final
 {
 public:
-    typedef std::variant<
-        std::function<Result<bool>(std::string const& value)>,
-        std::function<Result<bool>(std::int64_t value)>,
-        std::function<Result<bool>(double value)>,
-        std::function<Result<bool>()>
-    > Callback;
+    enum Type
+    {
+        None,
+        String,
+        Integer,
+        Float,
+        Boolean
+    };
+    typedef std::variant<std::monostate, std::string, std::int64_t, double, bool> Value;
 
+public:
     class Option
     {
+        friend class Usage;
+
     public:
-        Option(char tag_short, std::string tag_long, std::string description, Callback callback);
-        Option(char tag_short, std::string description, Callback callback);
-        Option(std::string tag_long, std::string description, Callback callback);
+        Option(char a_brief, std::string a_extended, std::string a_description, std::string a_arg_name = "", Value a_arg_value = "");
 
     private:
-        char m_short{ 0 };
-        std::string m_long;
-        std::string m_argument;
-        std::string m_description;
-        Callback m_callback;
+        char const brief{ 0 };
+        std::string const extended;
+        std::string const description;
+        std::string const arg_name;
+        Value const arg_value;
     };
 
     class Argument
     {
+        friend class Usage;
+
     public:
-        Argument(std::string tag, std::string description, bool optional = false);
-        Argument(std::string tag, std::string description, Callback callback, bool optional = false);
+        Argument(std::string a_name, std::string a_description, bool a_optional = false);
 
     private:
-        std::string m_tag;
-        std::string m_description;
-        Callback m_callback;
-        bool m_optional;
+        std::string const name;
+        std::string const description;
+        bool const optional;
     };
 
 public:
-    Usage(std::string description, std::vector<Option> options, std::vector<Argument> arguments);
+    Usage(std::string description, std::vector<Option> options, std::vector<Argument> arguments, bool varargs = false);
 
-    std::optional<Option> option() const;
-    std::optional<Argument> argument() const;
+    bool has(char const brief) const noexcept;
+    bool has(std::string const& extended) const noexcept;
 
-    std::string string(std::string const& executable) const;
-    Result<> parse(int argc, char** argv) const;
+    template<typename T = std::string>
+    std::optional<T> get(char const brief) const
+    {
+        if (m_options.size() != m_option_values.size()) {
+            return std::nullopt;
+        }
+
+        for (std::size_t i = 0; i < m_options.size(); ++i) {
+            if (brief == m_options[i].brief) {
+                return to<T>(m_option_values[i]);
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    template<typename T = std::string>
+    std::optional<T> get(std::string const& extended) const
+    {
+        if (m_options.size() != m_option_values.size()) {
+            return std::nullopt;
+        }
+
+        for (std::size_t i = 0; i < m_options.size(); ++i) {
+            if (extended == m_options[i].extended) {
+                return to<T>(m_option_values[i]);
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    std::string get(std::size_t index) const
+    {
+        if (index >= m_argument_values.size()) {
+            return {};
+        }
+
+        return m_argument_values[index];
+    }
+
+    Result<std::size_t> parse(int argc, char const* const* argv);
+
+    std::string toString(std::string const& executable) const;
 
 private:
     std::string m_description;
     std::vector<Option> m_options;
     std::vector<Argument> m_arguments;
+    bool m_varargs;
+
+    std::vector<bool> m_option_set;
+    std::vector<Value> m_option_values;
+    std::vector<std::string> m_argument_values;
+
+    template<typename T>
+    std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>, std::optional<T>>
+        to(Value const& value) const
+    {
+        if (false == std::holds_alternative<std::int64_t>(value)) {
+            return std::nullopt;
+        }
+
+        return static_cast<T>(std::get<std::int64_t>(value));
+    }
+
+    template<typename T>
+    std::enable_if_t<std::is_floating_point_v<T>, std::optional<T>>
+        to(Value const& value) const
+    {
+        if (false == std::holds_alternative<double>(value)) {
+            return std::nullopt;
+        }
+
+        return static_cast<T>(std::get<double>(value));
+    }
+
+    template<typename T>
+    std::enable_if_t<std::is_same_v<T, std::string> || std::is_same_v<T, bool>, std::optional<T>>
+        to(Value const& value) const
+    {
+        if (false == std::holds_alternative<T>(value)) {
+            return std::nullopt;
+        }
+
+        return std::get<T>(value);
+    }
 };
 
 } // namespace hlib

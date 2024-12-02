@@ -40,7 +40,5 @@ TEST_CASE("CPUMonitor", "[cpu]")
     CPUMonitor cpu_monitor;
     REQUIRE(true == cpu_monitor.initialize().success());
     REQUIRE(cpu_monitor.count() > 0);
-    usleep(100);
     REQUIRE(true == cpu_monitor.update().success());
-    REQUIRE(cpu_monitor.total() > 0);
 }

@@ -266,6 +266,15 @@ TEST_CASE("String Trim", "[string]")
     REQUIRE(true == trim(" \t\f\v\r\n").empty());
 }
 
+TEST_CASE("String Fill", "[string]")
+{
+    REQUIRE("foo   " == fill_right("foo", 6));
+    REQUIRE("   bar" == fill_left("bar", 6));
+
+    REQUIRE("foo..." == fill_right("foo", 6, '.'));
+    REQUIRE("...bar" == fill_left("bar", 6, '.'));
+}
+
 TEST_CASE("String Split", "[string]")
 {
     std::vector<std::string> tokens;
