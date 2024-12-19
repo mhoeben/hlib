@@ -102,18 +102,6 @@ std::string Error::what() const
 //
 // Public
 //
-int hlib::get_socket_error(int fd) noexcept
-{
-    int error;
-    socklen_t length = sizeof(error);
-
-    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &length)) {
-        return errno;
-    }
-
-    return error;
-}
-
 std::string hlib::get_error_string(int error_no)
 {
     char buffer[max_error_string];

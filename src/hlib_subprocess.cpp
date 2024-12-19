@@ -65,8 +65,11 @@ void Subprocess::onWritten(std::shared_ptr<Source> const& /* source */)
     m_stdin->close();
 }
 
-void Subprocess::onClose(int /* error */)
+void Subprocess::onClose(Pipe pipe, int error)
 {
+    if (nullptr != m_pipe_close_callback) {
+        m_pipe_close_callback(pipe, error);
+    }
     if (nullptr == m_event_loop_intern) {
         return;
     }
@@ -169,9 +172,9 @@ Subprocess::Subprocess()
 {
     using namespace std::placeholders;
 
-    m_stdin->setCloseCallback(std::bind(&Subprocess::onClose, this, _1));
-    m_stdout->setCloseCallback(std::bind(&Subprocess::onClose, this, _1));
-    m_stderr->setCloseCallback(std::bind(&Subprocess::onClose, this, _1));
+    m_stdin->setCloseCallback(std::bind(&Subprocess::onClose, this, Pipe::StdIn, _1));
+    m_stdout->setCloseCallback(std::bind(&Subprocess::onClose, this, Pipe::StdOut, _1));
+    m_stderr->setCloseCallback(std::bind(&Subprocess::onClose, this, Pipe::StdErr, _1));
 }
 
 Subprocess::Subprocess(std::string const& command, std::vector<std::string> const& args)
@@ -194,9 +197,9 @@ Subprocess::Subprocess(std::weak_ptr<EventLoop> event_loop)
 {
     using namespace std::placeholders;
 
-    m_stdin->setCloseCallback(std::bind(&Subprocess::onClose, this, _1));
-    m_stdout->setCloseCallback(std::bind(&Subprocess::onClose, this, _1));
-    m_stderr->setCloseCallback(std::bind(&Subprocess::onClose, this, _1));
+    m_stdin->setCloseCallback(std::bind(&Subprocess::onClose, this, Pipe::StdIn, _1));
+    m_stdout->setCloseCallback(std::bind(&Subprocess::onClose, this, Pipe::StdOut, _1));
+    m_stderr->setCloseCallback(std::bind(&Subprocess::onClose, this, Pipe::StdErr, _1));
 }
 
 Subprocess::State Subprocess::state() const noexcept
@@ -249,6 +252,11 @@ void Subprocess::setCloseFDs(bool enable, std::set<int> exceptions)
     m_close_fds_exceptions.insert(STDIN_FILENO);
     m_close_fds_exceptions.insert(STDOUT_FILENO);
     m_close_fds_exceptions.insert(STDERR_FILENO);
+}
+
+void Subprocess::setPipeCloseCallback(OnPipeClose callback)
+{
+    m_pipe_close_callback = std::move(callback);
 }
 
 Result<int> Subprocess::run(std::string const& command, std::vector<std::string> const& args, std::nothrow_t) noexcept

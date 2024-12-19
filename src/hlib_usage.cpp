@@ -253,7 +253,7 @@ std::string Usage::toString(std::string const& executable) const
     }
 
     if (false == m_options.empty()) {
-        auto prefix = [this](Option const& option) -> std::string {
+        auto prefix = [](Option const& option) -> std::string {
             std::string str = 0 != option.brief ? format("-%c", option.brief) : "  ";
             if (false == option.extended.empty()) {
                 str += 0 != option.brief ? ", ":"  ";

@@ -26,6 +26,7 @@
 #include "hlib/error.hpp"
 #include "hlib/event_loop.hpp"
 #include "hlib/file.hpp"
+#include "hlib/socket.hpp"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -159,7 +160,8 @@ void FileDescriptorIO::onEvent(int fd, std::uint32_t events)
 
     if (0 != ((EventLoop::Error|EventLoop::Hup) & events)) {
         // A socket error occurred, callback and close socket.
-        callbackAndClose(get_socket_error(fd));
+        int error = is_socket(fd) ? get_socket_error(fd) : EIO;
+        callbackAndClose(error);
         return;
     }
 

@@ -112,8 +112,6 @@ inline bool operator !=(Error const& error, bool is_set)
     return error.empty() == is_set;
 }
 
-int get_socket_error(int fd) noexcept;
-
 std::string get_error_string(int error_no);
 std::string get_error_string();
 

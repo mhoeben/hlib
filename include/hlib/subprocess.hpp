@@ -55,6 +55,15 @@ public:
         Failed
     };
 
+    enum Pipe
+    {
+        StdIn,
+        StdOut,
+        StdErr
+    };
+
+    typedef std::function<void(Pipe pipe, int error)> OnPipeClose;
+
 public:
     // Subprocess can be run with an internal event loop or external event loop.
     //
@@ -84,6 +93,7 @@ public:
     Buffer* error() const noexcept;
 
     void setCloseFDs(bool enable, std::set<int> exceptions);
+    void setPipeCloseCallback(OnPipeClose callback);
 
     Result<int> run(std::string const& command, std::vector<std::string> const& args, std::nothrow_t) noexcept;
     Result<int> run(std::string const& command, std::vector<std::string> const& args, Buffer&& input, std::nothrow_t) noexcept;
@@ -121,9 +131,10 @@ private:
 
     bool m_close_fds{ true };
     std::set<int> m_close_fds_exceptions{ STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO };
+    OnPipeClose m_pipe_close_callback;
 
     void onWritten(std::shared_ptr<Source> const& source);
-    void onClose(int error);
+    void onClose(Pipe pipe, int error);
     Result<int> run(std::vector<char const*> argv);
 };
 

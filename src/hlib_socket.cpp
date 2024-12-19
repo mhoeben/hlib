@@ -28,6 +28,7 @@
 #include "hlib/file.hpp"
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 using namespace hlib;
 
@@ -544,5 +545,28 @@ void Socket::close() noexcept
     m_receive_callback = nullptr;
 
     m_send_queue.clear();
+}
+
+bool hlib::is_socket(int fd) noexcept
+{
+    struct stat st;
+
+    if (-1 == fstat(fd, &st)) {
+        return false;
+    }
+
+    return S_ISSOCK(st.st_mode);
+}
+
+int hlib::get_socket_error(int fd) noexcept
+{
+    int error;
+    socklen_t length = sizeof(error);
+
+    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &length)) {
+        return errno;
+    }
+
+    return error;
 }
 

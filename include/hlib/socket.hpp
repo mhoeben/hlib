@@ -112,5 +112,8 @@ private:
     void callbackAndClose(int error);
 };
 
+bool is_socket(int fd) noexcept;
+int get_socket_error(int fd) noexcept;
+
 } // namespace hlib
 
