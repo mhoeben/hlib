@@ -101,6 +101,20 @@ bool Usage::has(std::string const& extended) const noexcept
     return false;
 }
 
+bool Usage::has(std::size_t argument_index) const noexcept
+{
+    return argument_index < m_argument_values.size();
+}
+
+std::string Usage::get(std::size_t index) const
+{
+    if (index >= m_argument_values.size()) {
+        return {};
+    }
+
+    return m_argument_values[index];
+}
+
 Result<std::size_t> Usage::parse(int argc, char const* const* argv)
 {
     std::string arg;

@@ -79,6 +79,7 @@ public:
 
     bool has(char const brief) const noexcept;
     bool has(std::string const& extended) const noexcept;
+    bool has(std::size_t argument_index) const noexcept;
 
     template<typename T = std::string>
     std::optional<T> get(char const brief) const
@@ -112,14 +113,7 @@ public:
         return std::nullopt;
     }
 
-    std::string get(std::size_t index) const
-    {
-        if (index >= m_argument_values.size()) {
-            return {};
-        }
-
-        return m_argument_values[index];
-    }
+    std::string get(std::size_t index) const;
 
     Result<std::size_t> parse(int argc, char const* const* argv);
 
