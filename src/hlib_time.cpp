@@ -433,7 +433,10 @@ std::string hlib::to_string_utc_time_milliseconds(time::Clock const& clock)
     constexpr std::size_t millisecond_offset = 8;
 
     strftime(string, sizeof(string), "%H:%M:%S", gmtime(&(clock.tv_sec)));
-    snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ldZ", clock.tv_nsec / 1000000);
+
+    // Satisfy the compiler's buffer overflow checker by limiting the argument to a range of 0 - 999.
+    const std::uint32_t ms = (clock.tv_nsec / 1000000) % 1000;
+    snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03dZ", ms);
     return string;
 }
 
@@ -445,7 +448,9 @@ std::string hlib::to_string_utc(time::Clock const& clock, bool milliseconds)
     strftime(string, sizeof(string), "%Y-%m-%dT%H:%M:%SZ", gmtime(&(clock.tv_sec)));
 
     if (true == milliseconds) {
-        snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ldZ", clock.tv_nsec / 1000000);
+        // Satisfy the compiler's buffer overflow checker by limiting the argument to a range of 0 - 999.
+        const std::uint32_t ms = (clock.tv_nsec / 1000000) % 1000;
+        snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03dZ", ms);
     }
 
     return string;
@@ -478,7 +483,10 @@ std::string hlib::to_string_local_time_milliseconds(time::Clock const& clock)
     constexpr std::size_t millisecond_offset = 8;
 
     strftime(string, sizeof(string), "%H:%M:%S", gmtime(&(clock.tv_sec)));
-    snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ld", clock.tv_nsec / 1000000);
+
+    // Satisfy the compiler's buffer overflow checker by limiting the argument to a range of 0 - 999.
+    const std::uint32_t ms = (clock.tv_nsec / 1000000) % 1000;
+    snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03d", ms);
     return string + localtime_offset_string(clock);
 }
 
@@ -490,7 +498,9 @@ std::string hlib::to_string_local(time::Clock const& clock, bool milliseconds)
     strftime(string, sizeof(string), "%Y-%m-%dT%H:%M:%S", gmtime(&(clock.tv_sec)));
 
     if (true == milliseconds) {
-        snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03ld", clock.tv_nsec / 1000000);
+        // Satisfy the compiler's buffer overflow checker by limiting the argument to a range of 0 - 999.
+        const std::uint32_t ms = (clock.tv_nsec / 1000000) % 1000;
+        snprintf(string + millisecond_offset, sizeof(string) - millisecond_offset, ".%03d", ms);
     }
 
     return string + localtime_offset_string(clock);
