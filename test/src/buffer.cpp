@@ -93,3 +93,34 @@ TEST_CASE("Buffer Empty", "[buffer]")
     REQUIRE_NOTHROW(nullptr == buffer.resize(0));
 }
 
+TEST_CASE("Buffer Zeroed", "[buffer]")
+{
+    auto const isZero = [](Buffer& buffer, std::size_t offset, std::size_t size)
+    {
+        std::uint8_t const* const data = static_cast<std::uint8_t const* const>(buffer.data()) + offset;
+        REQUIRE(offset + size <= buffer.capacity());
+
+        for (std::size_t i = 0; i < size; ++i) {
+            if (0 != data[0]) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    Buffer buffer;
+    void* data = buffer.reserveZeroed(8);
+    REQUIRE(nullptr != data);
+    REQUIRE(8 == buffer.capacity());
+    REQUIRE(0 == buffer.size());
+    REQUIRE(true == isZero(buffer, 0, 8));
+
+    memset(data, 0xff, buffer.capacity());
+    data = buffer.resizeZeroed(16);
+    REQUIRE(nullptr != data);
+    REQUIRE(16 == buffer.capacity());
+    REQUIRE(16 == buffer.size());
+    REQUIRE(true == isZero(buffer, 8, 8));
+}
+

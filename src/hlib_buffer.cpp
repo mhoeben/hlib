@@ -29,9 +29,9 @@ using namespace hlib;
 //
 // Buffer Implementation
 //
-bool Buffer::realloc(std::size_t capacity, bool shrink) noexcept
+bool Buffer::realloc(std::size_t capacity, ReallocType type) noexcept
 {
-    if (false == shrink && capacity <= m_capacity) {
+    if (Shrink != type && capacity <= m_capacity) {
         return true;
     }
 
@@ -45,6 +45,11 @@ bool Buffer::realloc(std::size_t capacity, bool shrink) noexcept
         data = ::realloc(m_data, capacity);
         if (nullptr == data) {
             return false;
+        }
+
+        if (GrowZeroed == type && capacity > m_capacity) {
+            std::uint8_t* ptr = static_cast<std::uint8_t*>(data);
+            memset(ptr + m_capacity, 0, capacity - m_capacity);
         }
     }
     else {
@@ -195,14 +200,14 @@ void Buffer::shrink() noexcept
         return;
     }
 
-    (void)realloc(m_size, true);
+    (void)realloc(m_size, Shrink);
 }
 
 void* Buffer::reserve(std::size_t capacity, std::nothrow_t) noexcept
 {
     assert(m_size <= m_capacity);
 
-    if (false == realloc(capacity, false)) {
+    if (false == realloc(capacity, Grow)) {
         return nullptr;
     }
 
@@ -218,11 +223,31 @@ void* Buffer::reserve(std::size_t capacity)
     return data;
 }
 
+void* Buffer::reserveZeroed(std::size_t capacity, std::nothrow_t) noexcept
+{
+    assert(m_size <= m_capacity);
+
+    if (false == realloc(capacity, GrowZeroed)) {
+        return nullptr;
+    }
+
+    return m_data;
+}
+
+void* Buffer::reserveZeroed(std::size_t capacity)
+{
+    void* data = reserveZeroed(capacity, std::nothrow);
+    if (nullptr == data && capacity > 0) {
+        throw std::bad_alloc();
+    }
+    return data;
+}
+
 void* Buffer::extend(std::size_t capacity, std::nothrow_t) noexcept
 {
     assert(m_size <= m_capacity);
 
-    if (capacity > 0 && false == realloc(m_size + capacity, false)) {
+    if (capacity > 0 && false == realloc(m_size + capacity, Grow)) {
         return nullptr;
     }
 
@@ -238,11 +263,31 @@ void* Buffer::extend(std::size_t capacity)
     return data;
 }
 
+void* Buffer::extendZeroed(std::size_t capacity, std::nothrow_t) noexcept
+{
+    assert(m_size <= m_capacity);
+
+    if (capacity > 0 && false == realloc(m_size + capacity, GrowZeroed)) {
+        return nullptr;
+    }
+
+    return static_cast<std::uint8_t*>(m_data) + m_size;
+}
+
+void* Buffer::extendZeroed(std::size_t capacity)
+{
+    void* data = extendZeroed(capacity, std::nothrow);
+    if (nullptr == data && capacity > 0) {
+        throw std::bad_alloc();
+    }
+    return data;
+}
+
 void* Buffer::resize(std::size_t size, std::nothrow_t) noexcept
 {
     assert(m_size <= m_capacity);
 
-    if (size > 0 && false == realloc(size, false)) {
+    if (size > 0 && false == realloc(size, Grow)) {
         return nullptr;
     }
 
@@ -253,6 +298,27 @@ void* Buffer::resize(std::size_t size, std::nothrow_t) noexcept
 void* Buffer::resize(std::size_t size)
 {
     void* data = resize(size, std::nothrow);
+    if (nullptr == data && size > 0) {
+        throw std::bad_alloc();
+    }
+    return data;
+}
+
+void* Buffer::resizeZeroed(std::size_t size, std::nothrow_t) noexcept
+{
+    assert(m_size <= m_capacity);
+
+    if (size > 0 && false == realloc(size, GrowZeroed)) {
+        return nullptr;
+    }
+
+    m_size = size;
+    return m_data;
+}
+
+void* Buffer::resizeZeroed(std::size_t size)
+{
+    void* data = resizeZeroed(size, std::nothrow);
     if (nullptr == data && size > 0) {
         throw std::bad_alloc();
     }
@@ -313,7 +379,7 @@ bool Buffer::insert(std::size_t offset, void const* data, std::size_t size, std:
         return true;
     }
 
-    if (false == realloc(m_size + size, false)) {
+    if (false == realloc(m_size + size, Grow)) {
         return false;
     }
 

@@ -73,12 +73,18 @@ public:
 
     void* reserve(std::size_t capacity, std::nothrow_t) noexcept;
     void* reserve(std::size_t capacity);
+    void* reserveZeroed(std::size_t capacity, std::nothrow_t) noexcept;
+    void* reserveZeroed(std::size_t capacity);
 
     void* extend(std::size_t capacity, std::nothrow_t) noexcept;
     void* extend(std::size_t capacity);
+    void* extendZeroed(std::size_t capacity, std::nothrow_t) noexcept;
+    void* extendZeroed(std::size_t capacity);
 
     void* resize(std::size_t size, std::nothrow_t) noexcept;
     void* resize(std::size_t size);
+    void* resizeZeroed(std::size_t size, std::nothrow_t) noexcept;
+    void* resizeZeroed(std::size_t size);
 
     bool assign(void const* data, std::size_t size, std::nothrow_t) noexcept;
     void assign(void const* data, std::size_t size);
@@ -119,7 +125,14 @@ private:
     std::size_t m_capacity{ 0 };
     std::size_t m_size{ 0 };
 
-    bool realloc(std::size_t capacity, bool shrink) noexcept;
+    enum ReallocType
+    {
+        Shrink,
+        Grow,
+        GrowZeroed
+    };
+
+    bool realloc(std::size_t capacity, ReallocType type) noexcept;
 };
 
 template <typename T>
