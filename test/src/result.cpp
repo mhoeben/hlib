@@ -130,5 +130,16 @@ TEST_CASE("Result Then", "[result]")
     });
 
     REQUIRE(false == error.empty());
+
+    error = Error();
+    result = Result<>().then([] {
+        return Result<std::string>("1971");
+    }).otherwise([&](Error const& e) {
+        error = e;
+    });
+
+    REQUIRE(true == error.empty());
+    REQUIRE(true == result.success());
+    REQUIRE("1971" == result.value());
 }
 

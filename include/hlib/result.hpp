@@ -170,6 +170,17 @@ public:
         return on_success(std::move(value()));
     }
 
+    template<typename F, typename R = std::invoke_result_t<F>>
+    std::enable_if_t<std::is_same_v<T, std::monostate>, Result<typename R::Type>>
+    then(F&& on_success)
+    {
+        if (true == failure()) {
+            return error();
+        }
+
+        return on_success();
+    }
+
     template<typename F>
     Result<T>& otherwise(F&& on_error)
     {
