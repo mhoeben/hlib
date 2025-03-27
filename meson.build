@@ -34,6 +34,7 @@ sources = files(
     'include/hlib/buffer.hpp',
     'include/hlib/cpu.hpp',
     'include/hlib/debug.hpp',
+    'include/hlib/enum.hpp',
     'include/hlib/error.hpp',
     'include/hlib/event_bus.hpp',
     'include/hlib/event_loop.hpp',
