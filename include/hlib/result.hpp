@@ -298,7 +298,7 @@ auto attempt(F&& func, Args&&... args) {
             std::invoke(std::forward<F>(func), std::forward<Args>(args)...);
             return Result<>{};
         }
-        catch (const std::exception& e) {
+        catch (std::exception const& e) {
             return Result<>(std::current_exception());
         }
     }
@@ -306,12 +306,11 @@ auto attempt(F&& func, Args&&... args) {
         try {
             return Result<R>(std::invoke(std::forward<F>(func), std::forward<Args>(args)...));
         }
-        catch (const std::exception& e) {
+        catch (std::exception const& e) {
             return Result<R>(std::current_exception());
         }
     }
 }
-
 
 } // namespace hlib
 

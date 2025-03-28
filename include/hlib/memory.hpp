@@ -202,6 +202,11 @@ public:
         return m_handle;
     }
 
+    bool empty() const noexcept
+    {
+        return invalid_handle == m_handle;
+    }
+
     T& get() noexcept
     {
         return m_handle;
