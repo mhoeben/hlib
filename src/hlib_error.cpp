@@ -32,12 +32,6 @@ namespace
 
 constexpr std::size_t max_error_string = 256;
 
-template<class... Ts>
-struct Overloaded : Ts... { using Ts::operator()...; };
-
-template<class... Ts>
-Overloaded(Ts...) -> Overloaded<Ts...>;
-
 } // namespace
 
 //
@@ -45,58 +39,48 @@ Overloaded(Ts...) -> Overloaded<Ts...>;
 //
 bool Error::empty() const noexcept
 {
-    return std::holds_alternative<std::monostate>(m_value);
+    return !m_exception;
 }
 
 std::error_code Error::code() const
 {
-    if (true == empty()) {
-        return std::error_code();
+    try {
+        if (empty()) {
+            return {};
+        }
+
+        std::rethrow_exception(m_exception);
+    }
+    catch (std::system_error const& e) {
+        return e.code();
+    }
+    catch (...) {
+        return {};
     }
 
-    if (false == std::holds_alternative<std::system_error>(m_value)) {
-        return std::error_code();
-    }
-
-    return std::get<std::system_error>(m_value).code();
 }
 
 std::string Error::what() const
 {
-    assert(false == empty());
-
-    return std::visit(Overloaded{
-        [](std::monostate const& /* e */) noexcept
-        {
-            return "";
-        },
-        [](std::bad_alloc const& /* e */) noexcept
-        {
-            return "bad alloc";
-        },
-        [](auto const& e) noexcept
-        {
-            return e.what();
+    try {
+        if (empty()) {
+            return {};
         }
-    }, m_value);
 
-    return std::string();
+        std::rethrow_exception(m_exception);
+    }
+    catch (std::exception const& e) {
+        return e.what();
+    }
+    catch (...) {
+        return {};
+    }
 }
 
 [[noreturn]] void Error::toss() const
 {
-    std::visit(Overloaded{
-        [](std::monostate const& /* e */)
-        {
-            throw std::bad_variant_access();
-        },
-        [](auto const& e)
-        {
-            throw e;
-        }
-    }, m_value);
-
-    throw std::bad_variant_access();
+    if (m_exception) std::rethrow_exception(m_exception);
+    throw std::logic_error("No exception stored");
 }
 
 //

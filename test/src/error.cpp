@@ -31,7 +31,7 @@ TEST_CASE("Error Monostate", "[error]")
 {
     Error error;
     REQUIRE(true == error.empty());
-    REQUIRE_THROWS_AS(error.toss(), std::bad_variant_access);
+    REQUIRE_THROWS_AS(error.toss(), std::logic_error);
 }
 
 TEST_CASE("Error", "[error]")
@@ -53,7 +53,7 @@ TEST_CASE("Error", "[error]")
 
     Error bad_alloc(std::bad_alloc{});
     REQUIRE(false == bad_alloc.empty());
-    REQUIRE("bad alloc" == bad_alloc.what());
+    REQUIRE("std::bad_alloc" == bad_alloc.what());
     REQUIRE_THROWS_AS(bad_alloc.toss(), std::bad_alloc);
 }
 

@@ -28,7 +28,6 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
-#include <variant>
 
 namespace hlib
 {
@@ -36,48 +35,44 @@ namespace hlib
 class Error final
 {
 public:
-    typedef std::variant<
-        std::monostate,
-        std::exception,
-            std::logic_error,
-                std::invalid_argument,
-                std::domain_error,
-                std::length_error,
-                std::out_of_range,
-            std::runtime_error,
-                std::range_error,
-                std::overflow_error,
-                std::underflow_error,
-                std::system_error,
-            std::bad_alloc
-    > Value;
-
-public:
     Error() = default;
 
-    template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
-    Error(T const& value)
-        : m_value(value)
+    Error(std::exception_ptr const& ptr)
+        : m_exception(ptr)
+    {
+    }
+
+    Error(std::exception_ptr&& ptr) noexcept
+        : m_exception(std::move(ptr))
     {
     }
 
     template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
-    Error(T&& value)
-        : m_value(std::move(value))
+    Error(T const& exception)
+        : m_exception(std::make_exception_ptr(exception))
     {
     }
 
     template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
-    Error& operator =(T const& value)
+    Error(T&& exception)
+        : m_exception(std::make_exception_ptr(std::forward<T>(exception)))
     {
-        m_value = value;
+    }
+
+    Error& operator=(std::exception_ptr ptr) {
+        m_exception = std::move(ptr);
         return *this;
     }
 
     template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
-    Error& operator =(T&& value)
-    {
-        m_value = std::move(value);
+    Error& operator =(T const& exception) {
+        m_exception = std::make_exception_ptr(exception);
+        return *this;
+    }
+
+    template<typename T, typename = std::enable_if_t<std::is_base_of<std::exception, T>::value>>
+    Error& operator =(T&& exception) noexcept {
+        m_exception = std::make_exception_ptr(std::forward<T>(exception));
         return *this;
     }
 
@@ -89,7 +84,7 @@ public:
     [[noreturn]] void toss() const;
 
 private:
-    Value m_value;
+    std::exception_ptr m_exception;
 };
 
 inline bool operator ==(bool is_set, Error const& error)

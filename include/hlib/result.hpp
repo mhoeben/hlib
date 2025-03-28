@@ -26,6 +26,7 @@
 #include "hlib/base.hpp"
 #include "hlib/error.hpp"
 #include <functional>
+#include <variant>
 
 namespace hlib
 {
@@ -57,6 +58,11 @@ public:
 
     Result(Error&& error)
         : m_value(std::in_place_index<1>, std::move(error))
+    {
+    }
+
+    Result(std::exception_ptr ptr)
+        : m_value(std::in_place_index<1>, Error(std::move(ptr)))
     {
     }
 
@@ -96,6 +102,12 @@ public:
         return *this;
     }
 
+    Result& operator =(std::exception_ptr ptr)
+    {
+        m_value = Value(std::in_place_index<1>, Error(std::move(ptr)));
+        return *this;
+    }
+
     template<typename E, typename = std::enable_if_t<std::is_base_of<std::exception, E>::value>>
     Result& operator =(E const &exception)
     {
@@ -104,9 +116,9 @@ public:
     }
 
     template<typename E, typename = std::enable_if_t<std::is_base_of<std::exception, E>::value>>
-    Result& operator =(E&& error)
+    Result& operator =(E&& exception)
     {
-        m_value = Value(std::in_place_index<1>, Error(std::move(error)));
+        m_value = Value(std::in_place_index<1>, Error(std::move(exception)));
         return *this;
     }
 
@@ -276,6 +288,16 @@ template<typename T = void>
 T success_or_throw(Result<T> result)
 {
     return check(std::move(result), [](Error&& error) -> void { throw std::move(error); });
+}
+
+template <typename F, typename... Args>
+auto attempt(F&& func, Args&&... args) -> Result<decltype(func(std::forward<Args>(args)...))>
+{
+    try {
+        return func(std::forward<Args>(args)...);
+    } catch (std::exception const& e) {
+        return std::current_exception();
+    }
 }
 
 } // namespace hlib

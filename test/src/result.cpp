@@ -143,3 +143,21 @@ TEST_CASE("Result Then", "[result]")
     REQUIRE("1971" == result.value());
 }
 
+TEST_CASE("Attempt", "[result]")
+{
+    auto div = [](int a, int b) -> Result<int> {
+        if (0 == b) {
+            throw std::domain_error("Division by zero");
+        }
+        return a / b;
+    };
+
+    auto result = attempt(div, 6, 3);
+    REQUIRE(true == result.success());
+    REQUIRE(2 == result.value());
+
+    result = attempt(div, 2, 0);
+    REQUIRE(false == result.success());
+    REQUIRE("Division by zero" == result.error().what());
+}
+
