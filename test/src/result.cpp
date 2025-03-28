@@ -145,6 +145,9 @@ TEST_CASE("Result Then", "[result]")
 
 TEST_CASE("Attempt", "[result]")
 {
+    auto none = []() {};
+    auto result0 = attempt(none);
+
     auto div = [](int a, int b) -> Result<int> {
         if (0 == b) {
             throw std::domain_error("Division by zero");

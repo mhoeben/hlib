@@ -290,14 +290,28 @@ T success_or_throw(Result<T> result)
     return check(std::move(result), [](Error&& error) -> void { throw std::move(error); });
 }
 
-template <typename F, typename... Args>
-auto attempt(F&& func, Args&&... args) -> Result<decltype(std::invoke(std::forward<F>(func), std::forward<Args>(args)...))> {
-    try {
-        return std::invoke(std::forward<F>(func), std::forward<Args>(args)...);
-    } catch (...) {
-        return std::current_exception();
+template<typename F, typename... Args>
+auto attempt(F&& func, Args&&... args) {
+    using R = std::invoke_result_t<F, Args...>;
+    if constexpr (std::is_void_v<R>) {
+        try {
+            std::invoke(std::forward<F>(func), std::forward<Args>(args)...);
+            return Result<>{};
+        }
+        catch (const std::exception& e) {
+            return Result<>(std::current_exception());
+        }
+    }
+    else {
+        try {
+            return Result<R>(std::invoke(std::forward<F>(func), std::forward<Args>(args)...));
+        }
+        catch (const std::exception& e) {
+            return Result<R>(std::current_exception());
+        }
     }
 }
+
 
 } // namespace hlib
 
