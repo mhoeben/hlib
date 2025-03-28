@@ -169,7 +169,7 @@ TEST_CASE("Attempt", "[result]")
     };
 
     Test test;
-    auto result2 = attempt(&Test::setValue, std::ref(test), 42);
+    auto result2 = attempt(&Test::setValue, test, 42);
     REQUIRE(true == result2.success());
     REQUIRE(42 == result2.value());
 }
