@@ -291,11 +291,10 @@ T success_or_throw(Result<T> result)
 }
 
 template <typename F, typename... Args>
-auto attempt(F&& func, Args&&... args) -> Result<decltype(func(std::forward<Args>(args)...))>
-{
+auto attempt(F&& func, Args&&... args) -> Result<decltype(std::invoke(std::forward<F>(func), std::forward<Args>(args)...))> {
     try {
-        return func(std::forward<Args>(args)...);
-    } catch (std::exception const& e) {
+        return std::invoke(std::forward<F>(func), std::forward<Args>(args)...);
+    } catch (...) {
         return std::current_exception();
     }
 }

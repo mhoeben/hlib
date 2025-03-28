@@ -152,12 +152,22 @@ TEST_CASE("Attempt", "[result]")
         return a / b;
     };
 
-    auto result = attempt(div, 6, 3);
-    REQUIRE(true == result.success());
-    REQUIRE(2 == result.value());
+    auto result1 = attempt(div, 6, 3);
+    REQUIRE(true == result1.success());
+    REQUIRE(2 == result1.value());
 
-    result = attempt(div, 2, 0);
-    REQUIRE(false == result.success());
-    REQUIRE("Division by zero" == result.error().what());
+    result1 = attempt(div, 2, 0);
+    REQUIRE(false == result1.success());
+    REQUIRE("Division by zero" == result1.error().what());
+
+    struct Test {
+        int setValue(int x) { value = x; return value; }
+        int value = 0;
+    };
+
+    Test test;
+    auto result2 = attempt(&Test::setValue, std::ref(test), 42);
+    REQUIRE(true == result2.success());
+    REQUIRE(42 == result2.value());
 }
 
