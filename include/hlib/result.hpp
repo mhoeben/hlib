@@ -261,7 +261,7 @@ inline std::function<void(Error&&)> set_error(Error& error)
     };
 }
 
-template<typename T>
+template<typename T = void>
 std::function<T(Error&&)> set_error(Error& error)
 {
     return [&error](Error&& e) noexcept {
