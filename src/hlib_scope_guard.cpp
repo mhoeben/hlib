@@ -43,11 +43,7 @@ ScopeGuard::ScopeGuard(std::function<void()> on_enter, std::function<void()> on_
 
 ScopeGuard::~ScopeGuard()
 {
-    if (nullptr == m_on_exit) {
-        return;
-    }
-
-    m_on_exit();
+    exit();
 }
 
 void ScopeGuard::clear() noexcept
@@ -55,3 +51,12 @@ void ScopeGuard::clear() noexcept
     m_on_exit = nullptr;
 }
 
+void ScopeGuard::exit()
+{
+    if (nullptr == m_on_exit) {
+        return;
+    }
+
+    m_on_exit();
+    m_on_exit = nullptr;
+}

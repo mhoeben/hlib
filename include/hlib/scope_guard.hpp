@@ -40,6 +40,7 @@ public:
     ~ScopeGuard();
 
     void clear() noexcept;
+    void exit();
 
 private:
     std::function<void()> m_on_exit;
