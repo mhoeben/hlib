@@ -71,6 +71,7 @@ add_library(${PROJECT_NAME} # STATIC, use BUILD_SHARED_LIBS for SHARED.
 
     src/hlib_buffer.cpp
     src/hlib_cpu.cpp
+    src/hlib_debug.cpp
     src/hlib_error.cpp
     src/hlib_event_bus.cpp
     src/hlib_event_loop.cpp

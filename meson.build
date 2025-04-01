@@ -69,6 +69,7 @@ sources = files(
 
     'src/hlib_buffer.cpp',
     'src/hlib_cpu.cpp',
+    'src/hlib_debug.cpp',
     'src/hlib_error.cpp',
     'src/hlib_event_bus.cpp',
     'src/hlib_event_loop.cpp',
@@ -141,7 +142,7 @@ hlib_dep = declare_dependency(
 )
 
 if not meson.is_subproject()
-    install_headers('include/hlib/', subdir: 'hlib')
+    install_headers('include/hlib', subdir: 'hlib')
 
     pkgconfig = import('pkgconfig')
     pkgconfig.generate(name: 'hlib',

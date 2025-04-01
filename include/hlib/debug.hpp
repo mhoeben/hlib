@@ -24,6 +24,13 @@
 #pragma once
 
 #include "hlib/macro.hpp"
+#include "hlib/math.hpp"
+#include "hlib/time.hpp"
+#include <sys/ptrace.h>
+#include <unistd.h>
+
+namespace hlib
+{
 
 #ifndef NDEBUG
 #define HLIB_DEBUG_HERE         (__FILE__ ":" HLIB_STRINGIFY_NUMBER(__LINE__))
@@ -48,3 +55,11 @@
 #elif
 #error "Unsupported compiler or architecture"
 #endif
+
+bool debugger_is_attached() noexcept;
+#define HLIB_DEBUGGER_IS_ATTACHED() debugger_is_attached()
+
+void debugger_wait_for_attachment(time::Duration const& sleep_interval = time::Sec(1)) noexcept;
+#define HLIB_DEBUGGER_WAIT_FOR_ATTACHM() debugger_wait_for_attachment()
+
+} // namespace hlib

@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2023 Maarten Hoeben
+// Copyright (c) 2019 Maarten Hoeben
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,51 +21,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#pragma once
+#include "hlib/debug.hpp"
+#include "hlib/file.hpp"
+#include <stdlib.h>
+#include <string.h>
 
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <new>
-#include <stdexcept>
-#include <string>
+using namespace hlib;
 
-namespace hlib
+//
+// Public
+//
+bool hlib::debugger_is_attached() noexcept {
+    std::error_code error_code;
+    file::File status("/proc/self/status", "r", error_code);
+
+    if (error_code) {
+        return false;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), status)) {
+        if (strncmp(line, "TracerPid:", 10) == 0) {
+            int tracer_pid = atoi(line + 10);
+            return 0 != tracer_pid;
+        }
+    }
+
+    return false;
+}
+
+void hlib::debugger_wait_for_attachment(time::Duration const& sleep_interval) noexcept
 {
+    useconds_t interval = sleep_interval.to<time::USec>().value();
 
-#define HLIB_NOT_COPYABLE(name) \
-    name(name const &) = delete; \
-    name& operator = (name const &) = delete
-
-#define HLIB_NOT_MOVABLE(name) \
-    name(name &&) = delete; \
-    name& operator = (name &&) = delete
-
-#if defined(__clang__)
-    #define HLIB_FALLTHROUGH [[clang::fallthrough]]
-#elif defined(__GNUC__) || defined(__GNUG__)
-    #if (__GNUC__ < 7)
-        #define HLIB_FALLTHROUGH
-    #else
-        #define HLIB_FALLTHROUGH __attribute__((fallthrough))
-    #endif
-#else
-    #error "Unsupported compiler."
-#endif
-
-#if defined(__cpp_rtti) && __cpp_rtti
-    #define HLIB_RTTI_ENABLED
-#else
-    #define HLIB_RTTI_DISABLED
-#endif
-
-#define HASSERT(expression) assert((expression))
-
-#ifndef NDEBUG
-#define HVERIFY(expression) assert((expression))
-#else
-#define HVERIFY(expression) do { (void)(expression); } while (false)
-#endif
-
-} // namespace hlib
+    while (debugger_is_attached()) {
+        usleep(interval);
+    }
+}
 
